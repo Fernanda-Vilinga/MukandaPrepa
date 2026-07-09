@@ -1,0 +1,50 @@
+.pilares {
+  background: var(--color-bg);
+  padding: 56px 0;
+}
+
+.pilares__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.pilar-card {
+  background: #FFFFFF;
+  border-radius: var(--radius-card);
+  padding: 28px 24px;
+  box-shadow: 0 1px 4px rgba(20, 20, 31, 0.06);
+}
+
+.pilar-card__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: rgba(251, 109, 29, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.pilar-card__icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.pilar-card h3 {
+  font-size: 17px;
+  margin-bottom: 8px;
+}
+
+.pilar-card p {
+  font-size: 14px;
+  color: var(--color-gray-mid);
+  line-height: 1.5;
+}
+
+@media (max-width: 767px) {
+  .pilares__grid {
+    grid-template-columns: 1fr;
+  }
+}

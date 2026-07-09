@@ -1,0 +1,107 @@
+.equipa-hero {
+  background: var(--color-bg);
+  padding: 56px 0 40px;
+  text-align: center;
+}
+
+.equipa-hero h1 {
+  font-size: 34px;
+  margin-bottom: 12px;
+}
+
+.equipa-hero p {
+  color: var(--color-gray-mid);
+  font-size: 16px;
+}
+
+.equipa-fundadores {
+  background: #FFFFFF;
+  padding: 48px 0;
+}
+
+.equipa-fundadores h2,
+.equipa-secao h2 {
+  font-size: 22px;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.equipa-secao {
+  background: var(--color-bg);
+  padding: 48px 0;
+}
+
+.equipa-secao:nth-of-type(even) {
+  background: #FFFFFF;
+}
+
+.equipa-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.equipa-grid--fundadores {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.membro-card {
+  text-align: center;
+  padding: 20px 14px;
+}
+
+.membro-card__avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(251, 109, 29, 0.12);
+  color: var(--color-orange);
+  font-family: var(--font-title);
+  font-weight: 700;
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 14px;
+}
+
+.membro-card h3 {
+  font-size: 15px;
+  margin-bottom: 4px;
+  color: var(--color-dark);
+}
+
+.membro-card p {
+  font-size: 12px;
+  color: var(--color-gray-mid);
+  line-height: 1.4;
+}
+
+.membro-card--vaga {
+  opacity: 0.7;
+}
+
+.membro-card--vaga .membro-card__avatar {
+  background: transparent;
+  border: 1.5px dashed var(--color-border);
+  color: var(--color-gray-mid);
+}
+
+.membro-card__vaga-label {
+  color: var(--color-gray-mid);
+  font-style: italic;
+}
+
+@media (max-width: 1023px) {
+  .equipa-grid,
+  .equipa-grid--fundadores {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .equipa-grid,
+  .equipa-grid--fundadores {
+    grid-template-columns: 1fr;
+  }
+}

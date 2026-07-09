@@ -1,0 +1,106 @@
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: #FFFFFF;
+  transition: box-shadow 0.2s ease;
+}
+
+.navbar--scrolled {
+  box-shadow: 0 2px 12px rgba(20, 20, 31, 0.08);
+}
+
+.navbar__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 72px;
+}
+
+.navbar__logo {
+  display: flex;
+  align-items: center;
+}
+
+.navbar__logo-img {
+  height: 36px;
+  width: auto;
+  display: block;
+}
+
+.navbar__links {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.navbar__links a,
+.navbar__dropdown-trigger {
+  color: var(--color-dark);
+  background: none;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.navbar__dropdown {
+  position: relative;
+}
+
+.navbar__dropdown-trigger {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.navbar__caret {
+  font-size: 10px;
+}
+
+.navbar__megamenu {
+  position: absolute;
+  /* Touches the trigger directly (top: 100%, no margin-top). A gap here
+     would be a dead zone: the mouse crosses it while over neither the
+     trigger nor the menu, firing mouseleave on .navbar__dropdown and
+     closing the menu before the pointer arrives. The box-shadow plus
+     inner padding gives enough visual separation without a real gap. */
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #FFFFFF;
+  border-radius: var(--radius-card);
+  box-shadow: 0 8px 24px rgba(20, 20, 31, 0.12);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  min-width: 200px;
+}
+
+.navbar__megamenu a {
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.navbar__megamenu a:hover {
+  background: #FBFBFB;
+  color: var(--color-orange);
+}
+
+.navbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.navbar__actions .btn {
+  padding: 10px 20px;
+  font-size: 14px;
+}
+
+@media (max-width: 1023px) {
+  .navbar__links {
+    display: none;
+  }
+}
