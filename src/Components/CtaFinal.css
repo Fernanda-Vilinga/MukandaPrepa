@@ -1,0 +1,22 @@
+.cta-final {
+  background: var(--color-orange);
+  padding: 56px 0;
+}
+
+.cta-final__inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  flex-wrap: wrap;
+  text-align: center;
+}
+
+.cta-final h2 {
+  color: #FFFFFF;
+  font-size: 26px;
+}
+
+.cta-final .btn-white {
+  padding: 14px 32px;
+}

@@ -1,0 +1,54 @@
+.hero {
+  background: #FFFFFF;
+  padding: 72px 0;
+}
+
+.hero__inner {
+  display: flex;
+  align-items: center;
+  gap: 48px;
+}
+
+.hero__text {
+  flex: 1;
+}
+
+.hero__text h1 {
+  font-size: 42px;
+  line-height: 1.2;
+  margin-bottom: 20px;
+}
+
+.hero__subtitle {
+  font-size: 16px;
+  color: var(--color-gray-mid);
+  line-height: 1.6;
+  margin-bottom: 28px;
+  max-width: 480px;
+}
+
+.hero__cta {
+  padding: 16px 32px;
+  font-size: 16px;
+}
+
+.hero__illustration {
+  flex: 1;
+  max-width: 420px;
+}
+
+@media (max-width: 1023px) {
+  .hero__inner {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .hero__subtitle {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .hero__text h1 {
+    font-size: 32px;
+  }
+}
