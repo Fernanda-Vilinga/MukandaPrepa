@@ -1,0 +1,74 @@
+.maratona {
+  background: var(--color-dark);
+  padding: 64px 0;
+}
+
+.maratona__inner {
+  text-align: center;
+}
+
+.maratona h2 {
+  color: #FFFFFF;
+  font-size: 28px;
+  margin-bottom: 32px;
+}
+
+.maratona__countdown {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.maratona__block {
+  background: var(--color-orange);
+  border-radius: var(--radius-card);
+  width: 96px;
+  padding: 16px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.maratona__number {
+  font-family: var(--font-title);
+  font-size: 32px;
+  font-weight: 700;
+  color: #FFFFFF;
+  line-height: 1;
+}
+
+.maratona__label {
+  font-size: 12px;
+  color: #FFFFFF;
+  margin-top: 6px;
+  opacity: 0.9;
+}
+
+.maratona__encerrado {
+  color: #FFFFFF;
+  font-size: 18px;
+  margin-bottom: 32px;
+}
+
+.maratona__actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+.maratona .btn-outline {
+  color: #FFFFFF;
+  border-color: #FFFFFF;
+}
+
+@media (max-width: 480px) {
+  .maratona__block {
+    width: 76px;
+  }
+
+  .maratona__actions {
+    flex-direction: column;
+    align-items: center;
+  }
+}

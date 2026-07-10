@@ -1,0 +1,77 @@
+.planos-preview {
+  background: #FFFFFF;
+  padding: 64px 0;
+}
+
+.planos-preview__title {
+  text-align: center;
+  font-size: 30px;
+  margin-bottom: 36px;
+}
+
+.planos-preview__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.plano-card {
+  position: relative;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: 32px 24px;
+  text-align: center;
+}
+
+.plano-card--destaque {
+  border-color: var(--color-orange);
+  box-shadow: 0 8px 24px rgba(251, 109, 29, 0.12);
+}
+
+.plano-card__badge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-orange);
+  color: #FFFFFF;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 14px;
+  border-radius: 999px;
+}
+
+.plano-card h3 {
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+
+.plano-card__preco {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-dark);
+  margin-bottom: 2px;
+}
+
+.plano-card__pagamento {
+  font-size: 13px;
+  color: var(--color-gray-mid);
+  margin-bottom: 20px;
+}
+
+.plano-card__cta {
+  width: 100%;
+  font-size: 14px;
+  padding: 12px 20px;
+}
+
+.planos-preview__footer {
+  text-align: center;
+  margin-top: 32px;
+}
+
+@media (max-width: 767px) {
+  .planos-preview__grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,81 @@
+.recursos-hero {
+  background: var(--color-bg);
+  padding: 56px 0 40px;
+  text-align: center;
+}
+
+.recursos-hero h1 {
+  font-size: 34px;
+  margin-bottom: 12px;
+}
+
+.recursos-hero p {
+  color: var(--color-gray-mid);
+  font-size: 16px;
+}
+
+.recursos-lista {
+  background: #FFFFFF;
+  padding: 40px 0 64px;
+}
+
+.recursos-aviso {
+  text-align: center;
+  font-size: 13px;
+  color: var(--color-gray-mid);
+  font-style: italic;
+  margin-bottom: 32px;
+}
+
+.recursos-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.recurso-card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: 22px 20px;
+}
+
+.pill-materia {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(23, 66, 231, 0.1);
+  color: var(--color-blue);
+  margin-bottom: 12px;
+}
+
+.recurso-card h3 {
+  font-size: 15px;
+  line-height: 1.4;
+  margin-bottom: 16px;
+  min-height: 42px;
+}
+
+.recurso-card__btn {
+  width: 100%;
+  font-size: 13px;
+  padding: 10px 16px;
+}
+
+.recurso-card__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 1023px) {
+  .recursos-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .recursos-grid {
+    grid-template-columns: 1fr;
+  }
+}

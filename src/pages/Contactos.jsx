@@ -1,0 +1,138 @@
+import { useState } from 'react';
+import './Contactos.css';
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export default function Contactos() {
+  const [form, setForm] = useState({ nome: '', email: '', assunto: '', mensagem: '' });
+  const [error, setError] = useState('');
+  const [enviado, setEnviado] = useState(false);
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const validate = () => {
+    if (!form.nome.trim()) return 'Preenche o teu nome.';
+    if (!form.email.trim() || !EMAIL_REGEX.test(form.email)) return 'Introduz um email válido.';
+    if (!form.mensagem.trim()) return 'Escreve a tua mensagem.';
+    return '';
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const validationError = validate();
+    setError(validationError);
+    if (validationError) return;
+
+    // TODO: ligar a um endpoint real (email transaccional ou backend) para
+    // entregar a mensagem. Por agora só valida no browser, não é enviada.
+    setEnviado(true);
+  };
+
+  return (
+    <>
+      <section className="contactos-hero">
+        <div className="container">
+          <h1>Contacta-nos</h1>
+          <p>Tens dúvidas sobre os planos, as maratonas ou as aulas? Fala connosco.</p>
+        </div>
+      </section>
+
+      <section className="contactos-conteudo">
+        <div className="container contactos-conteudo__grid">
+          <div className="contactos-form-card">
+            {enviado ? (
+              <div className="contactos-form-card__sucesso">
+                <h2>Mensagem enviada</h2>
+                <p>Obrigado pelo contacto. Vamos responder-te em breve.</p>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} noValidate>
+                <label>
+                  Nome
+                  <input
+                    type="text"
+                    name="nome"
+                    placeholder="O teu nome"
+                    value={form.nome}
+                    onChange={handleChange}
+                  />
+                </label>
+
+                <label>
+                  Email
+                  <input
+                    type="email"
+                    name="email"
+                    placeholder="teu@email.com"
+                    value={form.email}
+                    onChange={handleChange}
+                  />
+                </label>
+
+                <label>
+                  Assunto
+                  <input
+                    type="text"
+                    name="assunto"
+                    placeholder="Sobre o que é a tua mensagem?"
+                    value={form.assunto}
+                    onChange={handleChange}
+                  />
+                </label>
+
+                <label>
+                  Mensagem
+                  <textarea
+                    name="mensagem"
+                    placeholder="Escreve aqui a tua mensagem"
+                    rows={5}
+                    value={form.mensagem}
+                    onChange={handleChange}
+                  />
+                </label>
+
+                {error && <p className="contactos-form-card__error">{error}</p>}
+
+                <button type="submit" className="btn btn-primary contactos-form-card__submit">
+                  Enviar mensagem
+                </button>
+              </form>
+            )}
+          </div>
+
+          <div className="contactos-info">
+            <div className="contactos-info__card">
+              <h3>Morada</h3>
+              <p>Luanda, Angola</p>
+            </div>
+            <div className="contactos-info__card">
+              <h3>Email</h3>
+              <a href="mailto:mukandaprepa@gmail.com">mukandaprepa@gmail.com</a>
+            </div>
+            <div className="contactos-info__card">
+              <h3>Telefone</h3>
+              <a href="tel:+244931256328">+244 931 256 328</a>
+            </div>
+            <div className="contactos-info__card">
+              <h3>WhatsApp</h3>
+              <a href="https://wa.me/244923124578" target="_blank" rel="noreferrer">
+                +244 923 124 578
+              </a>
+            </div>
+
+            <div className="contactos-mapa">
+              <iframe
+                title="Localização MUKANDA PREPA"
+                src="https://www.google.com/maps?q=Luanda,Angola&output=embed"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+    </>
+  );
+}
