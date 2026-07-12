@@ -125,5 +125,15 @@
   text-align: center;
 }
 
+.sobre-cta-final {
+  background: var(--color-orange);
+  padding: 48px 0;
+}
+
+.sobre-cta-final__inner {
+  text-align: center;
+}
+
 .sobre-cta-final h2 {
-  color: #FFFF
+  color: #FFFFFF;
+}
