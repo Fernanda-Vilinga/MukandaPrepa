@@ -1,0 +1,182 @@
+// ============================================================
+// Dados mock — substituir pela API real (ver services/api.js)
+// ============================================================
+
+export const CURRENT_USER = {
+  id: 'u1',
+  name: 'Adilson Manuel',
+  email: 'adilson.manuel@gmail.com',
+  role: 'student',
+  plan: 'plus', // basic | plus | premium
+  area: 'Engenharia e Tecnologia',
+  phone: '+244 923 000 000',
+};
+
+export const PLAN_ATTEMPTS = { basic: 2, plus: 5, premium: Infinity };
+export const PLAN_LABEL = { basic: 'Basic', plus: 'Plus', premium: 'Premium' };
+
+// Áreas de conhecimento (registo)
+export const AREAS = [
+  'Engenharia e Tecnologia',
+  'Ciências Sociais',
+  'Ciências da Saúde',
+  'Ciências Económicas e Gestão',
+  'Direito',
+  'Educação e Humanidades',
+  'Outra',
+];
+
+// Descrição dos planos (janela de upgrade)
+// TODO: preços provisórios — confirmar com a equipa comercial.
+export const PLAN_INFO = [
+  {
+    id: 'basic', name: 'Basic', price: 'Grátis', accent: '#64748B',
+    features: ['2 tentativas por maratona', 'Resultados por email + dashboard', 'Chat de suporte'],
+    missing: ['Chat de dúvidas com professor', 'Tentativas ilimitadas'],
+  },
+  {
+    id: 'plus', name: 'Plus', price: '4 900 Kz/mês', accent: '#1742E7', popular: true,
+    features: ['5 tentativas por maratona', 'Feedback detalhado do professor', 'Chat de dúvidas com professor', 'Suporte prioritário'],
+    missing: ['Tentativas ilimitadas'],
+  },
+  {
+    id: 'premium', name: 'Premium', price: '9 900 Kz/mês', accent: '#FB6D1D',
+    features: ['Tentativas ilimitadas', 'Feedback detalhado do professor', 'Chat de dúvidas com professor', 'Suporte prioritário', 'Acesso antecipado a maratonas'],
+    missing: [],
+  },
+];
+
+export const MARATHONS = [
+  {
+    id: 'm1',
+    title: 'Maratona de Matemática — Álgebra Linear',
+    area: 'Engenharia',
+    discipline: 'Matemática',
+    durationMinutes: 60,
+    questionsPerSession: 5,
+    accessStart: '2026-07-12T08:00:00Z',
+    accessEnd: '2026-07-19T23:59:00Z',
+    status: 'active', // active | soon | closed
+    professor: 'Prof. Nzinga Domingos',
+    description:
+      'Sessão cronometrada com 5 questões sorteadas aleatoriamente de um banco de 15, preparadas pelo Prof. Nzinga Domingos. Podes navegar entre questões e rever antes de submeter. As respostas são validadas manualmente.',
+    password: 'MAT26X', // no backend real: hash verificado no servidor
+    attemptsUsed: 1,
+    icon: '📐',
+  },
+  {
+    id: 'm2',
+    title: 'Maratona de Química — Orgânica II',
+    area: 'Engenharia',
+    discipline: 'Química',
+    durationMinutes: 45,
+    questionsPerSession: 4,
+    accessStart: '2026-07-10T08:00:00Z',
+    accessEnd: '2026-07-16T20:00:00Z',
+    status: 'active',
+    professor: 'Prof.ª Ana Quissanga',
+    description: 'Reacções de substituição e eliminação. 4 questões aleatórias de um banco de 15.',
+    password: 'QUI26A',
+    attemptsUsed: 0,
+    icon: '🧪',
+  },
+  {
+    id: 'm3',
+    title: 'Maratona de Direito Constitucional',
+    area: 'Ciências Sociais',
+    discipline: 'Direito',
+    durationMinutes: 90,
+    questionsPerSession: 5,
+    accessStart: '2026-07-17T08:00:00Z',
+    accessEnd: '2026-07-24T23:59:00Z',
+    status: 'soon',
+    professor: 'Prof. Mário Vunge',
+    description: 'Princípios fundamentais da Constituição angolana.',
+    password: 'DIR26C',
+    attemptsUsed: 0,
+    icon: '⚖️',
+  },
+  {
+    id: 'm4',
+    title: 'Maratona de Física — Cinemática',
+    area: 'Engenharia',
+    discipline: 'Física',
+    durationMinutes: 60,
+    questionsPerSession: 5,
+    accessStart: '2026-06-25T08:00:00Z',
+    accessEnd: '2026-07-02T23:59:00Z',
+    status: 'closed',
+    professor: 'Prof. Nzinga Domingos',
+    description: 'Movimento rectilíneo uniforme e uniformemente variado.',
+    password: 'FIS26K',
+    attemptsUsed: 1,
+    icon: '📊',
+  },
+];
+
+// Banco de questões (por maratona) — imagens: placeholders até serem fornecidas
+export const QUESTIONS = {
+  m1: Array.from({ length: 15 }, (_, i) => {
+    const n = i + 1;
+    const type = n % 3 === 0 ? 'text' : n % 5 === 0 ? 'photo' : 'mcq';
+    return {
+      id: `m1q${n}`,
+      slot: n,
+      type, // mcq | text | photo
+      imageUrl: null, // TODO: URL da imagem da questão (fornecida pelo professor)
+      options:
+        type === 'mcq'
+          ? ['x = 2 e y = −1', 'x = 3 e y = 4', 'x = −3 e y = 2', 'O sistema é impossível']
+          : null,
+    };
+  }),
+};
+
+// Resultados já validados (histórico)
+export const RESULTS = [
+  {
+    id: 'r1',
+    marathonId: 'm4',
+    marathonTitle: 'Física — Cinemática',
+    attempt: 1,
+    date: '2026-07-02',
+    score: 4,
+    total: 5,
+    percent: 80,
+    rank: 3,
+    status: 'validated',
+    validatedBy: 'Prof. Nzinga Domingos',
+    answers: [
+      { n: 1, type: 'mcq', answer: 'B — v = 12 m/s', correct: true, feedback: 'Resolução perfeita.' },
+      { n: 2, type: 'mcq', answer: 'D — a = 0', correct: true, feedback: 'Correcto.' },
+      { n: 3, type: 'text', answer: '«O movimento é uniforme porque…» (128 car.)', correct: true, feedback: 'Boa justificação.' },
+      { n: 4, type: 'mcq', answer: 'Não respondida', correct: false, feedback: 'Questão em branco. Revê a matéria.' },
+      { n: 5, type: 'photo', answer: 'resolucao_q5.jpg', correct: true, feedback: 'Resolução clara e legível.' },
+    ],
+  },
+  {
+    id: 'r2',
+    marathonId: 'm1',
+    marathonTitle: 'Matemática — Álgebra Linear',
+    attempt: 1,
+    date: '2026-07-13',
+    score: null,
+    total: 5,
+    percent: null,
+    rank: null,
+    status: 'pending', // aguarda validação do professor
+    validatedBy: null,
+    answers: [],
+  },
+];
+
+export const CHAT_THREADS = {
+  duvidas: [
+    { from: 'prof', text: 'Boa tarde, Adilson. Em que posso ajudar?', time: '15:02' },
+    { from: 'me', text: 'Boa tarde, professor! Na questão 3, o enunciado pede a inversa ou só o determinante?', time: '15:04' },
+    { from: 'prof', text: 'Só o determinante e a justificação da invertibilidade. Não precisas de calcular a inversa completa. 👍', time: '15:06' },
+  ],
+  suporte: [
+    { from: 'prof', text: 'Olá! Este é o canal de suporte da MUKANDA PREPA. Problemas de acesso ou passwords, é por aqui.', time: '09:00' },
+  ],
+};
