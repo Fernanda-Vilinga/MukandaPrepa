@@ -2,9 +2,6 @@
 const { db } = require("../config/firebase");
 const bcrypt = require("bcrypt");
 const gerarToken = require("../utils/jwt");
-
-
-
 exports.register = async (req, res) => {
 
     try {
@@ -54,23 +51,13 @@ exports.register = async (req, res) => {
 
         };
 
-
-
         const usuario = await db
             .collection("usuarios")
             .add(novoUsuario);
-
-
-
         res.status(201).json({
-
             mensagem:"Usuário criado com sucesso.",
             usuarioId: usuario.id
-
         });
-
-
-
     } catch(error){
 
         console.error(error);
