@@ -49,8 +49,14 @@ export default function Header() {
       </nav>
 
       <div style={styles.actions}>
-        <button style={styles.login}>Login</button>
-        <button style={styles.signup}>Inscrever-me</button>
+        
+      
+        <button
+  style={styles.signup}
+  onClick={() => window.open("https://mukanda-prepa-app.vercel.app", "_blank")}
+>
+  Inscrever-me
+</button>
       </div>
     </header>
   );
