@@ -66,3 +66,40 @@ exports.criarProfessor = async (req, res) => {
         res.status(500).json({ mensagem: "Erro no servidor." });
     }
 };
+
+// GET /api/admin/users  (protegido: só admin)
+// Lista todos os utilizadores no formato esperado pela página de gestão.
+const CORES = ["var(--orange)", "var(--blue)", "var(--green)", "var(--dark)", "#9333EA"];
+
+const iniciais = (nome = "") =>
+    nome.trim().split(/\s+/).map((p) => p[0]).filter(Boolean).slice(0, 2).join("").toUpperCase() || "?";
+
+const dataCurta = (d) => {
+    if (!d) return "";
+    const data = d.toDate ? d.toDate() : new Date(d);
+    return data.toLocaleDateString("pt-PT", { day: "numeric", month: "short", year: "numeric" });
+};
+
+exports.listarUtilizadores = async (req, res) => {
+    try {
+        const r = await db.collection("usuarios").get();
+        const users = r.docs.map((doc, i) => {
+            const u = doc.data();
+            return {
+                id: doc.id,
+                name: u.nome,
+                email: u.email,
+                initials: iniciais(u.nome),
+                color: CORES[i % CORES.length],
+                role: u.role || "student",
+                plan: (u.role || "student") === "student" ? String(u.plano || "basic").toLowerCase() : null,
+                active: u.estado !== "suspenso",
+                created: dataCurta(u.criadoEm),
+            };
+        });
+        res.json({ users });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ mensagem: "Erro no servidor." });
+    }
+};

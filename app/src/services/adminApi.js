@@ -16,9 +16,10 @@ export async function getAdminOverview() {
 }
 
 // GET /api/admin/users?role=&q=
+// REAL — GET /api/admin/users
 export async function getUsers() {
-  await delay();
-  return USERS;
+  const { users } = await request('/admin/users');
+  return users;
 }
 
 // POST /api/admin/professors  — endpoint PROTEGIDO (apenas token admin, regra da spec)

@@ -15,12 +15,21 @@ export default function RegisterProfessor() {
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const complete = form.name && form.email && form.area;
 
+  const [error, setError] = useState('');
+
   const submit = async (e) => {
     e.preventDefault();
+    setError('');
     setBusy(true);
-    await registerProfessor(form);
-    setBusy(false);
-    setDone(true);
+    try {
+      await registerProfessor(form);
+      // Sucesso → abre a gestão de utilizadores para o admin confirmar o registo
+      navigate('/admin/utilizadores');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -85,6 +94,11 @@ export default function RegisterProfessor() {
                 <span style={{ display: 'inline-flex', fontSize: 11.5, fontWeight: 600, padding: '3px 10px', borderRadius: 999, background: 'var(--blue-l)', color: 'var(--blue)' }}>Perfil: Professor</span>
                 <span className="sm mut">Perfil bloqueado — os administradores só podem criar contas de professor por aqui.</span>
               </div>
+              {error && (
+                <div className="sm" style={{ background: 'var(--red-l, #fdecec)', color: 'var(--red, #c0392b)', borderRadius: 10, padding: '12px 16px', marginBottom: 12 }}>
+                  {error}
+                </div>
+              )}
               {done && (
                 <div className="sm" style={{ background: 'var(--green-l)', color: 'var(--green)', borderRadius: 10, padding: '12px 16px', marginBottom: 16 }}>
                   ✓ Professor registado. Email de boas-vindas enviado com as credenciais.
