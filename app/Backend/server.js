@@ -6,6 +6,8 @@ const cors = require("cors");
 const authRoutes = require("./src/routes/authRoutes");
 const adminRoutes = require("./src/routes/adminRoutes");
 const { profRouter, studentRouter } = require("./src/routes/marathonRoutes");
+const sessionRoutes = require("./src/routes/sessionRoutes");
+const { varrerExpiradas } = require("./src/controllers/sessionController");
 const seedAdmin = require("./src/utils/seedAdmin");
 
 
@@ -21,6 +23,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/prof/marathons", profRouter);
 app.use("/api/marathons", studentRouter);
+app.use("/api/sessions", sessionRoutes);
 
 
 
@@ -41,5 +44,7 @@ app.listen(PORT, async () => {
 
     console.log(`Servidor rodando na porta ${PORT}`);
     await seedAdmin().catch((e) => console.error("Erro no seed do admin:", e.message));
+    // Fecho automático de sessões expiradas (produção: job Bull + Redis)
+    setInterval(varrerExpiradas, 60 * 1000);
 
 });

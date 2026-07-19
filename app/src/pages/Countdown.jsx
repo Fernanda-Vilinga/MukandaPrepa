@@ -27,7 +27,12 @@ export default function Countdown() {
 
   useEffect(() => {
     if (left <= 0) {
-      startSession(id).then(() => navigate(`/maratonas/${id}/sessao`, { replace: true }));
+      startSession(id)
+        .then(() => navigate(`/maratonas/${id}/sessao`, { replace: true }))
+        .catch((err) => {
+          alert(err.message);
+          navigate(`/maratonas/${id}`, { replace: true });
+        });
     }
   }, [left, id, navigate]);
 

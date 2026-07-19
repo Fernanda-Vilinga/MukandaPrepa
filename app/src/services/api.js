@@ -134,20 +134,25 @@ export async function enterMarathon(id, password) {
 }
 
 // POST /api/marathons/:id/sessions  → sorteia N questões do banco de 15
+// POST /api/marathons/:id/sessions — o SORTEIO das 4–5 questões do banco
+// de 15 é feito NO SERVIDOR; a resposta correcta nunca chega ao browser.
 export async function startSession(id) {
-  await delay(300);
-  const m = await getMarathon(id);
-  const bank = QUESTIONS[id] ?? QUESTIONS.m1;
-  const shuffled = [...bank].sort(() => Math.random() - 0.5);
-  const picked = shuffled.slice(0, m.questionsPerSession);
-  const session = {
-    id: `s_${Date.now()}`,
-    marathonId: id,
-    startedAt: Date.now(),
-    durationSeconds: m.durationMinutes * 60,
-    questions: picked,
-  };
-  localStorage.setItem('mkp_session', JSON.stringify(session));
+  const data = await request(`/marathons/${id}/sessions`, { method: 'POST' });
+  localStorage.setItem('mkp_session', JSON.stringify(data.session));
+  localStorage.setItem('mkp_answers', JSON.stringify(data.session.answers || {}));
+  return data.session;
+}
+
+// GET /api/sessions/active — retomar sessão após fechar/reabrir o browser
+export async function resumeSession() {
+  const { session } = await request('/sessions/active');
+  if (session) {
+    localStorage.setItem('mkp_session', JSON.stringify(session));
+    localStorage.setItem('mkp_answers', JSON.stringify(session.answers || {}));
+  } else {
+    localStorage.removeItem('mkp_session');
+    localStorage.removeItem('mkp_answers');
+  }
   return session;
 }
 
@@ -156,9 +161,14 @@ export function activeSession() {
   return raw ? JSON.parse(raw) : null;
 }
 
-// PATCH /api/sessions/:id/answers — auto-save (a spec pede guardar automaticamente)
+// PATCH /api/sessions/:id/answers — auto-save local imediato + servidor
 export function saveAnswers(answers) {
   localStorage.setItem('mkp_answers', JSON.stringify(answers));
+  const sess = activeSession();
+  if (sess) {
+    request(`/sessions/${sess.id}/answers`, { method: 'PATCH', body: { answers } })
+      .catch(() => {}); // sem rede: o auto-save local mantém; o servidor recebe no próximo
+  }
 }
 
 export function savedAnswers() {
@@ -166,12 +176,18 @@ export function savedAnswers() {
   return raw ? JSON.parse(raw) : {};
 }
 
-// POST /api/sessions/:id/submit — bloqueia respostas e notifica o professor por email
+// POST /api/sessions/:id/submit — bloqueia respostas no servidor
+// (o timeout também submete automaticamente do lado do servidor)
 export async function submitSession() {
-  await delay(500);
+  const sess = activeSession();
+  const answers = savedAnswers();
+  let out = { ok: true };
+  if (sess) {
+    out = await request(`/sessions/${sess.id}/submit`, { method: 'POST', body: { answers } });
+  }
   localStorage.removeItem('mkp_session');
   localStorage.removeItem('mkp_answers');
-  return { ok: true, submittedAt: new Date().toISOString() };
+  return out;
 }
 
 // --- Resultados ------------------------------------------------

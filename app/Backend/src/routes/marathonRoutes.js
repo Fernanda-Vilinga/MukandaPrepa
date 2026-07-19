@@ -1,6 +1,7 @@
 const express = require("express");
 const { verificarToken, exigirRole } = require("../middleware/authMiddleware");
 const c = require("../controllers/marathonController");
+const sess = require("../controllers/sessionController");
 
 // /api/prof/marathons — rotas do professor
 const profRouter = express.Router();
@@ -18,5 +19,6 @@ studentRouter.use(verificarToken);
 studentRouter.get("/", c.listar);
 studentRouter.get("/:id", c.obter);
 studentRouter.post("/:id/enter", c.entrar);
+studentRouter.post("/:id/sessions", sess.iniciar);
 
 module.exports = { profRouter, studentRouter };
