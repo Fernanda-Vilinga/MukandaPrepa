@@ -5,6 +5,7 @@ const cors = require("cors");
 
 const authRoutes = require("./src/routes/authRoutes");
 const adminRoutes = require("./src/routes/adminRoutes");
+const { profRouter, studentRouter } = require("./src/routes/marathonRoutes");
 const seedAdmin = require("./src/utils/seedAdmin");
 
 
@@ -18,6 +19,8 @@ app.use(express.json());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/prof/marathons", profRouter);
+app.use("/api/marathons", studentRouter);
 
 
 

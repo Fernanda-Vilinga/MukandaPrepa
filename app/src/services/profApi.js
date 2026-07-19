@@ -6,17 +6,19 @@
 import {
   PROF_MARATHONS, SUBMISSIONS, LIVE_SESSIONS, MARATHON_STATS, PROF_CHATS,
 } from '../data/profMock.js';
+import { request } from './api.js';
 
 const delay = (ms = 250) => new Promise((r) => setTimeout(r, ms));
 
 // GET /api/prof/overview
 export async function getProfOverview() {
   await delay();
+  // Maratonas REAIS do professor; KPIs/pendentes continuam mock até à fase de sessões
+  const { marathons } = await request('/prof/marathons');
   return {
-    marathons: PROF_MARATHONS,
-    pendingValidations: SUBMISSIONS.filter((s) => s.status === 'pending').length,
-    connectedNow: PROF_MARATHONS.reduce((n, m) => n + m.connectedNow, 0),
-    unreadChats: PROF_CHATS.reduce((n, c) => n + c.unread, 0),
+    marathons,
+    pending: SUBMISSIONS.filter((x) => x.status === 'pending').length,
+    connectedNow: marathons.reduce((n, m) => n + (m.connectedNow || 0), 0),
   };
 }
 
@@ -62,16 +64,34 @@ export async function getMarathonStats(id = 'm1') {
 }
 
 // POST /api/prof/marathons  (rascunho ou publicar)
+// REAL — cria/actualiza o rascunho; o id fica guardado até publicar
 export async function saveMarathon(data, publish = false) {
-  await delay(400);
-  return { ok: true, id: 'm_novo', status: publish ? 'published' : 'draft', ...data };
+  const draftId = localStorage.getItem('mkp_draft_id');
+  const res = draftId
+    ? await request(`/prof/marathons/${draftId}`, { method: 'PUT', body: data })
+    : await request('/prof/marathons', { method: 'POST', body: data });
+  localStorage.setItem('mkp_draft_id', res.id);
+  if (publish) return publishMarathon(res.id);
+  return res;
+}
+
+// REAL — POST /api/prof/marathons/:id/publish (valida 15 questões no servidor)
+export async function publishMarathon(id = localStorage.getItem('mkp_draft_id')) {
+  const res = await request(`/prof/marathons/${id}/publish`, { method: 'POST' });
+  localStorage.removeItem('mkp_draft_id');
+  return res;
 }
 
 // PUT /api/prof/marathons/:id/questions/:slot
 // { imageFile, type, options, correctIndex }
+// REAL — guarda a questão no rascunho actual
 export async function saveQuestion(slot, data) {
-  await delay(200);
-  return { ok: true, slot, ...data };
+  const draftId = localStorage.getItem('mkp_draft_id');
+  if (!draftId) throw new Error('Guarda primeiro os dados da maratona (passo 1).');
+  return request(`/prof/marathons/${draftId}/questions/${slot}`, {
+    method: 'PUT',
+    body: { type: data.type, options: data.options, correct: data.correct, image: data.image },
+  });
 }
 
 // GET /api/prof/chats

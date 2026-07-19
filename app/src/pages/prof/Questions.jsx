@@ -1,7 +1,7 @@
 // Banco de questões — passo 2/4: grid de 15 slots + editor por questão.
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { saveQuestion } from './profDeps.js';
+import { saveQuestion, publishMarathon } from './profDeps.js';
 import { ProfTopbar, Steps, Pill } from '../../components/ProfUi.jsx';
 
 const TYPES = [
@@ -11,32 +11,32 @@ const TYPES = [
 ];
 
 const initialSlots = () =>
-  Array.from({ length: 15 }, (_, i) => {
-    const n = i + 1;
-    if (n > 9) return { slot: n, filled: false, type: 'mcq', image: null, options: ['', '', '', ''], correct: 0 };
-    const type = n % 3 === 0 ? 'text' : n % 5 === 0 ? 'photo' : 'mcq';
-    return {
-      slot: n, filled: true, type, image: `questao${n}.png`,
-      options: type === 'mcq' ? ['det(A) = 7', 'det(A) = −7', 'det(A) = 0', 'A matriz não é quadrada'] : ['', '', '', ''],
-      correct: 1,
-    };
-  });
+  Array.from({ length: 15 }, (_, i) => ({
+    slot: i + 1, filled: false, type: 'mcq', image: null, options: ['', '', '', ''], correct: 0,
+  }));
 
 export default function Questions() {
   const navigate = useNavigate();
   const [slots, setSlots] = useState(initialSlots);
   const [cur, setCur] = useState(8); // slot 9 seleccionado
   const [savedMsg, setSavedMsg] = useState(false);
+  const [error, setError] = useState('');
+  const [publishing, setPublishing] = useState(false);
   const q = slots[cur];
   const filled = slots.filter((s) => s.filled).length;
 
   const update = (patch) => setSlots((all) => all.map((s, i) => (i === cur ? { ...s, ...patch } : s)));
 
   const save = async () => {
-    await saveQuestion(q.slot, q);
-    update({ filled: true });
-    setSavedMsg(true);
-    setTimeout(() => setSavedMsg(false), 2000);
+    setError('');
+    try {
+      await saveQuestion(q.slot, q);
+      update({ filled: true });
+      setSavedMsg(true);
+      setTimeout(() => setSavedMsg(false), 2000);
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   const pillKind = { mcq: 'mcq', text: 'txt', photo: 'foto' };
@@ -167,9 +167,32 @@ export default function Questions() {
 
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 28, flexWrap: 'wrap', gap: 12 }}>
           <button className="btn ghost" onClick={() => navigate('/prof/maratonas/nova')}>← Dados da maratona</button>
-          <button className="btn" disabled={filled < 15} title={filled < 15 ? `Faltam ${15 - filled} questões` : ''}>
-            {filled < 15 ? `Pré-visualizar (faltam ${15 - filled} questões)` : 'Pré-visualizar →'}
+          <button
+            className="btn"
+            disabled={filled < 15 || publishing}
+            title={filled < 15 ? `Faltam ${15 - filled} questões` : ''}
+            onClick={async () => {
+              setError('');
+              setPublishing(true);
+              try {
+                await publishMarathon();
+                navigate('/prof/maratonas');
+              } catch (err) {
+                setError(err.message);
+              } finally {
+                setPublishing(false);
+              }
+            }}
+          >
+            {filled < 15 ? `Publicar (faltam ${15 - filled} questões)` : publishing ? 'A publicar…' : 'Publicar maratona ✓'}
           </button>
+        </div>
+        {error && (
+          <div className="sm" style={{ background: 'var(--red-l, #fdecec)', color: 'var(--red, #c0392b)', borderRadius: 10, padding: '12px 16px', marginTop: 12 }}>
+            {error}
+          </div>
+        )}
+        <div style={{ display: 'none' }}>
         </div>
       </div>
     </>

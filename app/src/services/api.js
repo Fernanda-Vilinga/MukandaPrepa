@@ -114,30 +114,23 @@ export async function updateProfile(data) {
   return user;
 }
 
-// --- Maratonas -------------------------------------------------
-// GET /api/marathons
+// --- Maratonas (REAL) ------------------------------------------
+// GET /api/marathons — só publicadas; status e tentativas calculados no servidor
 export async function getMarathons() {
-  await delay();
-  return MARATHONS;
+  const { marathons } = await request('/marathons');
+  return marathons;
 }
 
 // GET /api/marathons/:id
 export async function getMarathon(id) {
-  await delay();
-  const m = MARATHONS.find((x) => x.id === id);
-  if (!m) throw new Error('Maratona não encontrada.');
-  return m;
+  const { marathon } = await request(`/marathons/${id}`);
+  return marathon;
 }
 
 // POST /api/marathons/:id/enter  { password }
+// Janela, password (hash) e limite de tentativas validados no servidor.
 export async function enterMarathon(id, password) {
-  await delay(400);
-  const m = await getMarathon(id);
-  if (m.status !== 'active') throw new Error('A maratona não está activa.');
-  if (password.toUpperCase() !== m.password) throw new Error('Password incorrecta. Confirma com o professor.');
-  const max = PLAN_ATTEMPTS[currentUser()?.plan ?? 'basic'];
-  if (m.attemptsUsed >= max) throw new Error('Atingiste o limite de tentativas do teu plano.');
-  return { ok: true };
+  return request(`/marathons/${id}/enter`, { method: 'POST', body: { password } });
 }
 
 // POST /api/marathons/:id/sessions  → sorteia N questões do banco de 15
