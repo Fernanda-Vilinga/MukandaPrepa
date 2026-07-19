@@ -12,7 +12,7 @@ const TYPES = [
 
 const initialSlots = () =>
   Array.from({ length: 15 }, (_, i) => ({
-    slot: i + 1, filled: false, type: 'mcq', image: null, options: ['', '', '', ''], correct: 0,
+    slot: i + 1, filled: false, type: 'mcq', image: null, options: ['', '', '', ''], correct: null,
   }));
 
 export default function Questions() {
@@ -42,6 +42,9 @@ export default function Questions() {
 
   const save = async () => {
     setError('');
+    if (q.type === 'mcq' && q.correct == null) {
+      return setError('Marca a opção correcta antes de guardar a questão.');
+    }
     try {
       await saveQuestion(q.slot, q);
       update({ filled: true });

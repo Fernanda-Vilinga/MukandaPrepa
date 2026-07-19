@@ -148,12 +148,21 @@ exports.guardarQuestao = async (req, res) => {
         }
 
         const { type, options, correct, image } = req.body;
+        const tipo = ["mcq", "text", "photo"].includes(type) ? type : "mcq";
+
+        // MCQ exige uma opção correcta explícita (0–3) — o professor tem de escolher
+        // (atenção: Number(null) === 0, por isso null/undefined/"" → NaN explícito)
+        const idxCorrecta = correct === null || correct === undefined || correct === "" ? NaN : Number(correct);
+        if (tipo === "mcq" && !(Number.isInteger(idxCorrecta) && idxCorrecta >= 0 && idxCorrecta <= 3)) {
+            return res.status(400).json({ mensagem: "Marca a opção correcta antes de guardar a questão." });
+        }
+
         const questoes = m.questoes || [];
         questoes[slot - 1] = {
             slot,
-            type: ["mcq", "text", "photo"].includes(type) ? type : "mcq",
+            type: tipo,
             options: Array.isArray(options) ? options.slice(0, 4) : [],
-            correct: Number(correct) || 0,
+            correct: tipo === "mcq" ? idxCorrecta : null,
             image: image || null,   // referência/placeholder até haver upload real
             filled: true,
         };
