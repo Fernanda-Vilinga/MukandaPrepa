@@ -33,7 +33,7 @@ export default function Login() {
     setBusy(true);
     try {
       const user = await login(email, password);
-      navigate(user.role === 'admin' ? '/admin' : user.role === 'professor' ? '/prof' : '/');
+      navigate(user.mustChangePassword ? '/alterar-senha' : user.role === 'admin' ? '/admin' : user.role === 'professor' ? '/prof' : '/');
     } catch (err) {
       setError(err.message);
     } finally {
