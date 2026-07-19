@@ -6,6 +6,7 @@ const c = require("../controllers/marathonController");
 const profRouter = express.Router();
 profRouter.use(verificarToken, exigirRole("professor"));
 profRouter.get("/", c.listarDoProfessor);
+profRouter.get("/:id", c.obterDoProfessor);
 profRouter.post("/", c.criar);
 profRouter.put("/:id", c.actualizar);
 profRouter.put("/:id/questions/:slot", c.guardarQuestao);

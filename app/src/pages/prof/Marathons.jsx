@@ -1,7 +1,7 @@
 // Lista de maratonas do professor + botão para criar nova.
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getProfOverview } from './profDeps.js';
+import { getProfOverview, openDraft, newDraft } from './profDeps.js';
 import { ProfTopbar, Pill } from '../../components/ProfUi.jsx';
 import { Badge } from '../../components/Ui.jsx';
 
@@ -22,7 +22,7 @@ export default function ProfMarathons() {
             <h1 style={{ fontSize: 26, fontWeight: 800 }}>As tuas maratonas</h1>
             <div className="mut sm">{marathons.length} criadas · geridas por ti</div>
           </div>
-          <Link to="/prof/maratonas/nova" className="btn" style={{ textDecoration: 'none' }}>+ Nova maratona</Link>
+          <Link to="/prof/maratonas/nova" className="btn" style={{ textDecoration: 'none' }} onClick={() => newDraft()}>+ Nova maratona</Link>
         </div>
 
         <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
@@ -47,7 +47,7 @@ export default function ProfMarathons() {
                 </div>
               </div>
               {m.status === 'draft' ? (
-                <Link to="/prof/maratonas/nova/questoes" className="btn sm" style={{ textDecoration: 'none' }}>Continuar</Link>
+                <Link to="/prof/maratonas/nova" className="btn sm" style={{ textDecoration: 'none' }} onClick={() => openDraft(m.id)}>Continuar</Link>
               ) : (
                 <>
                   <Link to="/prof/monitorizacao" className="btn sm blue" style={{ textDecoration: 'none' }}>Monitorizar</Link>

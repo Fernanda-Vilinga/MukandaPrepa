@@ -195,6 +195,38 @@ exports.publicar = async (req, res) => {
     }
 };
 
+// GET /api/prof/marathons/:id  (professor) — dados completos para editar o rascunho
+exports.obterDoProfessor = async (req, res) => {
+    try {
+        const m = await obterDoc(req.params.id);
+        if (!m) return res.status(404).json({ mensagem: "Maratona não encontrada." });
+        if (m.professorId !== req.usuario.id) {
+            return res.status(403).json({ mensagem: "Esta maratona não é tua." });
+        }
+
+        const codigoArea = Object.keys(AREAS).find((k) => AREAS[k] === m.area) || m.area;
+        res.json({
+            marathon: {
+                id: m.id,
+                title: m.titulo,
+                discipline: m.disciplina,
+                area: codigoArea,
+                description: m.descricao,
+                duration: m.duracaoMinutos,
+                perSession: m.questoesPorSessao,
+                start: m.acessoInicio || "",
+                end: m.acessoFim || "",
+                hasPassword: !!m.senhaHash,   // a senha em si nunca é devolvida
+                status: m.status,
+                questions: m.questoes || [],
+            },
+        });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ mensagem: "Erro no servidor." });
+    }
+};
+
 // GET /api/prof/marathons  (professor) — as suas maratonas
 exports.listarDoProfessor = async (req, res) => {
     try {

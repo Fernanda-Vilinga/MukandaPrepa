@@ -64,6 +64,23 @@ export async function getMarathonStats(id = 'm1') {
 }
 
 // POST /api/prof/marathons  (rascunho ou publicar)
+// Gestão do rascunho actual (id guardado até publicar)
+export function openDraft(id) { localStorage.setItem('mkp_draft_id', id); }
+export function newDraft() { localStorage.removeItem('mkp_draft_id'); }
+
+// REAL — carrega o rascunho actual (null se não houver)
+export async function getDraft() {
+  const draftId = localStorage.getItem('mkp_draft_id');
+  if (!draftId) return null;
+  try {
+    const { marathon } = await request(`/prof/marathons/${draftId}`);
+    return marathon;
+  } catch {
+    localStorage.removeItem('mkp_draft_id');
+    return null;
+  }
+}
+
 // REAL — cria/actualiza o rascunho; o id fica guardado até publicar
 export async function saveMarathon(data, publish = false) {
   const draftId = localStorage.getItem('mkp_draft_id');

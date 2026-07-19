@@ -1,7 +1,7 @@
 // Banco de questões — passo 2/4: grid de 15 slots + editor por questão.
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { saveQuestion, publishMarathon } from './profDeps.js';
+import { saveQuestion, publishMarathon, getDraft } from './profDeps.js';
 import { ProfTopbar, Steps, Pill } from '../../components/ProfUi.jsx';
 
 const TYPES = [
@@ -18,7 +18,20 @@ const initialSlots = () =>
 export default function Questions() {
   const navigate = useNavigate();
   const [slots, setSlots] = useState(initialSlots);
-  const [cur, setCur] = useState(8); // slot 9 seleccionado
+  const [cur, setCur] = useState(0); // começa na questão 1
+
+  // Recarrega as questões já guardadas no rascunho
+  useEffect(() => {
+    getDraft().then((d) => {
+      if (!d || !d.questions) return;
+      setSlots((all) => all.map((slot, i) => {
+        const q = d.questions[i];
+        return q && q.filled
+          ? { slot: i + 1, filled: true, type: q.type, image: q.image, options: q.options.length ? q.options : ['', '', '', ''], correct: q.correct }
+          : slot;
+      }));
+    });
+  }, []);
   const [savedMsg, setSavedMsg] = useState(false);
   const [error, setError] = useState('');
   const [publishing, setPublishing] = useState(false);
@@ -34,6 +47,7 @@ export default function Questions() {
       update({ filled: true });
       setSavedMsg(true);
       setTimeout(() => setSavedMsg(false), 2000);
+      if (cur < 14) setCur(cur + 1); // passa automaticamente à questão seguinte
     } catch (err) {
       setError(err.message);
     }
@@ -166,7 +180,12 @@ export default function Questions() {
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 28, flexWrap: 'wrap', gap: 12 }}>
-          <button className="btn ghost" onClick={() => navigate('/prof/maratonas/nova')}>← Dados da maratona</button>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <button className="btn ghost" onClick={() => navigate('/prof/maratonas/nova')}>← Dados da maratona</button>
+            <button className="btn ghost" onClick={() => navigate('/prof/maratonas')} title="As questões guardadas ficam no rascunho">
+              Guardar rascunho ({filled}/15)
+            </button>
+          </div>
           <button
             className="btn"
             disabled={filled < 15 || publishing}
