@@ -18,6 +18,7 @@ const usuarioPublico = (usuario) => ({
     area: usuario.area || "",
     role: usuario.role || "student",
     plano: normalizarPlano(usuario.plano),
+    trocarSenha: usuario.trocarSenha === true,
 });
 
 // POST /api/auth/register
@@ -120,6 +121,46 @@ exports.login = async (req, res) => {
             token,
             usuario: usuarioPublico(usuario),
         });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ mensagem: "Erro no servidor." });
+    }
+};
+
+// POST /api/auth/alterar-senha  (autenticado)
+// Troca a senha do próprio utilizador; limpa a flag trocarSenha
+// (usada no 1º login do professor com senha temporária).
+exports.alterarSenha = async (req, res) => {
+    try {
+        const { senhaActual, novaSenha } = req.body;
+
+        if (!senhaActual || !novaSenha) {
+            return res.status(400).json({ mensagem: "Senha actual e nova senha são obrigatórias." });
+        }
+
+        if (String(novaSenha).length < 8) {
+            return res.status(400).json({ mensagem: "A nova senha deve ter pelo menos 8 caracteres." });
+        }
+
+        const doc = await db.collection("usuarios").doc(req.usuario.id).get();
+
+        if (!doc.exists) {
+            return res.status(404).json({ mensagem: "Conta não encontrada." });
+        }
+
+        const usuario = doc.data();
+        const senhaValida = await bcrypt.compare(senhaActual, usuario.senha);
+
+        if (!senhaValida) {
+            return res.status(401).json({ mensagem: "Senha actual incorrecta." });
+        }
+
+        await db.collection("usuarios").doc(req.usuario.id).update({
+            senha: await bcrypt.hash(novaSenha, 10),
+            trocarSenha: false,
+        });
+
+        res.json({ mensagem: "Senha alterada com sucesso." });
     } catch (error) {
         console.error(error);
         res.status(500).json({ mensagem: "Erro no servidor." });

@@ -17,7 +17,7 @@ const delay = (ms = 250) => new Promise((r) => setTimeout(r, ms));
 export const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:5000/api';
 
 // Helper: pedido JSON com tratamento de erros do backend ({ mensagem })
-async function request(path, { method = 'GET', body, auth = true } = {}) {
+export async function request(path, { method = 'GET', body, auth = true } = {}) {
   const headers = { 'Content-Type': 'application/json' };
   const token = localStorage.getItem('mkp_token');
   if (auth && token) headers.Authorization = `Bearer ${token}`;
@@ -45,6 +45,7 @@ const mapUser = (u) => ({
   area: u.area || '',
   role: u.role || 'student',
   plan: (u.plano || 'basic').toLowerCase(),
+  mustChangePassword: u.trocarSenha === true,
 });
 
 // --- Auth (REAL) -----------------------------------------------
@@ -89,6 +90,18 @@ export function currentUser() {
 export function logout() {
   localStorage.removeItem('mkp_token');
   localStorage.removeItem('mkp_user');
+}
+
+// POST /api/auth/alterar-senha — troca a senha do próprio utilizador
+// (também limpa a flag de senha temporária do professor)
+export async function changePassword(currentPassword, newPassword) {
+  await request('/auth/alterar-senha', {
+    method: 'POST',
+    body: { senhaActual: currentPassword, novaSenha: newPassword },
+  });
+  const u = currentUser();
+  if (u) localStorage.setItem('mkp_user', JSON.stringify({ ...u, mustChangePassword: false }));
+  return { ok: true };
 }
 
 // PUT /api/students/me — actualizar dados do perfil
