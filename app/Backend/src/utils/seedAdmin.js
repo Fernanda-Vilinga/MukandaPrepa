@@ -29,6 +29,7 @@ async function seedAdmin() {
         email,
         senha: await bcrypt.hash(senha, 10),
         role: "admin",
+        trocarSenha: true,   // a senha do .env é temporária: troca obrigatória no 1º login
         estado: "activo",
         criadoEm: new Date(),
     });
