@@ -1,8 +1,8 @@
 // ============================================================
-// Camada de API — MOCK
-// Cada função imita um endpoint da Especificação Técnica v1.0.
-// Para ligar ao backend real: substituir o corpo de cada função
-// por fetch(`${API_BASE}/...`) mantendo as mesmas assinaturas.
+// Camada de API — AUTENTICAÇÃO REAL + restante MOCK
+// login() e register() já consomem o backend real (Briefing v2.1,
+// secção 4.0.1). As restantes funções continuam mock e serão
+// substituídas módulo a módulo, mantendo as mesmas assinaturas.
 // ============================================================
 import {
   MARATHONS, QUESTIONS, RESULTS, CURRENT_USER,
@@ -10,31 +10,73 @@ import {
 } from '../data/mock.js';
 
 const delay = (ms = 250) => new Promise((r) => setTimeout(r, ms));
-// export const API_BASE = import.meta.env.VITE_API_BASE ?? 'https://app.mukandaprepa.ao/api';
 
-// --- Auth ------------------------------------------------------
+// URL base da API — definir VITE_API_BASE no ficheiro .env
+// (ex.: VITE_API_BASE=http://localhost:5000/api em dev,
+//  ou o URL do deploy: VITE_API_BASE=https://<backend>.vercel.app/api)
+export const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:5000/api';
+
+// Helper: pedido JSON com tratamento de erros do backend ({ mensagem })
+async function request(path, { method = 'GET', body, auth = true } = {}) {
+  const headers = { 'Content-Type': 'application/json' };
+  const token = localStorage.getItem('mkp_token');
+  if (auth && token) headers.Authorization = `Bearer ${token}`;
+  let res;
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  } catch {
+    throw new Error('Sem ligação ao servidor. Verifica a tua internet e tenta de novo.');
+  }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.mensagem || `Erro do servidor (${res.status}).`);
+  return data;
+}
+
+// Backend → formato de utilizador usado pela app
+const mapUser = (u) => ({
+  id: u.id,
+  name: u.nome,
+  email: u.email,
+  phone: u.contacto || '',
+  area: u.area || '',
+  role: u.role || 'student',
+  plan: (u.plano || 'basic').toLowerCase(),
+});
+
+// --- Auth (REAL) -----------------------------------------------
 // POST /api/auth/login
-export async function login(email, _password) {
-  await delay();
-  if (!email.includes('@')) throw new Error('Email inválido.');
-  // MOCK: emails que começam por "prof" entram como professor
-  // (no real, o backend devolve o role no token JWT)
-  const e = email.toLowerCase();
-  const user = e.startsWith('admin')
-    ? { id: 'a1', name: 'Henrique Catraio', email, role: 'admin' }
-    : e.startsWith('prof')
-      ? { id: 'p1', name: 'Nzinga Domingos', email, role: 'professor' }
-      : { ...CURRENT_USER, email };
+export async function login(email, password) {
+  const data = await request('/auth/login', {
+    method: 'POST',
+    auth: false,
+    body: { email, senha: password },
+  });
+  const user = mapUser(data.usuario);
+  localStorage.setItem('mkp_token', data.token);
   localStorage.setItem('mkp_user', JSON.stringify(user));
   return user;
 }
 
-// POST /api/auth/register  (cria APENAS perfil de estudante — regra da spec)
-export async function register(data) {
-  await delay(400);
-  // Regra de produto: toda a conta nova é criada no plano Basic (grátis).
-  // O upgrade é feito depois, já dentro da app.
-  const user = { ...CURRENT_USER, name: data.name, email: data.email, phone: data.phone, area: data.area, plan: 'basic', role: 'student' };
+// POST /api/auth/register  (cria APENAS perfil de estudante — regra da spec;
+// toda a conta nova entra no plano Basic grátis — o upgrade é feito depois)
+export async function register(form) {
+  const data = await request('/auth/register', {
+    method: 'POST',
+    auth: false,
+    body: {
+      nome: form.name,
+      email: form.email,
+      senha: form.password,
+      contacto: form.phone,
+      area: form.area,
+    },
+  });
+  const user = mapUser(data.usuario);
+  localStorage.setItem('mkp_token', data.token);
   localStorage.setItem('mkp_user', JSON.stringify(user));
   return user;
 }
@@ -45,6 +87,7 @@ export function currentUser() {
 }
 
 export function logout() {
+  localStorage.removeItem('mkp_token');
   localStorage.removeItem('mkp_user');
 }
 
