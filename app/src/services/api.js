@@ -19,7 +19,7 @@ export const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:5000/
 // Helper: pedido JSON com tratamento de erros do backend ({ mensagem })
 export async function request(path, { method = 'GET', body, auth = true } = {}) {
   const headers = { 'Content-Type': 'application/json' };
-  const token = localStorage.getItem('mkp_token');
+  const token = sessionStorage.getItem('mkp_token');
   if (auth && token) headers.Authorization = `Bearer ${token}`;
   let res;
   try {
@@ -48,6 +48,10 @@ const mapUser = (u) => ({
   mustChangePassword: u.trocarSenha === true,
 });
 
+// Decisão de produto (19 Jul 2026): sessionStorage em vez de localStorage —
+// fechar o browser termina a sessão e obriga a novo login (segurança em
+// computadores partilhados). F5/refresh na mesma janela mantém a sessão.
+
 // --- Auth (REAL) -----------------------------------------------
 // POST /api/auth/login
 export async function login(email, password) {
@@ -57,8 +61,8 @@ export async function login(email, password) {
     body: { email, senha: password },
   });
   const user = mapUser(data.usuario);
-  localStorage.setItem('mkp_token', data.token);
-  localStorage.setItem('mkp_user', JSON.stringify(user));
+  sessionStorage.setItem('mkp_token', data.token);
+  sessionStorage.setItem('mkp_user', JSON.stringify(user));
   return user;
 }
 
@@ -77,19 +81,19 @@ export async function register(form) {
     },
   });
   const user = mapUser(data.usuario);
-  localStorage.setItem('mkp_token', data.token);
-  localStorage.setItem('mkp_user', JSON.stringify(user));
+  sessionStorage.setItem('mkp_token', data.token);
+  sessionStorage.setItem('mkp_user', JSON.stringify(user));
   return user;
 }
 
 export function currentUser() {
-  const raw = localStorage.getItem('mkp_user');
+  const raw = sessionStorage.getItem('mkp_user');
   return raw ? JSON.parse(raw) : null;
 }
 
 export function logout() {
-  localStorage.removeItem('mkp_token');
-  localStorage.removeItem('mkp_user');
+  sessionStorage.removeItem('mkp_token');
+  sessionStorage.removeItem('mkp_user');
 }
 
 // POST /api/auth/alterar-senha — troca a senha do próprio utilizador
@@ -100,7 +104,7 @@ export async function changePassword(currentPassword, newPassword) {
     body: { senhaActual: currentPassword, novaSenha: newPassword },
   });
   const u = currentUser();
-  if (u) localStorage.setItem('mkp_user', JSON.stringify({ ...u, mustChangePassword: false }));
+  if (u) sessionStorage.setItem('mkp_user', JSON.stringify({ ...u, mustChangePassword: false }));
   return { ok: true };
 }
 
@@ -110,7 +114,7 @@ export async function changePassword(currentPassword, newPassword) {
 export async function updateProfile(data) {
   await delay(350);
   const user = { ...currentUser(), ...data };
-  localStorage.setItem('mkp_user', JSON.stringify(user));
+  sessionStorage.setItem('mkp_user', JSON.stringify(user));
   return user;
 }
 
@@ -138,8 +142,8 @@ export async function enterMarathon(id, password) {
 // de 15 é feito NO SERVIDOR; a resposta correcta nunca chega ao browser.
 export async function startSession(id) {
   const data = await request(`/marathons/${id}/sessions`, { method: 'POST' });
-  localStorage.setItem('mkp_session', JSON.stringify(data.session));
-  localStorage.setItem('mkp_answers', JSON.stringify(data.session.answers || {}));
+  sessionStorage.setItem('mkp_session', JSON.stringify(data.session));
+  sessionStorage.setItem('mkp_answers', JSON.stringify(data.session.answers || {}));
   return data.session;
 }
 
@@ -147,23 +151,23 @@ export async function startSession(id) {
 export async function resumeSession() {
   const { session } = await request('/sessions/active');
   if (session) {
-    localStorage.setItem('mkp_session', JSON.stringify(session));
-    localStorage.setItem('mkp_answers', JSON.stringify(session.answers || {}));
+    sessionStorage.setItem('mkp_session', JSON.stringify(session));
+    sessionStorage.setItem('mkp_answers', JSON.stringify(session.answers || {}));
   } else {
-    localStorage.removeItem('mkp_session');
-    localStorage.removeItem('mkp_answers');
+    sessionStorage.removeItem('mkp_session');
+    sessionStorage.removeItem('mkp_answers');
   }
   return session;
 }
 
 export function activeSession() {
-  const raw = localStorage.getItem('mkp_session');
+  const raw = sessionStorage.getItem('mkp_session');
   return raw ? JSON.parse(raw) : null;
 }
 
 // PATCH /api/sessions/:id/answers — auto-save local imediato + servidor
 export function saveAnswers(answers) {
-  localStorage.setItem('mkp_answers', JSON.stringify(answers));
+  sessionStorage.setItem('mkp_answers', JSON.stringify(answers));
   const sess = activeSession();
   if (sess) {
     request(`/sessions/${sess.id}/answers`, { method: 'PATCH', body: { answers } })
@@ -172,7 +176,7 @@ export function saveAnswers(answers) {
 }
 
 export function savedAnswers() {
-  const raw = localStorage.getItem('mkp_answers');
+  const raw = sessionStorage.getItem('mkp_answers');
   return raw ? JSON.parse(raw) : {};
 }
 
@@ -185,8 +189,8 @@ export async function submitSession() {
   if (sess) {
     out = await request(`/sessions/${sess.id}/submit`, { method: 'POST', body: { answers } });
   }
-  localStorage.removeItem('mkp_session');
-  localStorage.removeItem('mkp_answers');
+  sessionStorage.removeItem('mkp_session');
+  sessionStorage.removeItem('mkp_answers');
   return out;
 }
 

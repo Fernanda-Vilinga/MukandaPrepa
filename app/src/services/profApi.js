@@ -65,37 +65,37 @@ export async function getMarathonStats(id = 'm1') {
 
 // POST /api/prof/marathons  (rascunho ou publicar)
 // Gestão do rascunho actual (id guardado até publicar)
-export function openDraft(id) { localStorage.setItem('mkp_draft_id', id); }
-export function newDraft() { localStorage.removeItem('mkp_draft_id'); }
+export function openDraft(id) { sessionStorage.setItem('mkp_draft_id', id); }
+export function newDraft() { sessionStorage.removeItem('mkp_draft_id'); }
 
 // REAL — carrega o rascunho actual (null se não houver)
 export async function getDraft() {
-  const draftId = localStorage.getItem('mkp_draft_id');
+  const draftId = sessionStorage.getItem('mkp_draft_id');
   if (!draftId) return null;
   try {
     const { marathon } = await request(`/prof/marathons/${draftId}`);
     return marathon;
   } catch {
-    localStorage.removeItem('mkp_draft_id');
+    sessionStorage.removeItem('mkp_draft_id');
     return null;
   }
 }
 
 // REAL — cria/actualiza o rascunho; o id fica guardado até publicar
 export async function saveMarathon(data, publish = false) {
-  const draftId = localStorage.getItem('mkp_draft_id');
+  const draftId = sessionStorage.getItem('mkp_draft_id');
   const res = draftId
     ? await request(`/prof/marathons/${draftId}`, { method: 'PUT', body: data })
     : await request('/prof/marathons', { method: 'POST', body: data });
-  localStorage.setItem('mkp_draft_id', res.id);
+  sessionStorage.setItem('mkp_draft_id', res.id);
   if (publish) return publishMarathon(res.id);
   return res;
 }
 
 // REAL — POST /api/prof/marathons/:id/publish (valida 15 questões no servidor)
-export async function publishMarathon(id = localStorage.getItem('mkp_draft_id')) {
+export async function publishMarathon(id = sessionStorage.getItem('mkp_draft_id')) {
   const res = await request(`/prof/marathons/${id}/publish`, { method: 'POST' });
-  localStorage.removeItem('mkp_draft_id');
+  sessionStorage.removeItem('mkp_draft_id');
   return res;
 }
 
@@ -103,7 +103,7 @@ export async function publishMarathon(id = localStorage.getItem('mkp_draft_id'))
 // { imageFile, type, options, correctIndex }
 // REAL — guarda a questão no rascunho actual
 export async function saveQuestion(slot, data) {
-  const draftId = localStorage.getItem('mkp_draft_id');
+  const draftId = sessionStorage.getItem('mkp_draft_id');
   if (!draftId) throw new Error('Guarda primeiro os dados da maratona (passo 1).');
   return request(`/prof/marathons/${draftId}/questions/${slot}`, {
     method: 'PUT',
