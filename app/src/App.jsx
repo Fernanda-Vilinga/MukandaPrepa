@@ -13,6 +13,7 @@ import ResultDetail from './pages/ResultDetail.jsx';
 import Terms from './pages/Terms.jsx';
 import Profile from './pages/Profile.jsx';
 import ForgotPassword from './pages/ForgotPassword.jsx';
+import ChangePassword from './pages/ChangePassword.jsx';
 import ProfDashboard from './pages/prof/Dashboard.jsx';
 import CreateMarathon from './pages/prof/CreateMarathon.jsx';
 import Questions from './pages/prof/Questions.jsx';
@@ -33,6 +34,7 @@ import Support from './pages/admin/Support.jsx';
 function Private({ children }) {
   const user = currentUser();
   if (!user) return <Navigate to="/login" replace />;
+  if (user.mustChangePassword) return <Navigate to="/alterar-senha" replace />;
   if (user.role === 'professor') return <Navigate to="/prof" replace />;
   if (user.role === 'admin') return <Navigate to="/admin" replace />;
   return children;
@@ -41,6 +43,7 @@ function Private({ children }) {
 function PrivateAdmin({ children }) {
   const user = currentUser();
   if (!user) return <Navigate to="/login" replace />;
+  if (user.mustChangePassword) return <Navigate to="/alterar-senha" replace />;
   if (user.role !== 'admin') return <Navigate to="/" replace />;
   return children;
 }
@@ -48,6 +51,7 @@ function PrivateAdmin({ children }) {
 function PrivateProf({ children }) {
   const user = currentUser();
   if (!user) return <Navigate to="/login" replace />;
+  if (user.mustChangePassword) return <Navigate to="/alterar-senha" replace />;
   if (user.role !== 'professor') return <Navigate to="/" replace />;
   return children;
 }
@@ -60,6 +64,7 @@ export default function App() {
         <Route path="/registo" element={<Register />} />
         <Route path="/termos" element={<Terms />} />
         <Route path="/recuperar-senha" element={<ForgotPassword />} />
+        <Route path="/alterar-senha" element={<ChangePassword />} />
         <Route path="/" element={<Private><Dashboard /></Private>} />
         <Route path="/maratonas" element={<Private><Marathons /></Private>} />
         <Route path="/maratonas/:id" element={<Private><MarathonDetail /></Private>} />

@@ -1,8 +1,8 @@
 // ============================================================
-// Camada de API — MOCK
-// Cada função imita um endpoint da Especificação Técnica v1.0.
-// Para ligar ao backend real: substituir o corpo de cada função
-// por fetch(`${API_BASE}/...`) mantendo as mesmas assinaturas.
+// Camada de API — AUTENTICAÇÃO REAL + restante MOCK
+// login() e register() já consomem o backend real (Briefing v2.1,
+// secção 4.0.1). As restantes funções continuam mock e serão
+// substituídas módulo a módulo, mantendo as mesmas assinaturas.
 // ============================================================
 import {
   MARATHONS, QUESTIONS, RESULTS, CURRENT_USER,
@@ -10,42 +10,102 @@ import {
 } from '../data/mock.js';
 
 const delay = (ms = 250) => new Promise((r) => setTimeout(r, ms));
-// export const API_BASE = import.meta.env.VITE_API_BASE ?? 'https://app.mukandaprepa.ao/api';
 
-// --- Auth ------------------------------------------------------
+// URL base da API — definir VITE_API_BASE no ficheiro .env
+// (ex.: VITE_API_BASE=http://localhost:5000/api em dev,
+//  ou o URL do deploy: VITE_API_BASE=https://<backend>.vercel.app/api)
+export const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:5000/api';
+
+// Helper: pedido JSON com tratamento de erros do backend ({ mensagem })
+export async function request(path, { method = 'GET', body, auth = true } = {}) {
+  const headers = { 'Content-Type': 'application/json' };
+  const token = sessionStorage.getItem('mkp_token');
+  if (auth && token) headers.Authorization = `Bearer ${token}`;
+  let res;
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  } catch {
+    throw new Error('Sem ligação ao servidor. Verifica a tua internet e tenta de novo.');
+  }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.mensagem || `Erro do servidor (${res.status}).`);
+  return data;
+}
+
+// Backend → formato de utilizador usado pela app
+const mapUser = (u) => ({
+  id: u.id,
+  name: u.nome,
+  email: u.email,
+  phone: u.contacto || '',
+  area: u.area || '',
+  role: u.role || 'student',
+  plan: (u.plano || 'basic').toLowerCase(),
+  mustChangePassword: u.trocarSenha === true,
+});
+
+// Decisão de produto (19 Jul 2026): sessionStorage em vez de localStorage —
+// fechar o browser termina a sessão e obriga a novo login (segurança em
+// computadores partilhados). F5/refresh na mesma janela mantém a sessão.
+
+// --- Auth (REAL) -----------------------------------------------
 // POST /api/auth/login
-export async function login(email, _password) {
-  await delay();
-  if (!email.includes('@')) throw new Error('Email inválido.');
-  // MOCK: emails que começam por "prof" entram como professor
-  // (no real, o backend devolve o role no token JWT)
-  const e = email.toLowerCase();
-  const user = e.startsWith('admin')
-    ? { id: 'a1', name: 'Henrique Catraio', email, role: 'admin' }
-    : e.startsWith('prof')
-      ? { id: 'p1', name: 'Nzinga Domingos', email, role: 'professor' }
-      : { ...CURRENT_USER, email };
-  localStorage.setItem('mkp_user', JSON.stringify(user));
+export async function login(email, password) {
+  const data = await request('/auth/login', {
+    method: 'POST',
+    auth: false,
+    body: { email, senha: password },
+  });
+  const user = mapUser(data.usuario);
+  sessionStorage.setItem('mkp_token', data.token);
+  sessionStorage.setItem('mkp_user', JSON.stringify(user));
   return user;
 }
 
-// POST /api/auth/register  (cria APENAS perfil de estudante — regra da spec)
-export async function register(data) {
-  await delay(400);
-  // Regra de produto: toda a conta nova é criada no plano Basic (grátis).
-  // O upgrade é feito depois, já dentro da app.
-  const user = { ...CURRENT_USER, name: data.name, email: data.email, phone: data.phone, area: data.area, plan: 'basic', role: 'student' };
-  localStorage.setItem('mkp_user', JSON.stringify(user));
+// POST /api/auth/register  (cria APENAS perfil de estudante — regra da spec;
+// toda a conta nova entra no plano Basic grátis — o upgrade é feito depois)
+export async function register(form) {
+  const data = await request('/auth/register', {
+    method: 'POST',
+    auth: false,
+    body: {
+      nome: form.name,
+      email: form.email,
+      senha: form.password,
+      contacto: form.phone,
+      area: form.area,
+    },
+  });
+  const user = mapUser(data.usuario);
+  sessionStorage.setItem('mkp_token', data.token);
+  sessionStorage.setItem('mkp_user', JSON.stringify(user));
   return user;
 }
 
 export function currentUser() {
-  const raw = localStorage.getItem('mkp_user');
+  const raw = sessionStorage.getItem('mkp_user');
   return raw ? JSON.parse(raw) : null;
 }
 
 export function logout() {
-  localStorage.removeItem('mkp_user');
+  sessionStorage.removeItem('mkp_token');
+  sessionStorage.removeItem('mkp_user');
+}
+
+// POST /api/auth/alterar-senha — troca a senha do próprio utilizador
+// (também limpa a flag de senha temporária do professor)
+export async function changePassword(currentPassword, newPassword) {
+  await request('/auth/alterar-senha', {
+    method: 'POST',
+    body: { senhaActual: currentPassword, novaSenha: newPassword },
+  });
+  const u = currentUser();
+  if (u) sessionStorage.setItem('mkp_user', JSON.stringify({ ...u, mustChangePassword: false }));
+  return { ok: true };
 }
 
 // PUT /api/students/me — actualizar dados do perfil
@@ -54,90 +114,99 @@ export function logout() {
 export async function updateProfile(data) {
   await delay(350);
   const user = { ...currentUser(), ...data };
-  localStorage.setItem('mkp_user', JSON.stringify(user));
+  sessionStorage.setItem('mkp_user', JSON.stringify(user));
   return user;
 }
 
-// --- Maratonas -------------------------------------------------
-// GET /api/marathons
+// --- Maratonas (REAL) ------------------------------------------
+// GET /api/marathons — só publicadas; status e tentativas calculados no servidor
 export async function getMarathons() {
-  await delay();
-  return MARATHONS;
+  const { marathons } = await request('/marathons');
+  return marathons;
 }
 
 // GET /api/marathons/:id
 export async function getMarathon(id) {
-  await delay();
-  const m = MARATHONS.find((x) => x.id === id);
-  if (!m) throw new Error('Maratona não encontrada.');
-  return m;
+  const { marathon } = await request(`/marathons/${id}`);
+  return marathon;
 }
 
 // POST /api/marathons/:id/enter  { password }
+// Janela, password (hash) e limite de tentativas validados no servidor.
 export async function enterMarathon(id, password) {
-  await delay(400);
-  const m = await getMarathon(id);
-  if (m.status !== 'active') throw new Error('A maratona não está activa.');
-  if (password.toUpperCase() !== m.password) throw new Error('Password incorrecta. Confirma com o professor.');
-  const max = PLAN_ATTEMPTS[currentUser()?.plan ?? 'basic'];
-  if (m.attemptsUsed >= max) throw new Error('Atingiste o limite de tentativas do teu plano.');
-  return { ok: true };
+  return request(`/marathons/${id}/enter`, { method: 'POST', body: { password } });
 }
 
 // POST /api/marathons/:id/sessions  → sorteia N questões do banco de 15
+// POST /api/marathons/:id/sessions — o SORTEIO das 4–5 questões do banco
+// de 15 é feito NO SERVIDOR; a resposta correcta nunca chega ao browser.
 export async function startSession(id) {
-  await delay(300);
-  const m = await getMarathon(id);
-  const bank = QUESTIONS[id] ?? QUESTIONS.m1;
-  const shuffled = [...bank].sort(() => Math.random() - 0.5);
-  const picked = shuffled.slice(0, m.questionsPerSession);
-  const session = {
-    id: `s_${Date.now()}`,
-    marathonId: id,
-    startedAt: Date.now(),
-    durationSeconds: m.durationMinutes * 60,
-    questions: picked,
-  };
-  localStorage.setItem('mkp_session', JSON.stringify(session));
+  const data = await request(`/marathons/${id}/sessions`, { method: 'POST' });
+  sessionStorage.setItem('mkp_session', JSON.stringify(data.session));
+  sessionStorage.setItem('mkp_answers', JSON.stringify(data.session.answers || {}));
+  return data.session;
+}
+
+// GET /api/sessions/active — retomar sessão após fechar/reabrir o browser
+export async function resumeSession() {
+  const { session } = await request('/sessions/active');
+  if (session) {
+    sessionStorage.setItem('mkp_session', JSON.stringify(session));
+    sessionStorage.setItem('mkp_answers', JSON.stringify(session.answers || {}));
+  } else {
+    sessionStorage.removeItem('mkp_session');
+    sessionStorage.removeItem('mkp_answers');
+  }
   return session;
 }
 
 export function activeSession() {
-  const raw = localStorage.getItem('mkp_session');
+  const raw = sessionStorage.getItem('mkp_session');
   return raw ? JSON.parse(raw) : null;
 }
 
-// PATCH /api/sessions/:id/answers — auto-save (a spec pede guardar automaticamente)
+// PATCH /api/sessions/:id/answers — auto-save local imediato + servidor
 export function saveAnswers(answers) {
-  localStorage.setItem('mkp_answers', JSON.stringify(answers));
+  sessionStorage.setItem('mkp_answers', JSON.stringify(answers));
+  const sess = activeSession();
+  if (sess) {
+    request(`/sessions/${sess.id}/answers`, { method: 'PATCH', body: { answers } })
+      .catch(() => {}); // sem rede: o auto-save local mantém; o servidor recebe no próximo
+  }
 }
 
 export function savedAnswers() {
-  const raw = localStorage.getItem('mkp_answers');
+  const raw = sessionStorage.getItem('mkp_answers');
   return raw ? JSON.parse(raw) : {};
 }
 
-// POST /api/sessions/:id/submit — bloqueia respostas e notifica o professor por email
+// POST /api/sessions/:id/submit — bloqueia respostas no servidor
+// (o timeout também submete automaticamente do lado do servidor)
 export async function submitSession() {
-  await delay(500);
-  localStorage.removeItem('mkp_session');
-  localStorage.removeItem('mkp_answers');
-  return { ok: true, submittedAt: new Date().toISOString() };
+  const sess = activeSession();
+  const answers = savedAnswers();
+  let out = { ok: true };
+  if (sess) {
+    out = await request(`/sessions/${sess.id}/submit`, { method: 'POST', body: { answers } });
+  }
+  sessionStorage.removeItem('mkp_session');
+  sessionStorage.removeItem('mkp_answers');
+  return out;
 }
 
 // --- Resultados ------------------------------------------------
 // GET /api/students/me/results
+// REAL — GET /api/students/me/results
 export async function getResults() {
-  await delay();
-  return RESULTS;
+  const { results } = await request('/students/me/results');
+  return results;
 }
 
 // GET /api/results/:id
+// REAL — GET /api/results/:id
 export async function getResult(id) {
-  await delay();
-  const r = RESULTS.find((x) => x.id === id);
-  if (!r) throw new Error('Resultado não encontrado.');
-  return r;
+  const { result } = await request(`/results/${id}`);
+  return result;
 }
 
 // --- Planos / upgrade -------------------------------------------

@@ -6,43 +6,43 @@
 import {
   PROF_MARATHONS, SUBMISSIONS, LIVE_SESSIONS, MARATHON_STATS, PROF_CHATS,
 } from '../data/profMock.js';
+import { request } from './api.js';
 
 const delay = (ms = 250) => new Promise((r) => setTimeout(r, ms));
 
 // GET /api/prof/overview
 export async function getProfOverview() {
   await delay();
+  // Maratonas REAIS do professor; KPIs/pendentes continuam mock até à fase de sessões
+  const { marathons } = await request('/prof/marathons');
+  const { submissions } = await request('/prof/submissions');
   return {
-    marathons: PROF_MARATHONS,
-    pendingValidations: SUBMISSIONS.filter((s) => s.status === 'pending').length,
-    connectedNow: PROF_MARATHONS.reduce((n, m) => n + m.connectedNow, 0),
-    unreadChats: PROF_CHATS.reduce((n, c) => n + c.unread, 0),
+    marathons,
+    pending: submissions.filter((x) => x.status === 'pending').length,
+    connectedNow: marathons.reduce((n, m) => n + (m.connectedNow || 0), 0),
   };
 }
 
 // GET /api/prof/submissions?status=pending
+// REAL — GET /api/prof/submissions (fila: pendentes + validadas)
 export async function getSubmissions() {
-  await delay();
-  return SUBMISSIONS;
+  const { submissions } = await request('/prof/submissions');
+  return submissions;
 }
 
 // GET /api/prof/submissions/:id
+// REAL — GET /api/prof/submissions/:id (MCQ pré-corrigidas pelo servidor)
 export async function getSubmission(id) {
-  await delay();
-  const s = SUBMISSIONS.find((x) => x.id === id);
-  if (!s) throw new Error('Submissão não encontrada.');
-  // As submissões sem respostas detalhadas (mock) usam as do sub1
-  return s.answers.length ? s : { ...s, answers: SUBMISSIONS[0].answers };
+  const { submission } = await request(`/prof/submissions/${id}`);
+  return submission;
 }
 
 // POST /api/prof/submissions/:id/validate
 // { answers: [{ n, correct, feedback }], generalNote }
 // → backend: calcula nota, envia email ao aluno, afixa no dashboard
 export async function confirmValidation(id, payload) {
-  await delay(500);
-  const s = SUBMISSIONS.find((x) => x.id === id);
-  if (s) s.status = 'validated';
-  return { ok: true, id, ...payload };
+  // REAL — calcula a nota no servidor; email ao aluno na fase de emails
+  return request(`/prof/submissions/${id}/validate`, { method: 'POST', body: payload });
 }
 
 // GET /api/prof/marathons/:id/live  (real: WebSocket / polling)
@@ -62,16 +62,51 @@ export async function getMarathonStats(id = 'm1') {
 }
 
 // POST /api/prof/marathons  (rascunho ou publicar)
+// Gestão do rascunho actual (id guardado até publicar)
+export function openDraft(id) { sessionStorage.setItem('mkp_draft_id', id); }
+export function newDraft() { sessionStorage.removeItem('mkp_draft_id'); }
+
+// REAL — carrega o rascunho actual (null se não houver)
+export async function getDraft() {
+  const draftId = sessionStorage.getItem('mkp_draft_id');
+  if (!draftId) return null;
+  try {
+    const { marathon } = await request(`/prof/marathons/${draftId}`);
+    return marathon;
+  } catch {
+    sessionStorage.removeItem('mkp_draft_id');
+    return null;
+  }
+}
+
+// REAL — cria/actualiza o rascunho; o id fica guardado até publicar
 export async function saveMarathon(data, publish = false) {
-  await delay(400);
-  return { ok: true, id: 'm_novo', status: publish ? 'published' : 'draft', ...data };
+  const draftId = sessionStorage.getItem('mkp_draft_id');
+  const res = draftId
+    ? await request(`/prof/marathons/${draftId}`, { method: 'PUT', body: data })
+    : await request('/prof/marathons', { method: 'POST', body: data });
+  sessionStorage.setItem('mkp_draft_id', res.id);
+  if (publish) return publishMarathon(res.id);
+  return res;
+}
+
+// REAL — POST /api/prof/marathons/:id/publish (valida 15 questões no servidor)
+export async function publishMarathon(id = sessionStorage.getItem('mkp_draft_id')) {
+  const res = await request(`/prof/marathons/${id}/publish`, { method: 'POST' });
+  sessionStorage.removeItem('mkp_draft_id');
+  return res;
 }
 
 // PUT /api/prof/marathons/:id/questions/:slot
 // { imageFile, type, options, correctIndex }
+// REAL — guarda a questão no rascunho actual
 export async function saveQuestion(slot, data) {
-  await delay(200);
-  return { ok: true, slot, ...data };
+  const draftId = sessionStorage.getItem('mkp_draft_id');
+  if (!draftId) throw new Error('Guarda primeiro os dados da maratona (passo 1).');
+  return request(`/prof/marathons/${draftId}/questions/${slot}`, {
+    method: 'PUT',
+    body: { type: data.type, options: data.options, correct: data.correct, image: data.image },
+  });
 }
 
 // GET /api/prof/chats

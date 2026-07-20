@@ -1,8 +1,16 @@
 // Criar maratona — passo 1/4: dados. (Rascunho ou continuar para questões.)
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { saveMarathon } from './profDeps.js';
+import { saveMarathon, getDraft } from './profDeps.js';
 import { ProfTopbar, Steps } from '../../components/ProfUi.jsx';
+
+// ISO UTC → formato do input datetime-local, na hora local do professor
+const toLocalInput = (iso) => {
+  if (!iso) return '';
+  const d = new Date(iso);
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0, 16);
+};
 
 const AREAS = [
   ['eng', '⚙️ Engenharia', 'Engenharia e Tecnologia'],
@@ -16,12 +24,25 @@ export default function CreateMarathon() {
     duration: 60, perSession: 5, start: '', end: '', password: '',
   });
   const [saved, setSaved] = useState(false);
+  const [hasPassword, setHasPassword] = useState(false);
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
+  // Recarrega o rascunho em curso (se existir) ao abrir a página
+  useEffect(() => {
+    getDraft().then((d) => {
+      if (!d) return;
+      setForm({
+        title: d.title, discipline: d.discipline, area: d.area, description: d.description,
+        duration: d.duration, perSession: d.perSession, start: toLocalInput(d.start), end: toLocalInput(d.end), password: '',
+      });
+      setHasPassword(d.hasPassword);
+    });
+  }, []);
+
+  // Guardar rascunho → volta à lista de maratonas
   const draft = async () => {
     await saveMarathon(form, false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+    navigate('/prof/maratonas');
   };
 
   const next = async () => {
@@ -112,7 +133,7 @@ export default function CreateMarathon() {
           <div className="row" style={{ gap: 16, alignItems: 'flex-end' }}>
             <div className="col field" style={{ marginBottom: 0 }}>
               <label className="label">🔑 Password da maratona</label>
-              <input className="input" style={{ fontWeight: 700, letterSpacing: '.2em', textTransform: 'uppercase' }} maxLength={6} value={form.password} onChange={set('password')} placeholder="6 caracteres" />
+              <input className="input" style={{ fontWeight: 700, letterSpacing: '.2em', textTransform: 'uppercase' }} maxLength={6} value={form.password} onChange={set('password')} placeholder={hasPassword ? 'definida — escreve para alterar' : '6 caracteres'} />
             </div>
             <div className="col sm mut" style={{ paddingBottom: 12 }}>
               Partilha esta password com os alunos. Sem ela ninguém entra, mesmo com conta.
@@ -123,7 +144,7 @@ export default function CreateMarathon() {
 
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 32, flexWrap: 'wrap', gap: 12 }}>
             <button className="btn ghost" onClick={draft}>Guardar rascunho</button>
-            <button className="btn" onClick={next} disabled={!form.title || !form.discipline || form.password.length < 4}>
+            <button className="btn" onClick={next} disabled={!form.title || !form.discipline || (!hasPassword && form.password.length < 4)}>
               Continuar → Banco de questões
             </button>
           </div>

@@ -4,6 +4,12 @@ const express = require("express");
 const cors = require("cors");
 
 const authRoutes = require("./src/routes/authRoutes");
+const adminRoutes = require("./src/routes/adminRoutes");
+const { profRouter, studentRouter } = require("./src/routes/marathonRoutes");
+const sessionRoutes = require("./src/routes/sessionRoutes");
+const { profSubs, results, resultDetail } = require("./src/routes/submissionRoutes");
+const { varrerExpiradas } = require("./src/controllers/sessionController");
+const seedAdmin = require("./src/utils/seedAdmin");
 
 
 const app = express();
@@ -15,6 +21,13 @@ app.use(express.json());
 
 
 app.use("/api/auth", authRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/prof/marathons", profRouter);
+app.use("/api/marathons", studentRouter);
+app.use("/api/sessions", sessionRoutes);
+app.use("/api/prof/submissions", profSubs);
+app.use("/api/students/me/results", results);
+app.use("/api/results", resultDetail);
 
 
 
@@ -31,8 +44,11 @@ app.get("/", (req, res) => {
 const PORT = process.env.PORT || 5000;
 
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
 
     console.log(`Servidor rodando na porta ${PORT}`);
+    await seedAdmin().catch((e) => console.error("Erro no seed do admin:", e.message));
+    // Fecho automático de sessões expiradas (produção: job Bull + Redis)
+    setInterval(varrerExpiradas, 60 * 1000);
 
 });

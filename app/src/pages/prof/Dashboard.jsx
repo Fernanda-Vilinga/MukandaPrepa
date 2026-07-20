@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getProfOverview, getSubmissions, getProfChats, currentUser } from './profDeps.js';
+import { openDraft, newDraft } from '../../services/profApi.js';
 import { ProfTopbar, Pill } from '../../components/ProfUi.jsx';
 import { Stat, Badge } from '../../components/Ui.jsx';
 
@@ -30,7 +31,7 @@ export default function ProfDashboard() {
               Tens {ov.pendingValidations} submissões pendentes de validação e {ov.connectedNow} alunos conectados agora.
             </div>
           </div>
-          <Link to="/prof/maratonas/nova" className="btn" style={{ textDecoration: 'none' }}>+ Nova maratona</Link>
+          <Link to="/prof/maratonas/nova" className="btn" style={{ textDecoration: 'none' }} onClick={() => newDraft()}>+ Nova maratona</Link>
         </div>
 
         <div className="row" style={{ marginBottom: 24 }}>
@@ -60,7 +61,7 @@ export default function ProfDashboard() {
                   {m.status === 'draft' ? (
                     <>
                       <Badge status="soon" />
-                      <Link to="/prof/maratonas/nova/questoes" className="btn sm" style={{ textDecoration: 'none' }}>Continuar</Link>
+                      <Link to="/prof/maratonas/nova" className="btn sm" style={{ textDecoration: 'none' }} onClick={() => openDraft(m.id)}>Continuar</Link>
                     </>
                   ) : (
                     <>

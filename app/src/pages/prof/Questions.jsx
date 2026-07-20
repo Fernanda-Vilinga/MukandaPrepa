@@ -1,7 +1,7 @@
 // Banco de questões — passo 2/4: grid de 15 slots + editor por questão.
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { saveQuestion } from './profDeps.js';
+import { saveQuestion, publishMarathon, getDraft } from './profDeps.js';
 import { ProfTopbar, Steps, Pill } from '../../components/ProfUi.jsx';
 
 const TYPES = [
@@ -11,32 +11,49 @@ const TYPES = [
 ];
 
 const initialSlots = () =>
-  Array.from({ length: 15 }, (_, i) => {
-    const n = i + 1;
-    if (n > 9) return { slot: n, filled: false, type: 'mcq', image: null, options: ['', '', '', ''], correct: 0 };
-    const type = n % 3 === 0 ? 'text' : n % 5 === 0 ? 'photo' : 'mcq';
-    return {
-      slot: n, filled: true, type, image: `questao${n}.png`,
-      options: type === 'mcq' ? ['det(A) = 7', 'det(A) = −7', 'det(A) = 0', 'A matriz não é quadrada'] : ['', '', '', ''],
-      correct: 1,
-    };
-  });
+  Array.from({ length: 15 }, (_, i) => ({
+    slot: i + 1, filled: false, type: 'mcq', image: null, options: ['', '', '', ''], correct: null,
+  }));
 
 export default function Questions() {
   const navigate = useNavigate();
   const [slots, setSlots] = useState(initialSlots);
-  const [cur, setCur] = useState(8); // slot 9 seleccionado
+  const [cur, setCur] = useState(0); // começa na questão 1
+
+  // Recarrega as questões já guardadas no rascunho
+  useEffect(() => {
+    getDraft().then((d) => {
+      if (!d || !d.questions) return;
+      setSlots((all) => all.map((slot, i) => {
+        const q = d.questions[i];
+        return q && q.filled
+          ? { slot: i + 1, filled: true, type: q.type, image: q.image, options: q.options.length ? q.options : ['', '', '', ''], correct: q.correct }
+          : slot;
+      }));
+    });
+  }, []);
   const [savedMsg, setSavedMsg] = useState(false);
+  const [error, setError] = useState('');
+  const [publishing, setPublishing] = useState(false);
   const q = slots[cur];
   const filled = slots.filter((s) => s.filled).length;
 
   const update = (patch) => setSlots((all) => all.map((s, i) => (i === cur ? { ...s, ...patch } : s)));
 
   const save = async () => {
-    await saveQuestion(q.slot, q);
-    update({ filled: true });
-    setSavedMsg(true);
-    setTimeout(() => setSavedMsg(false), 2000);
+    setError('');
+    if (q.type === 'mcq' && q.correct == null) {
+      return setError('Marca a opção correcta antes de guardar a questão.');
+    }
+    try {
+      await saveQuestion(q.slot, q);
+      update({ filled: true });
+      setSavedMsg(true);
+      setTimeout(() => setSavedMsg(false), 2000);
+      if (cur < 14) setCur(cur + 1); // passa automaticamente à questão seguinte
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   const pillKind = { mcq: 'mcq', text: 'txt', photo: 'foto' };
@@ -166,10 +183,38 @@ export default function Questions() {
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 28, flexWrap: 'wrap', gap: 12 }}>
-          <button className="btn ghost" onClick={() => navigate('/prof/maratonas/nova')}>← Dados da maratona</button>
-          <button className="btn" disabled={filled < 15} title={filled < 15 ? `Faltam ${15 - filled} questões` : ''}>
-            {filled < 15 ? `Pré-visualizar (faltam ${15 - filled} questões)` : 'Pré-visualizar →'}
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <button className="btn ghost" onClick={() => navigate('/prof/maratonas/nova')}>← Dados da maratona</button>
+            <button className="btn ghost" onClick={() => navigate('/prof/maratonas')} title="As questões guardadas ficam no rascunho">
+              Guardar rascunho ({filled}/15)
+            </button>
+          </div>
+          <button
+            className="btn"
+            disabled={filled < 15 || publishing}
+            title={filled < 15 ? `Faltam ${15 - filled} questões` : ''}
+            onClick={async () => {
+              setError('');
+              setPublishing(true);
+              try {
+                await publishMarathon();
+                navigate('/prof/maratonas');
+              } catch (err) {
+                setError(err.message);
+              } finally {
+                setPublishing(false);
+              }
+            }}
+          >
+            {filled < 15 ? `Publicar (faltam ${15 - filled} questões)` : publishing ? 'A publicar…' : 'Publicar maratona ✓'}
           </button>
+        </div>
+        {error && (
+          <div className="sm" style={{ background: 'var(--red-l, #fdecec)', color: 'var(--red, #c0392b)', borderRadius: 10, padding: '12px 16px', marginTop: 12 }}>
+            {error}
+          </div>
+        )}
+        <div style={{ display: 'none' }}>
         </div>
       </div>
     </>
