@@ -56,9 +56,10 @@ export async function getLiveSessions() {
 }
 
 // GET /api/prof/marathons/:id/stats
-export async function getMarathonStats(id = 'm1') {
-  await delay();
-  return MARATHON_STATS[id] ?? MARATHON_STATS.m1;
+// REAL — GET /api/prof/marathons/:id/stats
+export async function getMarathonStats(id) {
+  const { stats } = await request(`/prof/marathons/${id}/stats`);
+  return stats;
 }
 
 // POST /api/prof/marathons  (rascunho ou publicar)

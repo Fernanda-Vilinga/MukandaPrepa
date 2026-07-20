@@ -49,9 +49,10 @@ export async function updateUser(id, patch) {
 }
 
 // GET /api/admin/stats
+// REAL — GET /api/admin/stats
 export async function getGlobalStats() {
-  await delay();
-  return GLOBAL_STATS;
+  const { stats } = await request('/admin/stats');
+  return stats;
 }
 
 // GET /api/admin/plans · PUT /api/admin/plans
