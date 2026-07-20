@@ -7,6 +7,7 @@ const authRoutes = require("./src/routes/authRoutes");
 const adminRoutes = require("./src/routes/adminRoutes");
 const { profRouter, studentRouter } = require("./src/routes/marathonRoutes");
 const sessionRoutes = require("./src/routes/sessionRoutes");
+const { profSubs, results, resultDetail } = require("./src/routes/submissionRoutes");
 const { varrerExpiradas } = require("./src/controllers/sessionController");
 const seedAdmin = require("./src/utils/seedAdmin");
 
@@ -24,6 +25,9 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/prof/marathons", profRouter);
 app.use("/api/marathons", studentRouter);
 app.use("/api/sessions", sessionRoutes);
+app.use("/api/prof/submissions", profSubs);
+app.use("/api/students/me/results", results);
+app.use("/api/results", resultDetail);
 
 
 

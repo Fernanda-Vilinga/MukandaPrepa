@@ -196,17 +196,17 @@ export async function submitSession() {
 
 // --- Resultados ------------------------------------------------
 // GET /api/students/me/results
+// REAL — GET /api/students/me/results
 export async function getResults() {
-  await delay();
-  return RESULTS;
+  const { results } = await request('/students/me/results');
+  return results;
 }
 
 // GET /api/results/:id
+// REAL — GET /api/results/:id
 export async function getResult(id) {
-  await delay();
-  const r = RESULTS.find((x) => x.id === id);
-  if (!r) throw new Error('Resultado não encontrado.');
-  return r;
+  const { result } = await request(`/results/${id}`);
+  return result;
 }
 
 // --- Planos / upgrade -------------------------------------------

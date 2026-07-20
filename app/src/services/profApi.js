@@ -15,36 +15,34 @@ export async function getProfOverview() {
   await delay();
   // Maratonas REAIS do professor; KPIs/pendentes continuam mock até à fase de sessões
   const { marathons } = await request('/prof/marathons');
+  const { submissions } = await request('/prof/submissions');
   return {
     marathons,
-    pending: SUBMISSIONS.filter((x) => x.status === 'pending').length,
+    pending: submissions.filter((x) => x.status === 'pending').length,
     connectedNow: marathons.reduce((n, m) => n + (m.connectedNow || 0), 0),
   };
 }
 
 // GET /api/prof/submissions?status=pending
+// REAL — GET /api/prof/submissions (fila: pendentes + validadas)
 export async function getSubmissions() {
-  await delay();
-  return SUBMISSIONS;
+  const { submissions } = await request('/prof/submissions');
+  return submissions;
 }
 
 // GET /api/prof/submissions/:id
+// REAL — GET /api/prof/submissions/:id (MCQ pré-corrigidas pelo servidor)
 export async function getSubmission(id) {
-  await delay();
-  const s = SUBMISSIONS.find((x) => x.id === id);
-  if (!s) throw new Error('Submissão não encontrada.');
-  // As submissões sem respostas detalhadas (mock) usam as do sub1
-  return s.answers.length ? s : { ...s, answers: SUBMISSIONS[0].answers };
+  const { submission } = await request(`/prof/submissions/${id}`);
+  return submission;
 }
 
 // POST /api/prof/submissions/:id/validate
 // { answers: [{ n, correct, feedback }], generalNote }
 // → backend: calcula nota, envia email ao aluno, afixa no dashboard
 export async function confirmValidation(id, payload) {
-  await delay(500);
-  const s = SUBMISSIONS.find((x) => x.id === id);
-  if (s) s.status = 'validated';
-  return { ok: true, id, ...payload };
+  // REAL — calcula a nota no servidor; email ao aluno na fase de emails
+  return request(`/prof/submissions/${id}/validate`, { method: 'POST', body: payload });
 }
 
 // GET /api/prof/marathons/:id/live  (real: WebSocket / polling)
