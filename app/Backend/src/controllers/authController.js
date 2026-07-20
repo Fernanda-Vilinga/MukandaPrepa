@@ -114,6 +114,10 @@ exports.login = async (req, res) => {
             return res.status(401).json({ mensagem: "Usuário não encontrado." });
         }
 
+        if (usuario.estado === "suspenso") {
+            return res.status(403).json({ mensagem: "Esta conta está suspensa. Contacta a administração." });
+        }
+
         const token = gerarToken(usuario);
 
         res.json({

@@ -42,11 +42,10 @@ export async function registerProfessor(data) {
 }
 
 // PATCH /api/admin/users/:id  (activar, suspender, alterar plano, redefinir senha)
+// REAL — PATCH /api/admin/users/:id
+// patch: { active } | { plan } | { resetPassword: true }
 export async function updateUser(id, patch) {
-  await delay(300);
-  const u = USERS.find((x) => x.id === id);
-  if (u) Object.assign(u, patch);
-  return { ok: true, id, ...patch };
+  return request(`/admin/users/${id}`, { method: 'PATCH', body: patch });
 }
 
 // GET /api/admin/stats

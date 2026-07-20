@@ -4,14 +4,25 @@ import { Link } from 'react-router-dom';
 import { getUsers, updateUser } from '../../services/adminApi.js';
 import { AdminTopbar, RolePill, PlanPill } from '../../components/AdminUi.jsx';
 
+const PLANOS = [
+  ['basic', 'Basic'],
+  ['plus', 'Plus'],
+  ['premium', 'Premium'],
+];
+
 export default function Users() {
   const [users, setUsers] = useState([]);
   const [role, setRole] = useState('all');
   const [q, setQ] = useState('');
   const [actionsFor, setActionsFor] = useState(null);
+  const [planModalFor, setPlanModalFor] = useState(null);
+  const [resetResult, setResetResult] = useState(null); // { user, temporaryPassword }
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
   const actionsRef = useRef(null);
 
-  useEffect(() => { getUsers().then((u) => setUsers([...u])); }, []);
+  const reload = () => getUsers().then((u) => setUsers([...u]));
+  useEffect(() => { reload(); }, []);
 
   // fecha o menu de acções ao clicar fora
   useEffect(() => {
@@ -28,9 +39,39 @@ export default function Users() {
   );
 
   const toggleActive = async (u) => {
-    await updateUser(u.id, { active: !u.active });
-    setUsers((all) => all.map((x) => (x.id === u.id ? { ...x, active: !u.active } : x)));
     setActionsFor(null);
+    setError('');
+    try {
+      await updateUser(u.id, { active: !u.active });
+      setUsers((all) => all.map((x) => (x.id === u.id ? { ...x, active: !u.active } : x)));
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const changePlan = async (u, plan) => {
+    setBusy(true);
+    setError('');
+    try {
+      await updateUser(u.id, { plan });
+      setUsers((all) => all.map((x) => (x.id === u.id ? { ...x, plan } : x)));
+      setPlanModalFor(null);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const resetPassword = async (u) => {
+    setActionsFor(null);
+    setError('');
+    try {
+      const res = await updateUser(u.id, { resetPassword: true });
+      setResetResult({ user: u, temporaryPassword: res.temporaryPassword });
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   return (
@@ -46,6 +87,12 @@ export default function Users() {
             <Link to="/admin/professores/novo" className="btn" style={{ textDecoration: 'none' }}>+ Registar professor</Link>
           </div>
         </div>
+
+        {error && (
+          <div className="sm" style={{ background: 'var(--red-l, #fdecec)', color: 'var(--red, #c0392b)', borderRadius: 10, padding: '12px 16px', marginBottom: 16 }}>
+            {error}
+          </div>
+        )}
 
         <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
           {[['all', 'Todos'], ['student', 'Estudantes'], ['professor', 'Professores'], ['admin', 'Admins']].map(([id, label]) => (
@@ -84,11 +131,11 @@ export default function Users() {
                           {u.active ? '⏸ Suspender conta' : '✅ Activar conta'}
                         </button>
                         {u.role === 'student' && (
-                          <button className="sm" style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: '9px 12px', borderRadius: 8 }} onClick={() => setActionsFor(null)}>
+                          <button className="sm" style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: '9px 12px', borderRadius: 8 }} onClick={() => { setPlanModalFor(u); setActionsFor(null); }}>
                             💳 Alterar plano
                           </button>
                         )}
-                        <button className="sm" style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: '9px 12px', borderRadius: 8 }} onClick={() => setActionsFor(null)}>
+                        <button className="sm" style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: '9px 12px', borderRadius: 8 }} onClick={() => resetPassword(u)}>
                           🔑 Redefinir senha
                         </button>
                       </div>
@@ -101,6 +148,49 @@ export default function Users() {
         </div>
         <div className="mut sm" style={{ marginTop: 16 }}>A mostrar {list.length} de {users.length} utilizadores</div>
       </div>
+
+      {/* Modal: alterar plano */}
+      {planModalFor && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(20,20,31,.55)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }} onClick={() => setPlanModalFor(null)}>
+          <div className="card" style={{ maxWidth: 420, width: '100%', padding: 32 }} onClick={(e) => e.stopPropagation()}>
+            <h2 style={{ fontSize: 20, fontWeight: 800, marginBottom: 6 }}>Alterar plano</h2>
+            <p className="mut sm" style={{ marginBottom: 20 }}>
+              <b style={{ color: 'var(--dark)' }}>{planModalFor.name}</b> — plano actual: <PlanPill plan={planModalFor.plan} />
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {PLANOS.map(([id, label]) => (
+                <button
+                  key={id}
+                  className={`btn sm ${planModalFor.plan === id ? 'dark' : 'ghost'}`}
+                  disabled={busy || planModalFor.plan === id}
+                  onClick={() => changePlan(planModalFor, id)}
+                  style={{ justifyContent: 'flex-start' }}
+                >
+                  {planModalFor.plan === id ? '✓ ' : ''}{label}
+                </button>
+              ))}
+            </div>
+            <button className="btn ghost sm" style={{ width: '100%', marginTop: 16 }} onClick={() => setPlanModalFor(null)}>Cancelar</button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: senha redefinida */}
+      {resetResult && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(20,20,31,.55)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }} onClick={() => setResetResult(null)}>
+          <div className="card" style={{ maxWidth: 440, width: '100%', padding: 32 }} onClick={(e) => e.stopPropagation()}>
+            <h2 style={{ fontSize: 20, fontWeight: 800, marginBottom: 6 }}>Senha redefinida</h2>
+            <p className="mut sm" style={{ marginBottom: 16 }}>
+              Nova senha temporária para <b style={{ color: 'var(--dark)' }}>{resetResult.user.name}</b>. Vai ser pedida a troca no próximo login.
+            </p>
+            <div style={{ background: '#F4F4F6', borderRadius: 10, padding: '14px 16px', fontWeight: 700, letterSpacing: '.05em', fontSize: 18, textAlign: 'center', marginBottom: 16 }}>
+              {resetResult.temporaryPassword}
+            </div>
+            <p className="xs mut" style={{ marginBottom: 16 }}>Partilha esta senha com o utilizador por um canal seguro. Ela não volta a ser mostrada.</p>
+            <button className="btn sm" style={{ width: '100%' }} onClick={() => setResetResult(null)}>Fechar</button>
+          </div>
+        </div>
+      )}
     </>
   );
 }

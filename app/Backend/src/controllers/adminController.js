@@ -1,5 +1,6 @@
 const { db } = require("../config/firebase");
 const bcrypt = require("bcrypt");
+const crypto = require("crypto");
 
 // POST /api/admin/professores  (protegido: só admin)
 // Cria conta de professor com senha temporária — o professor deve
@@ -98,6 +99,69 @@ exports.listarUtilizadores = async (req, res) => {
             };
         });
         res.json({ users });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ mensagem: "Erro no servidor." });
+    }
+};
+
+// PATCH /api/admin/users/:id  (protegido: só admin)
+// Acções: { active: bool } · { plan: "basic"|"plus"|"premium" } · { resetPassword: true }
+const PLANOS_VALIDOS = ["basic", "plus", "premium"];
+
+exports.actualizarUtilizador = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { active, plan, resetPassword } = req.body;
+
+        if (active === undefined && plan === undefined && !resetPassword) {
+            return res.status(400).json({ mensagem: "Nenhuma acção indicada." });
+        }
+
+        const doc = await db.collection("usuarios").doc(id).get();
+        if (!doc.exists) return res.status(404).json({ mensagem: "Utilizador não encontrado." });
+        const alvo = doc.data();
+
+        // Um admin não pode suspender-se nem redefinir a própria senha por aqui
+        // (evita bloquear-se a si próprio sem querer; usa /alterar-senha para isso)
+        if (id === req.usuario.id && (active === false || resetPassword)) {
+            return res.status(400).json({ mensagem: "Não podes aplicar esta acção à tua própria conta." });
+        }
+
+        const patch = {};
+        let novaSenhaTemporaria = null;
+
+        if (active !== undefined) {
+            patch.estado = active ? "activo" : "suspenso";
+        }
+
+        if (plan !== undefined) {
+            if (alvo.role !== "student") {
+                return res.status(400).json({ mensagem: "Só é possível alterar o plano de estudantes." });
+            }
+            const planoNorm = String(plan).toLowerCase();
+            if (!PLANOS_VALIDOS.includes(planoNorm)) {
+                return res.status(400).json({ mensagem: "Plano inválido." });
+            }
+            patch.plano = planoNorm;
+        }
+
+        if (resetPassword) {
+            novaSenhaTemporaria = `MKP-${crypto.randomInt(100000, 999999)}`;
+            patch.senha = await bcrypt.hash(novaSenhaTemporaria, 10);
+            patch.trocarSenha = true;   // o utilizador troca no próximo login
+        }
+
+        await db.collection("usuarios").doc(id).update(patch);
+
+        res.json({
+            ok: true,
+            id,
+            active: patch.estado ? patch.estado === "activo" : undefined,
+            plan: patch.plano,
+            temporaryPassword: novaSenhaTemporaria || undefined,
+        });
+        // TODO fase de emails: notificar o utilizador da senha redefinida / plano alterado
     } catch (error) {
         console.error(error);
         res.status(500).json({ mensagem: "Erro no servidor." });
