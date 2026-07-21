@@ -1,5 +1,6 @@
 const { db } = require("../config/firebase");
 const bcrypt = require("bcrypt");
+const { cifrar, decifrar } = require("../utils/crypto");
 
 // Limites de tentativas por plano — validados SEMPRE no servidor (spec §4.3)
 const LIMITE_PLANO = { basic: 2, plus: 5, premium: Infinity };
@@ -92,6 +93,7 @@ exports.criar = async (req, res) => {
             senhaHash: b.password
                 ? await bcrypt.hash(String(b.password).trim().toUpperCase(), 10)
                 : null,
+            senhaCifrada: b.password ? cifrar(String(b.password).trim().toUpperCase()) : null,
             status: "draft",
             icon: iconPara(b.discipline),
             professorId: req.usuario.id,
@@ -120,7 +122,9 @@ exports.actualizar = async (req, res) => {
 
         const patch = dadosDoBody(req.body);
         if (req.body.password) {
-            patch.senhaHash = await bcrypt.hash(String(req.body.password).trim().toUpperCase(), 10);
+            const senhaNorm = String(req.body.password).trim().toUpperCase();
+            patch.senhaHash = await bcrypt.hash(senhaNorm, 10);
+            patch.senhaCifrada = cifrar(senhaNorm);
         }
         patch.icon = iconPara(req.body.discipline);
 
@@ -230,6 +234,25 @@ exports.obterDoProfessor = async (req, res) => {
                 questions: m.questoes || [],
             },
         });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ mensagem: "Erro no servidor." });
+    }
+};
+
+// GET /api/prof/marathons/:id/password  (professor, dono) — revela a
+// password de acesso para o professor a poder comunicar aos alunos
+exports.obterPassword = async (req, res) => {
+    try {
+        const m = await obterDoc(req.params.id);
+        if (!m) return res.status(404).json({ mensagem: "Maratona não encontrada." });
+        if (m.professorId !== req.usuario.id) {
+            return res.status(403).json({ mensagem: "Esta maratona não é tua." });
+        }
+        if (!m.senhaCifrada) {
+            return res.status(404).json({ mensagem: "Esta maratona ainda não tem password definida." });
+        }
+        res.json({ password: decifrar(m.senhaCifrada) });
     } catch (e) {
         console.error(e);
         res.status(500).json({ mensagem: "Erro no servidor." });

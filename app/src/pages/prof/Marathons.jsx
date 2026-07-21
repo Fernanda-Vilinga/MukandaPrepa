@@ -1,13 +1,27 @@
 // Lista de maratonas do professor + botão para criar nova.
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getProfOverview, openDraft, newDraft } from './profDeps.js';
+import { getProfOverview, openDraft, newDraft, getMarathonPassword } from './profDeps.js';
 import { ProfTopbar, Pill } from '../../components/ProfUi.jsx';
 import { Badge } from '../../components/Ui.jsx';
 
 export default function ProfMarathons() {
   const [marathons, setMarathons] = useState([]);
   const [filter, setFilter] = useState('all');
+  const [copiedFor, setCopiedFor] = useState(null);
+  const [pwError, setPwError] = useState('');
+
+  const copyPassword = async (m) => {
+    setPwError('');
+    try {
+      const password = await getMarathonPassword(m.id);
+      await navigator.clipboard.writeText(password);
+      setCopiedFor(m.id);
+      setTimeout(() => setCopiedFor(null), 2000);
+    } catch (err) {
+      setPwError(err.message);
+    }
+  };
 
   useEffect(() => { getProfOverview().then((ov) => setMarathons(ov.marathons)); }, []);
 
@@ -24,6 +38,12 @@ export default function ProfMarathons() {
           </div>
           <Link to="/prof/maratonas/nova" className="btn" style={{ textDecoration: 'none' }} onClick={() => newDraft()}>+ Nova maratona</Link>
         </div>
+
+        {pwError && (
+          <div className="sm" style={{ background: 'var(--red-l, #fdecec)', color: 'var(--red, #c0392b)', borderRadius: 10, padding: '12px 16px', marginBottom: 16 }}>
+            {pwError}
+          </div>
+        )}
 
         <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
           <button className={`btn sm ${filter === 'all' ? 'dark' : 'ghost'}`} onClick={() => setFilter('all')}>Todas ({marathons.length})</button>
@@ -50,6 +70,9 @@ export default function ProfMarathons() {
                 <Link to="/prof/maratonas/nova" className="btn sm" style={{ textDecoration: 'none' }} onClick={() => openDraft(m.id)}>Continuar</Link>
               ) : (
                 <>
+                  <button className="btn sm ghost" onClick={() => copyPassword(m)} title="Copiar a password para partilhar com os alunos">
+                    {copiedFor === m.id ? '✓ Copiada!' : '🔑 Copiar password'}
+                  </button>
                   <Link to="/prof/monitorizacao" className="btn sm blue" style={{ textDecoration: 'none' }}>Monitorizar</Link>
                   <Link to={`/prof/estatisticas/${m.id}`} className="btn sm ghost" style={{ textDecoration: 'none' }}>Estatísticas</Link>
                 </>

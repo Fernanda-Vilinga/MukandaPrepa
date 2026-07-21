@@ -6,7 +6,7 @@
 import {
   PROF_MARATHONS, SUBMISSIONS, LIVE_SESSIONS, MARATHON_STATS, PROF_CHATS,
 } from '../data/profMock.js';
-import { request } from './api.js';
+import { request, API_BASE } from './api.js';
 
 const delay = (ms = 250) => new Promise((r) => setTimeout(r, ms));
 
@@ -65,6 +65,37 @@ export async function getMarathonStats(id) {
 // POST /api/prof/marathons  (rascunho ou publicar)
 // Gestão do rascunho actual (id guardado até publicar)
 export function openDraft(id) { sessionStorage.setItem('mkp_draft_id', id); }
+// REAL — GET /api/prof/marathons/:id/export.csv (download)
+// fetch manual: o link de download normal não envia o token JWT guardado
+// em sessionStorage, por isso pedimos o ficheiro e disparamos o download
+// nós próprios a partir da resposta.
+export async function exportMarathonCSV(id, filename = `maratona-${id}.csv`) {
+  const token = sessionStorage.getItem('mkp_token');
+  const res = await fetch(`${API_BASE}/prof/marathons/${id}/export.csv`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.mensagem || `Erro ao exportar (${res.status}).`);
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+// REAL — GET /api/prof/marathons/:id/password (a app nunca guarda a
+// password em claro; só é pedida ao servidor quando o professor clica)
+export async function getMarathonPassword(id) {
+  const { password } = await request(`/prof/marathons/${id}/password`);
+  return password;
+}
+
 export function newDraft() { sessionStorage.removeItem('mkp_draft_id'); }
 
 // REAL — carrega o rascunho actual (null se não houver)

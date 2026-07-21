@@ -16,6 +16,12 @@ const todasSessoes = async () => (await db.collection("sessoes").get()).docs.map
 const todasMaratonas = async () => (await db.collection("maratonas").get()).docs.map((d) => ({ id: d.id, ...d.data() }));
 const todosUsuarios = async () => (await db.collection("usuarios").get()).docs.map((d) => ({ id: d.id, ...d.data() }));
 
+// CSV: escapar campo (aspas duplicadas, envolver se tiver , " ou quebra de linha)
+const csvEsc = (v) => {
+    const s = v == null ? "" : String(v);
+    return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+};
+
 const fmtDuracao = (ms) => (ms < 60000 ? `${Math.round(ms / 1000)}s` : `${Math.round(ms / 60000)}m`);
 
 // GET /api/prof/marathons/:id/stats  (professor, dono da maratona)
@@ -96,8 +102,17 @@ exports.estatisticasMaratona = async (req, res) => {
             return { label: b.label, pct: validadas.length ? Math.round((n / validadas.length) * 100) : 0 };
         });
 
+        const fmtData = (v) => {
+            const d = dataDe(v);
+            return d ? d.toLocaleDateString("pt-PT", { day: "numeric", month: "short" }) : "—";
+        };
+
         res.json({
             stats: {
+                title: m.titulo,
+                window: `${fmtData(m.acessoInicio)} – ${fmtData(m.acessoFim)}`,
+                totalQuestions: (m.questoes || []).filter((q) => q && q.filled).length,
+                questionsPerSession: m.questoesPorSessao,
                 participants: participantes,
                 completionRate,
                 avgTime,
@@ -197,6 +212,78 @@ exports.estatisticasGlobais = async (req, res) => {
                 topProfessors,
             },
         });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ mensagem: "Erro no servidor." });
+    }
+};
+
+// GET /api/prof/marathons/:id/export.csv  (professor, dono)
+// Uma linha por submissão (submetida ou validada); Q1..Q15 = acerto/erro
+// por slot do banco (em branco se essa questão não foi sorteada na sessão).
+exports.exportarCSV = async (req, res) => {
+    try {
+        const doc = await db.collection("maratonas").doc(req.params.id).get();
+        if (!doc.exists) return res.status(404).json({ mensagem: "Maratona não encontrada." });
+        const m = { id: doc.id, ...doc.data() };
+        if (m.professorId !== req.usuario.id) {
+            return res.status(403).json({ mensagem: "Esta maratona não é tua." });
+        }
+
+        const usuarios = await todosUsuarios();
+        const usuarioPorId = {};
+        usuarios.forEach((u) => { usuarioPorId[u.id] = u; });
+
+        const sessoes = (await todasSessoes())
+            .filter((s) => s.maratonaId === m.id && (s.estado === "submitted" || s.estado === "validated"))
+            .sort((a, b) => (a.submetidaEm || "").localeCompare(b.submetidaEm || ""));
+
+        const cabecalho = [
+            "Aluno", "Email", "Plano", "Tentativa", "Estado",
+            "Nota", "Total", "Percentagem", "TempoSessaoMin",
+            "Submetida", "Validada", "FeedbackGeral",
+            ...Array.from({ length: 15 }, (_, i) => `Q${i + 1}`),
+        ];
+
+        const linhas = [cabecalho];
+        sessoes.forEach((s) => {
+            const aluno = usuarioPorId[s.usuarioId] || {};
+            const validada = s.estado === "validated";
+            const marcas = (s.validacao && s.validacao.answers) || [];
+
+            const porSlot = Array(15).fill("");
+            (s.questoes || []).forEach((q, i) => {
+                if (!validada) { porSlot[q.slot - 1] = "por validar"; return; }
+                const marca = marcas.find((a) => a.n === i + 1);
+                porSlot[q.slot - 1] = marca ? (marca.correct ? "certo" : "errado") : "";
+            });
+
+            const fimMs = dataDe(s.submetidaEm), inicioMs = dataDe(s.iniciadaEm);
+            const tempoMin = fimMs && inicioMs ? Math.round((fimMs.getTime() - inicioMs.getTime()) / 60000) : "";
+
+            linhas.push([
+                aluno.nome || "Desconhecido",
+                aluno.email || "",
+                aluno.plano ? aluno.plano.charAt(0).toUpperCase() + aluno.plano.slice(1) : "",
+                s.tentativa || 1,
+                validada ? "Validada" : "Por validar",
+                validada ? s.score : "",
+                s.total || (s.questoes || []).length,
+                validada ? s.percent : "",
+                tempoMin,
+                s.submetidaEm || "",
+                validada ? s.validacao.validadaEm : "",
+                validada ? (s.validacao.generalNote || "") : "",
+                ...porSlot,
+            ]);
+        });
+
+        const csv = linhas.map((linha) => linha.map(csvEsc).join(",")).join("\r\n");
+        const nomeFicheiro = `maratona-${m.id}.csv`;
+
+        res.setHeader("Content-Type", "text/csv; charset=utf-8");
+        res.setHeader("Content-Disposition", `attachment; filename="${nomeFicheiro}"`);
+        res.send("\uFEFF" + csv); // BOM — acentos correctos ao abrir no Excel
     } catch (e) {
         console.error(e);
         res.status(500).json({ mensagem: "Erro no servidor." });

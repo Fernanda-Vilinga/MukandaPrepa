@@ -9,11 +9,13 @@ const profRouter = express.Router();
 profRouter.use(verificarToken, exigirRole("professor"));
 profRouter.get("/", c.listarDoProfessor);
 profRouter.get("/:id", c.obterDoProfessor);
+profRouter.get("/:id/password", c.obterPassword);
 profRouter.post("/", c.criar);
 profRouter.put("/:id", c.actualizar);
 profRouter.put("/:id/questions/:slot", c.guardarQuestao);
 profRouter.post("/:id/publish", c.publicar);
 profRouter.get("/:id/stats", stats.estatisticasMaratona);
+profRouter.get("/:id/export.csv", stats.exportarCSV);
 
 // /api/marathons — rotas do estudante (qualquer utilizador autenticado)
 const studentRouter = express.Router();
