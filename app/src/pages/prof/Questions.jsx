@@ -49,7 +49,7 @@ export default function Questions() {
       await saveQuestion(q.slot, q);
       update({ filled: true });
       setSavedMsg(true);
-      setTimeout(() => setSavedMsg(false), 2000);
+      setTimeout(() => setSavedMsg(false), 700);
       if (cur < 14) setCur(cur + 1); // passa automaticamente à questão seguinte
     } catch (err) {
       setError(err.message);
