@@ -45,6 +45,7 @@ export function Badge({ status }) {
     active: ['act', '● Activa'],
     soon: ['soon', 'Em breve'],
     closed: ['end', 'Encerrada'],
+    draft: ['end', 'Rascunho'],
     validated: ['act', 'Validada'],
     pending: ['soon', '⏳ Em validação'],
   };

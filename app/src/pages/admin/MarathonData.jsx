@@ -1,7 +1,7 @@
 // Dados completos de uma maratona (visão admin) + exportação CSV.
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { getMarathonData } from '../../services/adminApi.js';
+import { getMarathonData, exportAdminMarathonCSV } from '../../services/adminApi.js';
 import { AdminTopbar, PlanPill } from '../../components/AdminUi.jsx';
 import { Stat, Badge } from '../../components/Ui.jsx';
 
@@ -14,8 +14,23 @@ const STATE = {
 export default function MarathonData() {
   const { id } = useParams();
   const [d, setD] = useState(null);
+  const [exporting, setExporting] = useState(false);
+  const [error, setError] = useState('');
   useEffect(() => { getMarathonData(id).then(setD); }, [id]);
   if (!d) return <AdminTopbar />;
+
+  const exportCSV = async () => {
+    setError('');
+    setExporting(true);
+    try {
+      const slug = d.title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      await exportAdminMarathonCSV(id, `maratona-${slug || id}.csv`);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   return (
     <>
@@ -28,9 +43,16 @@ export default function MarathonData() {
             </h1>
             <div className="mut sm">{d.professor} · janela {d.window} · {d.questions} questões · {d.perSession} por sessão · {d.duration} min</div>
           </div>
-          {/* TODO backend: GET /api/admin/marathons/:id/export.csv */}
-          <button className="btn dark">⬇ Exportar CSV</button>
+          <button className="btn dark" onClick={exportCSV} disabled={exporting}>
+            {exporting ? 'A exportar…' : '⬇ Exportar CSV'}
+          </button>
         </div>
+
+        {error && (
+          <div className="sm" style={{ background: 'var(--red-l, #fdecec)', color: 'var(--red, #c0392b)', borderRadius: 10, padding: '12px 16px', marginBottom: 16 }}>
+            {error}
+          </div>
+        )}
 
         <div className="row" style={{ marginBottom: 24 }}>
           <Stat value={d.participants} label="Alunos participantes" />

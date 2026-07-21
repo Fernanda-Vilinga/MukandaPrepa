@@ -20,7 +20,7 @@ export function AdminTopbar() {
   const items = [
     ['Dashboard', '/admin'],
     ['Utilizadores', '/admin/utilizadores'],
-    ['Maratonas', '/admin/maratonas/m1'],
+    ['Maratonas', '/admin/maratonas'],
     ['Estatísticas', '/admin/estatisticas'],
     ['Planos', '/admin/planos'],
     ['Suporte', '/admin/suporte'],

@@ -29,6 +29,7 @@ import Users from './pages/admin/Users.jsx';
 import GlobalStats from './pages/admin/GlobalStats.jsx';
 import Plans from './pages/admin/Plans.jsx';
 import MarathonData from './pages/admin/MarathonData.jsx';
+import AdminMarathons from './pages/admin/Marathons.jsx';
 import Support from './pages/admin/Support.jsx';
 
 function Private({ children }) {
@@ -88,6 +89,7 @@ export default function App() {
         <Route path="/admin/utilizadores" element={<PrivateAdmin><Users /></PrivateAdmin>} />
         <Route path="/admin/estatisticas" element={<PrivateAdmin><GlobalStats /></PrivateAdmin>} />
         <Route path="/admin/planos" element={<PrivateAdmin><Plans /></PrivateAdmin>} />
+        <Route path="/admin/maratonas" element={<PrivateAdmin><AdminMarathons /></PrivateAdmin>} />
         <Route path="/admin/maratonas/:id" element={<PrivateAdmin><MarathonData /></PrivateAdmin>} />
         <Route path="/admin/suporte" element={<PrivateAdmin><Support /></PrivateAdmin>} />
         <Route path="*" element={<Navigate to="/" replace />} />

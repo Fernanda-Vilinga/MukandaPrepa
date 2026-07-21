@@ -5,7 +5,7 @@ import {
   ADMIN_KPIS, ACTIVITY_WEEKS, SYSTEM_ALERTS, USERS, GLOBAL_STATS,
   PLANS_CONFIG, PROMO_CODES, MARATHON_DATA, SUPPORT_CHATS,
 } from '../data/adminMock.js';
-import { request } from './api.js';
+import { request, API_BASE } from './api.js';
 
 const delay = (ms = 250) => new Promise((r) => setTimeout(r, ms));
 
@@ -66,9 +66,34 @@ export async function savePlansConfig(plans) {
 }
 
 // GET /api/admin/marathons/:id/data  (+ /export.csv)
-export async function getMarathonData(id = 'm1') {
-  await delay();
-  return MARATHON_DATA[id] ?? MARATHON_DATA.m1;
+// REAL — GET /api/admin/marathons
+export async function getAllMarathons() {
+  const { marathons } = await request('/admin/marathons');
+  return marathons;
+}
+
+// REAL — GET /api/admin/marathons/:id
+export async function getMarathonData(id) {
+  const { data } = await request(`/admin/marathons/${id}`);
+  return data;
+}
+
+// REAL — GET /api/admin/marathons/:id/export.csv (download)
+export async function exportAdminMarathonCSV(id, filename = `maratona-${id}.csv`) {
+  const token = sessionStorage.getItem('mkp_token');
+  const res = await fetch(`${API_BASE}/admin/marathons/${id}/export.csv`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.mensagem || `Erro ao exportar (${res.status}).`);
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
 }
 
 // GET /api/admin/support-chats
