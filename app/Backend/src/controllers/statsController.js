@@ -289,3 +289,117 @@ exports.exportarCSV = async (req, res) => {
         res.status(500).json({ mensagem: "Erro no servidor." });
     }
 };
+
+// GET /api/admin/overview  (só admin) — KPIs, actividade semanal, alertas
+// e últimos registos do dashboard principal. Alertas são heurísticas
+// calculadas a partir de dados reais (não texto inventado) — ver notas
+// em cada bloco; ajusta os limiares conforme a operação real da equipa.
+exports.visaoGeralAdmin = async (req, res) => {
+    try {
+        const [sessoes, maratonas, usuarios] = await Promise.all([todasSessoes(), todasMaratonas(), todosUsuarios()]);
+        const estudantes = usuarios.filter((u) => (u.role || "student") === "student");
+        const professores = usuarios.filter((u) => u.role === "professor");
+
+        const criadoEmMs = (u) => { const d = dataDe(u.criadoEm); return d ? d.getTime() : null; };
+        const agora = Date.now();
+        const semanaAtras = agora - 7 * 24 * 3600 * 1000;
+        const mesAtras = agora - 30 * 24 * 3600 * 1000;
+        const diaAtras = agora - 24 * 3600 * 1000;
+
+        const totalUsers = usuarios.length;
+        const newThisWeek = usuarios.filter((u) => (criadoEmMs(u) || 0) >= semanaAtras).length;
+        const newProfsMonth = professores.filter((u) => (criadoEmMs(u) || 0) >= mesAtras).length;
+
+        const activeMarathons = maratonas.filter((m) => {
+            if (m.status !== "published" || !m.acessoInicio || !m.acessoFim) return false;
+            return agora >= new Date(m.acessoInicio).getTime() && agora <= new Date(m.acessoFim).getTime();
+        }).length;
+        const soonMarathons = maratonas.filter((m) => m.status === "published" && m.acessoInicio && agora < new Date(m.acessoInicio).getTime()).length;
+
+        const pendentes = sessoes.filter((s) => s.estado === "submitted");
+        const maratonaPorId = {};
+        maratonas.forEach((m) => { maratonaPorId[m.id] = m; });
+        const profsComPendentes = new Set(
+            pendentes.map((s) => maratonaPorId[s.maratonaId] && maratonaPorId[s.maratonaId].professorId).filter(Boolean)
+        );
+
+        const kpis = {
+            totalUsers, newThisWeek,
+            professors: professores.length, newProfsMonth,
+            activeMarathons, soonMarathons,
+            pendingValidations: pendentes.length, pendingProfessors: profsComPendentes.size,
+        };
+
+        // Actividade: sessões de maratona iniciadas por semana (9 últimas semanas)
+        const activity = [];
+        for (let i = 8; i >= 0; i--) {
+            const fim = agora - i * 7 * 24 * 3600 * 1000;
+            const inicio = fim - 7 * 24 * 3600 * 1000;
+            const n = sessoes.filter((s) => {
+                const d = dataDe(s.iniciadaEm);
+                return d && d.getTime() >= inicio && d.getTime() < fim;
+            }).length;
+            activity.push({ n, i });
+        }
+        const maxActividade = Math.max(1, ...activity.map((a) => a.n));
+        const activityOut = activity.map(({ n, i }) => ({
+            label: i % 3 === 0 ? MESES[new Date(agora - i * 7 * 24 * 3600 * 1000).getMonth()] : "",
+            v: Math.round((n / maxActividade) * 100),
+        }));
+
+        // Alertas — heurísticas sobre dados reais (sem texto inventado)
+        const alerts = [];
+        const porProfessorAtraso = {};
+        pendentes.forEach((s) => {
+            const m = maratonaPorId[s.maratonaId];
+            if (!m) return;
+            const d = dataDe(s.submetidaEm);
+            const horas = d ? (agora - d.getTime()) / 3600000 : 0;
+            if (horas > 48) {
+                porProfessorAtraso[m.professorId] = porProfessorAtraso[m.professorId] || { nome: null, n: 0 };
+                porProfessorAtraso[m.professorId].n++;
+            }
+        });
+        for (const profId of Object.keys(porProfessorAtraso)) {
+            const prof = usuarios.find((u) => u.id === profId);
+            const info = porProfessorAtraso[profId];
+            alerts.push({ level: "red", text: `Validação em atraso: ${info.n} submissõ${info.n === 1 ? "" : "es"} há mais de 48 h (${prof ? "Prof. " + prof.nome : "professor"}).` });
+        }
+
+        const novos24h = usuarios.filter((u) => (criadoEmMs(u) || 0) >= diaAtras).length;
+        if (novos24h >= 3) {
+            alerts.push({ level: "blue", text: `Pico de registos: ${novos24h} novos utilizadores nas últimas 24 h.` });
+        }
+
+        maratonas.forEach((m) => {
+            if (m.status !== "published" || !m.acessoInicio) return;
+            const inicioMs = new Date(m.acessoInicio).getTime();
+            const jaComecou = agora >= inicioMs;
+            const temParticipantes = sessoes.some((s) => s.maratonaId === m.id);
+            if (jaComecou && !temParticipantes && agora <= new Date(m.acessoFim).getTime()) {
+                alerts.push({ level: "amber", text: `Maratona sem inscrições: "${m.titulo}" já está activa e ainda não tem nenhuma tentativa registada.` });
+            }
+        });
+
+        // Últimos registos (qualquer role), mais recente primeiro
+        const CORES2 = ["var(--orange)", "var(--blue)", "var(--green)", "var(--dark)", "#9333EA"];
+        const iniciaisDe = (nome = "") => nome.trim().split(/\s+/).map((p) => p[0]).filter(Boolean).slice(0, 2).join("").toUpperCase() || "?";
+        const recent = [...usuarios]
+            .sort((a, b) => (criadoEmMs(b) || 0) - (criadoEmMs(a) || 0))
+            .slice(0, 3)
+            .map((u, i) => ({
+                id: u.id,
+                name: u.nome,
+                initials: iniciaisDe(u.nome),
+                color: CORES2[i % CORES2.length],
+                role: u.role || "student",
+                plan: (u.role || "student") === "student" ? String(u.plano || "basic").toLowerCase() : null,
+                created: dataDe(u.criadoEm) ? dataDe(u.criadoEm).toLocaleDateString("pt-PT", { day: "numeric", month: "short" }) : "—",
+            }));
+
+        res.json({ kpis, activity: activityOut, alerts, recent });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ mensagem: "Erro no servidor." });
+    }
+};

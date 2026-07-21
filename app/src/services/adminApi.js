@@ -10,9 +10,9 @@ import { request } from './api.js';
 const delay = (ms = 250) => new Promise((r) => setTimeout(r, ms));
 
 // GET /api/admin/overview
+// REAL — GET /api/admin/overview
 export async function getAdminOverview() {
-  await delay();
-  return { kpis: ADMIN_KPIS, activity: ACTIVITY_WEEKS, alerts: SYSTEM_ALERTS, recent: USERS.slice(0, 3) };
+  return request('/admin/overview');
 }
 
 // GET /api/admin/users?role=&q=
