@@ -1,13 +1,27 @@
 // Estatísticas globais da plataforma.
 import { useEffect, useState } from 'react';
-import { getGlobalStats } from '../../services/adminApi.js';
+import { getGlobalStats, exportGlobalReportCSV } from '../../services/adminApi.js';
 import { AdminTopbar } from '../../components/AdminUi.jsx';
 import { Stat } from '../../components/Ui.jsx';
 
 export default function GlobalStats() {
   const [s, setS] = useState(null);
+  const [exporting, setExporting] = useState(false);
+  const [error, setError] = useState('');
   useEffect(() => { getGlobalStats().then(setS); }, []);
   if (!s) return <AdminTopbar />;
+
+  const exportCSV = async () => {
+    setError('');
+    setExporting(true);
+    try {
+      await exportGlobalReportCSV();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setExporting(false);
+    }
+  };
   const totalPlan = s.byPlan.basic + s.byPlan.plus + s.byPlan.premium;
   const pct = (n) => Math.round((n / totalPlan) * 100);
 
@@ -17,9 +31,16 @@ export default function GlobalStats() {
       <div className="wrap">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
           <h1 style={{ fontSize: 26, fontWeight: 800 }}>Estatísticas globais</h1>
-          {/* TODO backend: exportação de relatório */}
-          <button className="btn dark">⬇ Exportar relatório</button>
+          <button className="btn dark" onClick={exportCSV} disabled={exporting}>
+            {exporting ? 'A exportar…' : '⬇ Exportar relatório'}
+          </button>
         </div>
+
+        {error && (
+          <div className="sm" style={{ background: 'var(--red-l, #fdecec)', color: 'var(--red, #c0392b)', borderRadius: 10, padding: '12px 16px', marginBottom: 16 }}>
+            {error}
+          </div>
+        )}
 
         <div className="row" style={{ marginBottom: 24 }}>
           <Stat value={s.users} label="Utilizadores" />

@@ -55,6 +55,24 @@ export async function getGlobalStats() {
   return stats;
 }
 
+// REAL — GET /api/admin/stats/export.csv (download)
+export async function exportGlobalReportCSV(filename = `relatorio-global-${new Date().toISOString().slice(0, 10)}.csv`) {
+  const token = sessionStorage.getItem('mkp_token');
+  const res = await fetch(`${API_BASE}/admin/stats/export.csv`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.mensagem || `Erro ao exportar (${res.status}).`);
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
 // GET /api/admin/plans · PUT /api/admin/plans
 export async function getPlansConfig() {
   await delay();

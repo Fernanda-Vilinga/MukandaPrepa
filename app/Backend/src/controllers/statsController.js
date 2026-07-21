@@ -129,8 +129,8 @@ exports.estatisticasMaratona = async (req, res) => {
 };
 
 // GET /api/admin/stats  (só admin)
-exports.estatisticasGlobais = async (req, res) => {
-    try {
+async function calcularStatsGlobais() {
+    {
         const [sessoes, maratonas, usuarios] = await Promise.all([todasSessoes(), todasMaratonas(), todosUsuarios()]);
         const estudantes = usuarios.filter((u) => (u.role || "student") === "student");
         const professores = usuarios.filter((u) => u.role === "professor");
@@ -200,18 +200,72 @@ exports.estatisticasGlobais = async (req, res) => {
             .slice(0, 5)
             .map(({ _marathons, ...rest }) => rest);
 
-        res.json({
-            stats: {
-                users: usuarios.length,
-                marathonsCreated: maratonas.length,
-                completionRate,
-                sessions: sessoes.length,
-                byPlan,
-                byMonth,
-                byArea,
-                topProfessors,
-            },
-        });
+        return {
+            users: usuarios.length,
+            marathonsCreated: maratonas.length,
+            completionRate,
+            sessions: sessoes.length,
+            byPlan,
+            byMonth,
+            byArea,
+            topProfessors,
+        };
+    }
+}
+
+// GET /api/admin/stats  (só admin)
+exports.estatisticasGlobais = async (req, res) => {
+    try {
+        const stats = await calcularStatsGlobais();
+        res.json({ stats });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ mensagem: "Erro no servidor." });
+    }
+};
+
+// CSV: escapar campo
+const csvEscG = (v) => { const s = v == null ? "" : String(v); return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+const csvLinha = (campos) => campos.map(csvEscG).join(",");
+
+// GET /api/admin/stats/export.csv  (só admin) — relatório global em secções
+exports.exportarRelatorioGlobal = async (req, res) => {
+    try {
+        const s = await calcularStatsGlobais();
+        const linhas = [];
+
+        linhas.push(csvLinha(["Resumo", ""]));
+        linhas.push(csvLinha(["Utilizadores", s.users]));
+        linhas.push(csvLinha(["Maratonas criadas", s.marathonsCreated]));
+        linhas.push(csvLinha(["Sessões realizadas", s.sessions]));
+        linhas.push(csvLinha(["Taxa de conclusão média (%)", s.completionRate]));
+        linhas.push("");
+
+        linhas.push(csvLinha(["Utilizadores por plano", ""]));
+        linhas.push(csvLinha(["Plano", "Utilizadores"]));
+        linhas.push(csvLinha(["Basic", s.byPlan.basic]));
+        linhas.push(csvLinha(["Plus", s.byPlan.plus]));
+        linhas.push(csvLinha(["Premium", s.byPlan.premium]));
+        linhas.push("");
+
+        linhas.push(csvLinha(["Maratonas criadas por mês (ano corrente)", ""]));
+        linhas.push(csvLinha(["Mês", "Maratonas"]));
+        s.byMonth.forEach((m) => linhas.push(csvLinha([m.label, m.v])));
+        linhas.push("");
+
+        linhas.push(csvLinha(["Taxa de conclusão por área", ""]));
+        linhas.push(csvLinha(["Área", "Percentagem (%)"]));
+        s.byArea.forEach((a) => linhas.push(csvLinha([a.label.replace(/^\S+\s/, ""), a.pct])));
+        linhas.push("");
+
+        linhas.push(csvLinha(["Professores mais activos", ""]));
+        linhas.push(csvLinha(["Professor", "Maratonas publicadas", "Validação média", "Dentro do prazo (<=24h)"]));
+        s.topProfessors.forEach((p) => linhas.push(csvLinha([p.name, p.marathons, p.avgValidation, p.ok ? "Sim" : "Não"])));
+
+        const csv = linhas.join("\r\n");
+        res.setHeader("Content-Type", "text/csv; charset=utf-8");
+        res.setHeader("Content-Disposition", `attachment; filename="relatorio-global-${new Date().toISOString().slice(0, 10)}.csv"`);
+        res.send("﻿" + csv);
     } catch (e) {
         console.error(e);
         res.status(500).json({ mensagem: "Erro no servidor." });
