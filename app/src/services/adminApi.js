@@ -3,7 +3,7 @@
 // ============================================================
 import {
   ADMIN_KPIS, ACTIVITY_WEEKS, SYSTEM_ALERTS, USERS, GLOBAL_STATS,
-  PLANS_CONFIG, PROMO_CODES, MARATHON_DATA, SUPPORT_CHATS,
+  PLANS_CONFIG, PROMO_CODES, MARATHON_DATA,
 } from '../data/adminMock.js';
 import { request, API_BASE } from './api.js';
 
@@ -114,8 +114,17 @@ export async function exportAdminMarathonCSV(id, filename = `maratona-${id}.csv`
   URL.revokeObjectURL(url);
 }
 
-// GET /api/admin/support-chats
+// REAL — GET /api/admin/chats (inbox de Suporte, partilhado por todos os admins)
 export async function getSupportChats() {
-  await delay(150);
-  return SUPPORT_CHATS;
+  const { chats } = await request('/admin/chats');
+  return chats.map((c) => ({
+    ...c,
+    messages: c.messages.map((m) => ({ ...m, from: m.from === 'admin' ? 'admin' : 'student' })),
+  }));
+}
+
+// REAL — POST /api/admin/chats/:id { text }
+export async function sendSupportChat(conversaId, text) {
+  const { message } = await request(`/admin/chats/${conversaId}`, { method: 'POST', body: { text } });
+  return { from: 'admin', text: message.text, time: message.time };
 }

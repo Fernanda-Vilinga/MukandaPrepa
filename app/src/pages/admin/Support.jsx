@@ -3,8 +3,8 @@
 // e problemas de acesso. Após confirmar pagamento: actualizar o plano do
 // estudante em Utilizadores → Acções → Alterar plano, e o sistema envia
 // o email de confirmação (TODO backend).
-import { useEffect, useState } from 'react';
-import { getSupportChats } from '../../services/adminApi.js';
+import { useEffect, useRef, useState } from 'react';
+import { getSupportChats, sendSupportChat } from '../../services/adminApi.js';
 import { AdminTopbar, PlanPill } from '../../components/AdminUi.jsx';
 
 export default function Support() {
@@ -12,18 +12,32 @@ export default function Support() {
   const [cur, setCur] = useState(null);
   const [text, setText] = useState('');
 
+  const curIdRef = useRef(null);
+  useEffect(() => { curIdRef.current = cur?.id ?? null; }, [cur]);
+
   useEffect(() => {
-    getSupportChats().then((c) => { setChats(c); setCur(c[0] ?? null); });
+    const load = () => getSupportChats().then((c) => {
+      setChats(c);
+      setCur((prev) => {
+        if (!prev) return c[0] ?? null;
+        return c.find((x) => x.id === curIdRef.current) ?? prev;
+      });
+    });
+    load();
+    // Sem WebSocket nesta fase — "tempo real" aproximado por polling (ver Monitor.jsx).
+    const timer = setInterval(load, 6000);
+    return () => clearInterval(timer);
   }, []);
 
   const unread = chats.reduce((n, c) => n + c.unread, 0);
 
-  const send = () => {
-    if (!text.trim() || !cur) return;
-    const msg = { from: 'admin', text, time: new Date().toTimeString().slice(0, 5) };
+  const send = async () => {
+    const value = text.trim();
+    if (!value || !cur) return;
+    setText('');
+    const msg = await sendSupportChat(cur.id, value);
     setChats((all) => all.map((c) => (c.id === cur.id ? { ...c, messages: [...c.messages, msg], unread: 0 } : c)));
     setCur((c) => ({ ...c, messages: [...c.messages, msg], unread: 0 }));
-    setText('');
   };
 
   return (

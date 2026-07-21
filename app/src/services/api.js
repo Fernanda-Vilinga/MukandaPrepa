@@ -6,7 +6,7 @@
 // ============================================================
 import {
   MARATHONS, QUESTIONS, RESULTS, CURRENT_USER,
-  PLAN_ATTEMPTS, CHAT_THREADS,
+  PLAN_ATTEMPTS,
 } from '../data/mock.js';
 
 const delay = (ms = 250) => new Promise((r) => setTimeout(r, ms));
@@ -226,9 +226,25 @@ export async function requestPlanUpgrade(planId) {
   return { ok: true, planId };
 }
 
-// --- Chat ------------------------------------------------------
-// GET /api/chats/:channel  (real: WebSocket via Socket.io)
+// --- Chat --------------------------------------------------------
+// REAL — GET /api/chats/:channel (duvidas | suporte)
+// "Tempo real" aproximado por polling (sem WebSocket/Socket.io nesta
+// fase — decisão pragmática, igual à monitorização ao vivo do professor).
 export async function getChat(channel) {
-  await delay(150);
-  return CHAT_THREADS[channel] ?? [];
+  const data = await request(`/chats/${channel}`);
+  return {
+    messages: (data.messages || []).map((m) => ({
+      from: m.from === 'estudante' ? 'me' : 'prof',
+      text: m.text,
+      time: m.time,
+    })),
+    ref: data.ref ?? null,
+    available: data.available !== false,
+  };
+}
+
+// REAL — POST /api/chats/:channel { text }
+export async function sendChat(channel, text) {
+  const { message } = await request(`/chats/${channel}`, { method: 'POST', body: { text } });
+  return { from: 'me', text: message.text, time: message.time };
 }

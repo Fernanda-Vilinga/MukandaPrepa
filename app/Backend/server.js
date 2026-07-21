@@ -8,6 +8,7 @@ const adminRoutes = require("./src/routes/adminRoutes");
 const { profRouter, studentRouter } = require("./src/routes/marathonRoutes");
 const sessionRoutes = require("./src/routes/sessionRoutes");
 const { profSubs, results, resultDetail } = require("./src/routes/submissionRoutes");
+const { studentRouter: chatStudent, profRouter: chatProf, adminRouter: chatAdmin } = require("./src/routes/chatRoutes");
 const { varrerExpiradas } = require("./src/controllers/sessionController");
 const seedAdmin = require("./src/utils/seedAdmin");
 
@@ -28,6 +29,9 @@ app.use("/api/sessions", sessionRoutes);
 app.use("/api/prof/submissions", profSubs);
 app.use("/api/students/me/results", results);
 app.use("/api/results", resultDetail);
+app.use("/api/chats", chatStudent);
+app.use("/api/prof/chats", chatProf);
+app.use("/api/admin/chats", chatAdmin);
 
 
 

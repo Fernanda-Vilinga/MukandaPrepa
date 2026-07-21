@@ -4,7 +4,7 @@
 // substitui os corpos por fetch() reais.
 // ============================================================
 import {
-  PROF_MARATHONS, SUBMISSIONS, LIVE_SESSIONS, MARATHON_STATS, PROF_CHATS,
+  PROF_MARATHONS, SUBMISSIONS, LIVE_SESSIONS, MARATHON_STATS,
 } from '../data/profMock.js';
 import { request, API_BASE } from './api.js';
 
@@ -138,8 +138,17 @@ export async function saveQuestion(slot, data) {
   });
 }
 
-// GET /api/prof/chats
+// REAL — GET /api/prof/chats (inbox de Dúvidas do professor)
 export async function getProfChats() {
-  await delay(150);
-  return PROF_CHATS;
+  const { chats } = await request('/prof/chats');
+  return chats.map((c) => ({
+    ...c,
+    messages: c.messages.map((m) => ({ ...m, from: m.from === 'professor' ? 'prof' : 'student' })),
+  }));
+}
+
+// REAL — POST /api/prof/chats/:id { text }
+export async function sendProfChat(conversaId, text) {
+  const { message } = await request(`/prof/chats/${conversaId}`, { method: 'POST', body: { text } });
+  return { from: 'prof', text: message.text, time: message.time };
 }

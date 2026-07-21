@@ -91,28 +91,3 @@ export const MARATHON_DATA = {
 };
 
 // Chat Suporte (admins) — inclui pedidos de compra de planos
-export const SUPPORT_CHATS = [
-  {
-    id: 's1', student: 'Adilson Manuel', initials: 'AM', color: 'var(--orange)', unread: 1,
-    topic: '💳 Upgrade de plano', last: '16:02', plan: 'plus',
-    messages: [
-      { from: 'student', text: 'Olá! Quero actualizar o meu plano Plus para o plano Premium (9 900 Kz/mês). Podem dar seguimento à compra? — mensagem automática', time: '16:00' },
-      { from: 'student', text: 'Já fiz a transferência, envio o comprovativo aqui?', time: '16:02' },
-    ],
-  },
-  {
-    id: 's2', student: 'Carla Sebastião', initials: 'CS', color: '#9333EA', unread: 1,
-    topic: '🔑 Problema de acesso', last: '14:47', plan: 'basic',
-    messages: [
-      { from: 'student', text: 'Boa tarde, a password da maratona de Física não funciona…', time: '14:47' },
-    ],
-  },
-  {
-    id: 's3', student: 'Rui Muteka', initials: 'RM', color: 'var(--blue)', unread: 0,
-    topic: '💳 Upgrade de plano', last: 'ontem', plan: 'basic',
-    messages: [
-      { from: 'student', text: 'Quero passar para o Plus. Como pago?', time: 'ontem' },
-      { from: 'admin', text: 'Olá Rui! Enviámos os dados de pagamento para o teu email. Qualquer dúvida, os gestores comerciais estão no WhatsApp: +244 9XX XXX XXX.', time: 'ontem' },
-    ],
-  },
-];

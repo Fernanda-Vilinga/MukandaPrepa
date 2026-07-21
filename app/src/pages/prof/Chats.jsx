@@ -1,7 +1,7 @@
 // Gestão de chats — apenas Dúvidas (privado por aluno).
 // O canal Suporte é gerido exclusivamente pelos ADMINISTRADORES.
-import { useEffect, useState } from 'react';
-import { getProfChats } from './profDeps.js';
+import { useEffect, useRef, useState } from 'react';
+import { getProfChats, sendProfChat } from './profDeps.js';
 import { ProfTopbar, Pill } from '../../components/ProfUi.jsx';
 
 export default function ProfChats() {
@@ -9,18 +9,32 @@ export default function ProfChats() {
   const [cur, setCur] = useState(null);
   const [text, setText] = useState('');
 
+  const curIdRef = useRef(null);
+  useEffect(() => { curIdRef.current = cur?.id ?? null; }, [cur]);
+
   useEffect(() => {
-    getProfChats().then((c) => { setChats(c); setCur(c[0] ?? null); });
+    const load = () => getProfChats().then((c) => {
+      setChats(c);
+      setCur((prev) => {
+        if (!prev) return c[0] ?? null;
+        return c.find((x) => x.id === curIdRef.current) ?? prev;
+      });
+    });
+    load();
+    // Sem WebSocket nesta fase — "tempo real" aproximado por polling (ver Monitor.jsx).
+    const timer = setInterval(load, 6000);
+    return () => clearInterval(timer);
   }, []);
 
   const unread = chats.reduce((n, c) => n + c.unread, 0);
 
-  const send = () => {
-    if (!text.trim() || !cur) return;
-    const msg = { from: 'prof', text, time: new Date().toTimeString().slice(0, 5) };
+  const send = async () => {
+    const value = text.trim();
+    if (!value || !cur) return;
+    setText('');
+    const msg = await sendProfChat(cur.id, value);
     setChats((all) => all.map((c) => (c.id === cur.id ? { ...c, messages: [...c.messages, msg], unread: 0 } : c)));
     setCur((c) => ({ ...c, messages: [...c.messages, msg], unread: 0 }));
-    setText('');
   };
 
   return (

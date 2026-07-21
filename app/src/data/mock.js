@@ -170,13 +170,3 @@ export const RESULTS = [
   },
 ];
 
-export const CHAT_THREADS = {
-  duvidas: [
-    { from: 'prof', text: 'Boa tarde, Adilson. Em que posso ajudar?', time: '15:02' },
-    { from: 'me', text: 'Boa tarde, professor! Na questão 3, o enunciado pede a inversa ou só o determinante?', time: '15:04' },
-    { from: 'prof', text: 'Só o determinante e a justificação da invertibilidade. Não precisas de calcular a inversa completa. 👍', time: '15:06' },
-  ],
-  suporte: [
-    { from: 'prof', text: 'Olá! Este é o canal de suporte da MUKANDA PREPA. Problemas de acesso ou passwords, é por aqui.', time: '09:00' },
-  ],
-};

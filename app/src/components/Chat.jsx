@@ -1,6 +1,11 @@
 // Chats do estudante: 💬 Dúvidas (privado com o professor) · 🎧 Suporte (geral)
-import { useEffect, useState } from 'react';
-import { getChat } from '../services/api.js';
+// REAL — mensagens persistidas no backend; "tempo real" por polling
+// (sem WebSocket/Socket.io nesta fase, decisão pragmática documentada
+// também em prof/Monitor.jsx).
+import { useEffect, useRef, useState } from 'react';
+import { getChat, sendChat } from '../services/api.js';
+
+const POLL_MS = 6000;
 
 export function ChatFab() {
   const [open, setOpen] = useState(null); // null | 'duvidas' | 'suporte'
@@ -25,37 +30,43 @@ export function ChatFab() {
 
 function ChatPanel({ channel, autoText, onClose, onSwitch }) {
   const [msgs, setMsgs] = useState([]);
+  const [ref, setRef] = useState(null);
+  const [available, setAvailable] = useState(true);
   const [text, setText] = useState('');
+  const autoSentRef = useRef(false);
 
   useEffect(() => {
-    let timer;
     let cancelled = false;
-    getChat(channel).then((base) => {
-      if (cancelled) return;
-      if (!autoText) return setMsgs(base);
-      const now = new Date().toTimeString().slice(0, 5);
-      setMsgs([...base, { from: 'me', text: autoText, time: now }]);
-      // Resposta automática do suporte (mock — no real: admins notificados
-      // por email na conta Gmail suporte e respondem por aqui)
-      // TODO backend: substituir +244 9XX XXX XXX pelo número oficial e
-      // transformá-lo em interlink que abre o WhatsApp Business
-      // (https://wa.me/<numero>)
-      timer = setTimeout(() => {
-        setMsgs((m) => [...m, {
-          from: 'prof',
-          text: 'Bem-vindo(a) à família MUKANDA PREPA! 🎉 Recebemos o teu pedido e um administrador já está a tratar de tudo — estás em boas mãos. É simples: 1️⃣ vais receber neste chat e no teu email os dados para o pagamento; 2️⃣ efectuas o pagamento e envias o comprovativo aqui mesmo; 3️⃣ confirmamos e o teu plano fica activo de imediato — nós avisamos-te por email. Centenas de estudantes já actualizaram o plano por este canal, com total segurança. Alguma dúvida? Fala directamente com os nossos gestores comerciais no WhatsApp: +244 9XX XXX XXX. Estamos aqui para te ajudar a ir mais longe! 🚀',
-          time: new Date().toTimeString().slice(0, 5),
-        }]);
-      }, 1200);
-    });
-    // cleanup: evita mensagens duplicadas (StrictMode corre os efeitos 2x em dev)
-    return () => { cancelled = true; clearTimeout(timer); };
-  }, [channel, autoText]);
+    autoSentRef.current = false;
 
-  const send = () => {
-    if (!text.trim()) return;
-    setMsgs((m) => [...m, { from: 'me', text, time: new Date().toTimeString().slice(0, 5) }]);
+    const load = async () => {
+      const data = await getChat(channel);
+      if (cancelled) return;
+      setMsgs(data.messages);
+      setRef(data.ref);
+      setAvailable(data.available);
+
+      // Mensagem automática (ex.: pedido de upgrade de plano) — enviada
+      // uma única vez como mensagem real ao abrir o painel com autoText.
+      if (autoText && !autoSentRef.current && data.available !== false) {
+        autoSentRef.current = true;
+        const sent = await sendChat(channel, autoText);
+        if (!cancelled) setMsgs((m) => [...m, sent]);
+      }
+    };
+    load();
+
+    const timer = setInterval(load, POLL_MS);
+    return () => { cancelled = true; clearInterval(timer); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [channel]);
+
+  const send = async () => {
+    const value = text.trim();
+    if (!value) return;
     setText('');
+    const sent = await sendChat(channel, value);
+    setMsgs((m) => [...m, sent]);
   };
 
   return (
@@ -69,9 +80,14 @@ function ChatPanel({ channel, autoText, onClose, onSwitch }) {
         <button className={`btn sm ${channel === 'suporte' ? '' : 'ghost'}`} style={{ flex: 1 }} onClick={() => onSwitch('suporte')}>🎧 Suporte</button>
       </div>
       <div className="xs mut" style={{ padding: '10px 24px', background: 'var(--bg)' }}>
-        {channel === 'duvidas' ? 'Chat privado com o professor da maratona' : 'Canal geral — problemas de acesso, passwords, etc.'}
+        {channel === 'duvidas'
+          ? (ref ? `Chat privado com o professor — ${ref}` : 'Chat privado com o professor da maratona')
+          : 'Canal geral — problemas de acesso, passwords, etc.'}
       </div>
       <div style={{ flex: 1, padding: 24, display: 'flex', flexDirection: 'column', gap: 14, overflowY: 'auto' }}>
+        {channel === 'duvidas' && !available && (
+          <div className="sm mut">Ainda não tens nenhuma maratona para tirar dúvidas com um professor. Entra numa maratona primeiro.</div>
+        )}
         {msgs.map((m, i) => (
           <div
             key={i}
@@ -97,9 +113,10 @@ function ChatPanel({ channel, autoText, onClose, onSwitch }) {
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && send()}
+          disabled={channel === 'duvidas' && !available}
           style={{ flex: 1 }}
         />
-        <button className="btn" style={{ padding: '14px 18px' }} onClick={send}>➤</button>
+        <button className="btn" style={{ padding: '14px 18px' }} onClick={send} disabled={channel === 'duvidas' && !available}>➤</button>
       </div>
     </div>
   );
