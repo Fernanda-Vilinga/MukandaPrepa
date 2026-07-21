@@ -5,21 +5,24 @@ import { currentUser, logout } from '../services/api.js';
 import PlanModal, { openPlans } from './PlanModal.jsx';
 import { PLAN_LABEL } from '../data/mock.js';
 
-/* Logotipo — ESPAÇO RESERVADO.
-   TODO: substituir o conteúdo por <img src="/logo.svg" …/> quando
-   o ficheiro oficial for adicionado a /public. Manter as dimensões. */
-export function Logo({ size = 40 }) {
+// Logotipo oficial MUKANDA PREPA (ícone). Versão branca sobre fundos
+// escuros/laranja (light), laranja sobre fundos claros (por defeito).
+export function Logo({ size = 40, light = false }) {
   return (
-    <span className="ph-logo" style={{ width: size, height: size }} title="Logotipo MUKANDA PREPA (a fornecer)">
-      LOGO
-    </span>
+    <img
+      src={light ? '/logo-icon-branco.png' : '/logo-icon.png'}
+      alt="MUKANDA PREPA"
+      width={size}
+      height={size}
+      style={{ objectFit: 'contain', display: 'block' }}
+    />
   );
 }
 
 export function Brand({ light = false, size = 40 }) {
   return (
     <Link to="/" className="brand">
-      <Logo size={size} />
+      <Logo size={size} light={light} />
       <span className="name" style={light ? { color: '#fff' } : undefined}>
         MUKANDA<br />PREPA
       </span>
