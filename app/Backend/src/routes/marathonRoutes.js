@@ -3,6 +3,7 @@ const { verificarToken, exigirRole } = require("../middleware/authMiddleware");
 const c = require("../controllers/marathonController");
 const sess = require("../controllers/sessionController");
 const stats = require("../controllers/statsController");
+const live = require("../controllers/liveController");
 
 // /api/prof/marathons — rotas do professor
 const profRouter = express.Router();
@@ -16,6 +17,7 @@ profRouter.put("/:id/questions/:slot", c.guardarQuestao);
 profRouter.post("/:id/publish", c.publicar);
 profRouter.get("/:id/stats", stats.estatisticasMaratona);
 profRouter.get("/:id/export.csv", stats.exportarCSV);
+profRouter.get("/:id/live", live.obterAoVivo);
 
 // /api/marathons — rotas do estudante (qualquer utilizador autenticado)
 const studentRouter = express.Router();

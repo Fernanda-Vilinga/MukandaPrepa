@@ -66,7 +66,7 @@ export default function ProfDashboard() {
                   ) : (
                     <>
                       <Badge status="active" />
-                      <Link to="/prof/monitorizacao" className="btn sm blue" style={{ textDecoration: 'none' }}>Monitorizar</Link>
+                      <Link to={`/prof/monitorizacao/${m.id}`} className="btn sm blue" style={{ textDecoration: 'none' }}>Monitorizar</Link>
                       <Link to={`/prof/estatisticas/${m.id}`} className="btn sm ghost" style={{ textDecoration: 'none' }}>Estatísticas</Link>
                     </>
                   )}

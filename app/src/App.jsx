@@ -79,7 +79,7 @@ export default function App() {
         <Route path="/prof/maratonas" element={<PrivateProf><ProfMarathons /></PrivateProf>} />
         <Route path="/prof/maratonas/nova" element={<PrivateProf><CreateMarathon /></PrivateProf>} />
         <Route path="/prof/maratonas/nova/questoes" element={<PrivateProf><Questions /></PrivateProf>} />
-        <Route path="/prof/monitorizacao" element={<PrivateProf><Monitor /></PrivateProf>} />
+        <Route path="/prof/monitorizacao/:id" element={<PrivateProf><Monitor /></PrivateProf>} />
         <Route path="/prof/validacao" element={<PrivateProf><Queue /></PrivateProf>} />
         <Route path="/prof/validacao/:id" element={<PrivateProf><Validate /></PrivateProf>} />
         <Route path="/prof/estatisticas/:id" element={<PrivateProf><Stats /></PrivateProf>} />

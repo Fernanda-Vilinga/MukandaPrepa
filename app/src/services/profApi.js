@@ -46,13 +46,10 @@ export async function confirmValidation(id, payload) {
 }
 
 // GET /api/prof/marathons/:id/live  (real: WebSocket / polling)
-export async function getLiveSessions() {
-  await delay();
-  return {
-    sessions: LIVE_SESSIONS,
-    completed: 15, abandoned: 2, avgTime: '41m',
-    pendingValidation: 5, connected: LIVE_SESSIONS.length + 3, participants: 23,
-  };
+// REAL — GET /api/prof/marathons/:id/live (sem WebSocket: a página
+// faz polling periódico chamando esta função de novo)
+export async function getLiveSessions(id) {
+  return request(`/prof/marathons/${id}/live`);
 }
 
 // GET /api/prof/marathons/:id/stats
