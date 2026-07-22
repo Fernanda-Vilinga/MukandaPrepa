@@ -98,7 +98,7 @@ export default function Plans() {
                 <div className="mont" style={{ fontWeight: 800, fontSize: 20 }}>{p.name}</div>
 
                 <div style={{ margin: '10px 0 16px' }}>
-                  <div className="xs mut">PREÇO MENSAL (Kz) — 0 = Grátis</div>
+                  <div className="xs mut">PREÇO — PAGAMENTO ÚNICO (Kz) — 0 = Grátis</div>
                   <input
                     className="input mont"
                     type="number" min="0" step="100"
@@ -107,7 +107,7 @@ export default function Plans() {
                     onChange={(e) => update(p.id, { priceKz: Number(e.target.value) })}
                     disabled={!editing}
                   />
-                  <div className="xs mut" style={{ marginTop: 4 }}>{p.priceKz === 0 ? 'Grátis' : `${Number(p.priceKz).toLocaleString('pt-PT')} Kz/mês`}</div>
+                  <div className="xs mut" style={{ marginTop: 4 }}>{p.priceKz === 0 ? 'Grátis' : `${Number(p.priceKz).toLocaleString('pt-PT')} Kz (pagamento único)`}</div>
                 </div>
 
                 <div style={{ background: 'var(--bg)', borderRadius: 12, padding: 14, marginBottom: 18 }}>

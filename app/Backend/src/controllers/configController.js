@@ -43,7 +43,8 @@ const obterConfig = async () => {
     };
 };
 
-const labelPreco = (p) => (p.priceKz === 0 ? "Grátis" : `${Number(p.priceKz).toLocaleString("pt-PT")} Kz/mês`);
+// Pagamento único (não recorrente) — sem cobrança mensal.
+const labelPreco = (p) => (p.priceKz === 0 ? "Grátis" : `${Number(p.priceKz).toLocaleString("pt-PT")} Kz (pagamento único)`);
 const labelTentativas = (p) => (p.attempts == null ? "∞" : String(p.attempts));
 const comLabels = (p) => ({ ...p, price: labelPreco(p), attemptsLabel: labelTentativas(p) });
 

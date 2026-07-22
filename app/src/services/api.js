@@ -91,6 +91,23 @@ export function currentUser() {
   return raw ? JSON.parse(raw) : null;
 }
 
+// REAL — GET /api/auth/me — re-sincroniza sessionStorage com o backend.
+// currentUser() só lê a fotografia gravada no login; sem isto, mudanças
+// feitas pelo admin (plano, suspensão) só apareciam depois de sair e
+// entrar de novo, mesmo com F5. Silencioso em caso de falha de rede —
+// mantém a sessão cacheada em vez de deslogar por uma falha momentânea.
+export async function refreshUser() {
+  if (!sessionStorage.getItem('mkp_token')) return null;
+  try {
+    const data = await request('/auth/me');
+    const user = mapUser(data.usuario);
+    sessionStorage.setItem('mkp_user', JSON.stringify(user));
+    return user;
+  } catch {
+    return currentUser();
+  }
+}
+
 export function logout() {
   sessionStorage.removeItem('mkp_token');
   sessionStorage.removeItem('mkp_user');

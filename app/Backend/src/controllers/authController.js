@@ -131,6 +131,26 @@ exports.login = async (req, res) => {
     }
 };
 
+// GET /api/auth/me  (autenticado) — perfil actual, sempre lido do Firestore.
+// Usado para re-sincronizar sessionStorage depois de um F5, já que o
+// token/plano/estado só ficam gravados no browser no momento do login.
+exports.meuPerfil = async (req, res) => {
+    try {
+        const doc = await db.collection("usuarios").doc(req.usuario.id).get();
+        if (!doc.exists) return res.status(404).json({ mensagem: "Conta não encontrada." });
+
+        const usuario = { id: doc.id, ...doc.data() };
+        if (usuario.estado === "suspenso") {
+            return res.status(403).json({ mensagem: "Esta conta está suspensa. Contacta a administração." });
+        }
+
+        res.json({ usuario: usuarioPublico(usuario) });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ mensagem: "Erro no servidor." });
+    }
+};
+
 // POST /api/auth/alterar-senha  (autenticado)
 // Troca a senha do próprio utilizador; limpa a flag trocarSenha
 // (usada no 1º login do professor com senha temporária).

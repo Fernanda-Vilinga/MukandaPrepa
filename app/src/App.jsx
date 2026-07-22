@@ -1,5 +1,6 @@
+import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { currentUser } from './services/api.js';
+import { currentUser, refreshUser } from './services/api.js';
 import Login from './pages/Login.jsx';
 import Register from './pages/Register.jsx';
 import Dashboard from './pages/Dashboard.jsx';
@@ -58,6 +59,21 @@ function PrivateProf({ children }) {
 }
 
 export default function App() {
+  // Re-sincroniza o utilizador com o backend uma vez ao carregar a app
+  // (F5 inclusive) — sem isto, mudanças feitas pelo admin (plano,
+  // suspensão) só apareciam depois de sair e voltar a entrar, mesmo
+  // com a página actualizada, porque currentUser() só lia a fotografia
+  // gravada no sessionStorage no momento do login.
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    refreshUser().finally(() => setReady(true));
+  }, []);
+
+  if (!ready) {
+    return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', color: 'var(--mut)' }}>A carregar…</div>;
+  }
+
   return (
     <BrowserRouter>
       <Routes>

@@ -96,7 +96,7 @@ export default function GlobalStats() {
                 </div>
               </div>
               <div className="sm mut" style={{ marginTop: 14 }}>
-                Receita recorrente: <b style={{ color: 'var(--dark)' }}>Plus + Premium = {pct(s.byPlan.plus + s.byPlan.premium)}%</b> da base
+                Base paga (planos com custo): <b style={{ color: 'var(--dark)' }}>Plus + Premium = {pct(s.byPlan.plus + s.byPlan.premium)}%</b> da base
               </div>
             </div>
             <div className="card">
