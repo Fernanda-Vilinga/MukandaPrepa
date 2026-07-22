@@ -2,7 +2,7 @@
 // REAL — mensagens persistidas no backend; "tempo real" por polling
 // (sem WebSocket/Socket.io nesta fase, decisão pragmática documentada
 // também em prof/Monitor.jsx).
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   getDuvidasThreads, getDuvidasThread, sendDuvidas,
   getSuporte, sendSuporte, getMarathons,
@@ -12,10 +12,9 @@ const POLL_MS = 6000;
 
 export function ChatFab() {
   const [open, setOpen] = useState(null); // null | 'duvidas' | 'suporte'
-  const [auto, setAuto] = useState(null); // mensagem automática (ex.: upgrade de plano — vai para o Suporte)
 
   useEffect(() => {
-    const h = (e) => { setAuto(e.detail.autoText ?? null); setOpen(e.detail.channel); };
+    const h = (e) => setOpen(e.detail.channel);
     window.addEventListener('mkp:openChat', h);
     return () => window.removeEventListener('mkp:openChat', h);
   }, []);
@@ -26,12 +25,12 @@ export function ChatFab() {
         <button className="b" style={{ background: 'var(--blue)' }} title="Dúvidas com o professor" onClick={() => setOpen('duvidas')}>💬</button>
         <button className="b" style={{ background: 'var(--dark)' }} title="Suporte geral" onClick={() => setOpen('suporte')}>🎧</button>
       </div>
-      {open && <ChatPanel channel={open} autoText={auto} onClose={() => { setOpen(null); setAuto(null); }} onSwitch={setOpen} />}
+      {open && <ChatPanel channel={open} onClose={() => setOpen(null)} onSwitch={setOpen} />}
     </>
   );
 }
 
-function ChatPanel({ channel, autoText, onClose, onSwitch }) {
+function ChatPanel({ channel, onClose, onSwitch }) {
   const [maratonaId, setMaratonaId] = useState(null);
 
   useEffect(() => { if (channel !== 'duvidas') setMaratonaId(null); }, [channel]);
@@ -51,7 +50,7 @@ function ChatPanel({ channel, autoText, onClose, onSwitch }) {
         ? (maratonaId
           ? <DuvidasThread maratonaId={maratonaId} onBack={() => setMaratonaId(null)} />
           : <DuvidasPicker onPick={setMaratonaId} />)
-        : <SuportePanel autoText={autoText} />}
+        : <SuportePanel />}
     </div>
   );
 }
@@ -189,33 +188,22 @@ function DuvidasThread({ maratonaId, onBack }) {
   );
 }
 
-function SuportePanel({ autoText }) {
+function SuportePanel() {
   const [msgs, setMsgs] = useState([]);
   const [text, setText] = useState('');
-  const autoSentRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
-    autoSentRef.current = false;
 
     const load = async () => {
       const data = await getSuporte();
       if (cancelled) return;
       setMsgs(data.messages);
-
-      // Mensagem automática (ex.: pedido de upgrade de plano) — enviada
-      // uma única vez como mensagem real ao abrir o painel com autoText.
-      if (autoText && !autoSentRef.current) {
-        autoSentRef.current = true;
-        const sent = await sendSuporte(autoText);
-        if (!cancelled) setMsgs((m) => [...m, sent]);
-      }
     };
     load();
 
     const timer = setInterval(load, POLL_MS);
     return () => { cancelled = true; clearInterval(timer); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const send = async () => {

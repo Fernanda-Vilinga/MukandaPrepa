@@ -26,26 +26,6 @@ export const AREAS = [
   'Outra',
 ];
 
-// Descrição dos planos (janela de upgrade)
-// TODO: preços provisórios — confirmar com a equipa comercial.
-export const PLAN_INFO = [
-  {
-    id: 'basic', name: 'Basic', price: 'Grátis', accent: '#64748B',
-    features: ['2 tentativas por maratona', 'Resultados por email + dashboard', 'Chat de suporte'],
-    missing: ['Chat de dúvidas com professor', 'Tentativas ilimitadas'],
-  },
-  {
-    id: 'plus', name: 'Plus', price: '4 900 Kz/mês', accent: '#1742E7', popular: true,
-    features: ['5 tentativas por maratona', 'Feedback detalhado do professor', 'Chat de dúvidas com professor', 'Suporte prioritário'],
-    missing: ['Tentativas ilimitadas'],
-  },
-  {
-    id: 'premium', name: 'Premium', price: '9 900 Kz/mês', accent: '#FB6D1D',
-    features: ['Tentativas ilimitadas', 'Feedback detalhado do professor', 'Chat de dúvidas com professor', 'Suporte prioritário', 'Acesso antecipado a maratonas'],
-    missing: [],
-  },
-];
-
 export const MARATHONS = [
   {
     id: 'm1',

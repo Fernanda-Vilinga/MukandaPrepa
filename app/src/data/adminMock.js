@@ -55,23 +55,6 @@ export const GLOBAL_STATS = {
   ],
 };
 
-// Config dos planos — TODO: preços provisórios, confirmar com equipa comercial
-export const PLANS_CONFIG = [
-  { id: 'basic', name: 'Basic', price: 'Grátis', attempts: '2', accent: '#64748B', active: true,
-    features: ['2 tentativas por maratona', 'Resultados por email + dashboard', 'Chat de suporte'],
-    missing: ['Chat de dúvidas com professor', 'Tentativas ilimitadas'] },
-  { id: 'plus', name: 'Plus', price: '4 900 Kz/mês', attempts: '5', accent: '#1742E7', active: true, popular: true,
-    features: ['5 tentativas por maratona', 'Feedback detalhado', 'Chat de dúvidas com professor', 'Suporte prioritário'],
-    missing: ['Tentativas ilimitadas'] },
-  { id: 'premium', name: 'Premium', price: '9 900 Kz/mês', attempts: '∞', accent: '#FB6D1D', active: true,
-    features: ['Tentativas ilimitadas', 'Feedback detalhado', 'Chat de dúvidas com professor', 'Suporte prioritário', 'Acesso antecipado'],
-    missing: [] },
-];
-
-export const PROMO_CODES = [
-  { code: 'MUKANDA26', desc: '30% de desconto no 1º mês Plus/Premium', expires: '31 Ago 2026', used: 41, active: true },
-];
-
 // Dados completos de uma maratona (visão admin)
 export const MARATHON_DATA = {
   m1: {

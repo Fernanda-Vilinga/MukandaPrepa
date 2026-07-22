@@ -3,7 +3,7 @@
 // ============================================================
 import {
   ADMIN_KPIS, ACTIVITY_WEEKS, SYSTEM_ALERTS, USERS, GLOBAL_STATS,
-  PLANS_CONFIG, PROMO_CODES, MARATHON_DATA,
+  MARATHON_DATA,
 } from '../data/adminMock.js';
 import { request, API_BASE } from './api.js';
 
@@ -73,14 +73,30 @@ export async function exportGlobalReportCSV(filename = `relatorio-global-${new D
   URL.revokeObjectURL(url);
 }
 
-// GET /api/admin/plans · PUT /api/admin/plans
+// REAL — GET /api/admin/plans (planos, promoções, dados de pagamento — tudo, incluindo inactivos)
 export async function getPlansConfig() {
-  await delay();
-  return { plans: PLANS_CONFIG, promos: PROMO_CODES };
+  return request('/admin/plans');
 }
-export async function savePlansConfig(plans) {
-  await delay(400);
-  return { ok: true, plans };
+
+// REAL — PUT /api/admin/plans  { plans, promos, payment }
+export async function savePlansConfig(config) {
+  return request('/admin/plans', { method: 'PUT', body: config });
+}
+
+// REAL — GET /api/admin/purchases (pedidos de upgrade, mais recentes primeiro)
+export async function getPurchases() {
+  const { purchases } = await request('/admin/purchases');
+  return purchases;
+}
+
+// REAL — POST /api/admin/purchases/:id/confirm
+export async function confirmPurchase(id) {
+  return request(`/admin/purchases/${id}/confirm`, { method: 'POST' });
+}
+
+// REAL — POST /api/admin/purchases/:id/reject  { motivo }
+export async function rejectPurchase(id, motivo) {
+  return request(`/admin/purchases/${id}/reject`, { method: 'POST', body: { motivo } });
 }
 
 // GET /api/admin/marathons/:id/data  (+ /export.csv)

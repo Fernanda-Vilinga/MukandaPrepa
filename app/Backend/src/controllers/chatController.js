@@ -312,9 +312,17 @@ exports.adminListar = async (req, res) => {
         const conversas = (await db.collection("conversas").get()).docs
             .map((d) => ({ id: d.id, ...d.data() })).filter((c) => c.tipo === "suporte");
 
+        // Pedidos de upgrade pendentes, por estudante — ligam o botão de
+        // acção do chat Suporte ao pedido real (ver purchaseController).
+        const comprasPendentes = (await db.collection("compras").where("estado", "==", "pendente").get())
+            .docs.map((d) => ({ id: d.id, ...d.data() }));
+        const compraPorEstudante = {};
+        comprasPendentes.forEach((c) => { compraPorEstudante[c.estudanteId] = c; });
+
         const lista = [];
         for (const c of conversas) {
             const aluno = await obterUsuario(c.estudanteId);
+            const pendente = compraPorEstudante[c.estudanteId];
             lista.push({
                 id: c.id,
                 student: aluno ? aluno.nome : "Estudante",
@@ -322,7 +330,10 @@ exports.adminListar = async (req, res) => {
                 color: corDe(c.estudanteId),
                 unread: c.naoLidasAdmin || 0,
                 plan: aluno ? String(aluno.plano || "basic").toLowerCase() : "basic",
-                topic: "🎧 Suporte geral",
+                topic: pendente ? "💳 Upgrade de plano" : "🎧 Suporte geral",
+                pendingPurchase: pendente
+                    ? { id: pendente.id, planoActual: pendente.planoActual, planoPedido: pendente.planoPedido, promoCode: pendente.promoCode || null }
+                    : null,
                 last: c.ultimaMensagemEm ? haQuanto(c.ultimaMensagemEm) : "",
                 messages: (c.mensagens || []).map(mensagemPublica),
             });

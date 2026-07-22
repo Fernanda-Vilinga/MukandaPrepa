@@ -1,6 +1,8 @@
 const { db } = require("../config/firebase");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
+const { enviarEmail } = require("../utils/email");
+const tpl = require("../utils/emailTemplates");
 
 // POST /api/admin/professores  (protegido: só admin)
 // Cria conta de professor com senha temporária — o professor deve
@@ -49,6 +51,9 @@ exports.criarProfessor = async (req, res) => {
         };
 
         const docRef = await db.collection("usuarios").add(novoProfessor);
+
+        const { subject, html } = tpl.boasVindasProfessor({ nome, email: emailNormalizado, senhaTemporaria });
+        enviarEmail({ to: emailNormalizado, subject, html }).catch(() => {});
 
         res.status(201).json({
             mensagem: "Professor registado com sucesso.",
@@ -154,6 +159,16 @@ exports.actualizarUtilizador = async (req, res) => {
 
         await db.collection("usuarios").doc(id).update(patch);
 
+        if (novaSenhaTemporaria && alvo.email) {
+            const { subject, html } = tpl.senhaRedefinida({ nome: alvo.nome, email: alvo.email, senhaTemporaria: novaSenhaTemporaria });
+            enviarEmail({ to: alvo.email, subject, html }).catch(() => {});
+        }
+        if (patch.plano && alvo.email) {
+            const PLANO_LABEL = { basic: "Basic", plus: "Plus", premium: "Premium" };
+            const { subject, html } = tpl.planoAlteradoPeloAdmin({ nome: alvo.nome, plano: PLANO_LABEL[patch.plano] || patch.plano });
+            enviarEmail({ to: alvo.email, subject, html }).catch(() => {});
+        }
+
         res.json({
             ok: true,
             id,
@@ -161,7 +176,6 @@ exports.actualizarUtilizador = async (req, res) => {
             plan: patch.plano,
             temporaryPassword: novaSenhaTemporaria || undefined,
         });
-        // TODO fase de emails: notificar o utilizador da senha redefinida / plano alterado
     } catch (error) {
         console.error(error);
         res.status(500).json({ mensagem: "Erro no servidor." });

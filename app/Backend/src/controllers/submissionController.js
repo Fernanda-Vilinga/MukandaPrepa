@@ -1,4 +1,6 @@
 const { db } = require("../config/firebase");
+const { enviarEmail } = require("../utils/email");
+const tpl = require("../utils/emailTemplates");
 
 // ---- helpers de apresentação ----
 const CORES = ["var(--orange)", "var(--blue)", "var(--green)", "var(--dark)", "#9333EA"];
@@ -172,7 +174,20 @@ exports.validar = async (req, res) => {
         });
 
         res.json({ ok: true, score, total });
-        // TODO fase de emails: "resultado validado" para o estudante
+
+        // Notifica o estudante — não bloqueia a resposta.
+        (async () => {
+            const aluno = await nomeDoUtilizador(s.usuarioId);
+            if (!aluno.email) return;
+            const minhas = await maratonasDoProf(req.usuario.id);
+            const maratona = minhas[s.maratonaId];
+            const percent = total ? Math.round((score / total) * 100) : 0;
+            const { subject, html } = tpl.resultadoValidado({
+                nomeAluno: aluno.nome, maratona: maratona ? maratona.titulo : "a maratona",
+                score, total, percent,
+            });
+            await enviarEmail({ to: aluno.email, subject, html });
+        })().catch(() => {});
     } catch (e) {
         console.error(e);
         res.status(500).json({ mensagem: "Erro no servidor." });

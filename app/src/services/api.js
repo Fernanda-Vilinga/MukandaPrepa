@@ -210,20 +210,22 @@ export async function getResult(id) {
 }
 
 // --- Planos / upgrade -------------------------------------------
-// POST /api/plans/upgrade-request  { plan }
-// FLUXO DE COMPRA (regra de produto — importante para o backend):
-// 1. Toda a compra de plano passa pelo CHAT SUPORTE (administradores).
-// 2. Este endpoint cria a mensagem automática no chat e envia email de
-//    notificação para a conta Gmail suporte da MUKANDA (os admins dão
-//    seguimento à conversa). WhatsApp = contacto directo com os gestores
-//    comerciais para esclarecimentos.
-// 3. O estudante envia o comprovativo de pagamento pelo mesmo chat.
-// 4. Confirmado o pagamento, o ADMIN actualiza o plano do estudante,
-//    convida-o a actualizar a página, e o sistema envia email de
-//    confirmação ao estudante.
-export async function requestPlanUpgrade(planId) {
-  await delay(300);
-  return { ok: true, planId };
+// REAL — GET /api/plans (planos activos, promoções activas, dados de
+// pagamento configurados pelo admin em admin/Plans.jsx)
+export async function getPlans() {
+  return request('/plans');
+}
+
+// REAL — POST /api/plans/upgrade-request  { planId, promoCode }
+// FLUXO DE COMPRA:
+// 1. Cria um pedido pendente e a mensagem automática no chat Suporte;
+//    os administradores são notificados por email.
+// 2. O estudante envia o comprovativo de pagamento pelo mesmo chat.
+// 3. Confirmado o pagamento, o ADMIN confirma o pedido (Suporte →
+//    "Confirmar e actualizar plano"): o plano é actualizado, o
+//    estudante recebe uma mensagem no chat e um email de confirmação.
+export async function requestPlanUpgrade(planId, promoCode) {
+  return request('/plans/upgrade-request', { method: 'POST', body: { planId, promoCode } });
 }
 
 // --- Chat --------------------------------------------------------
