@@ -84,7 +84,21 @@ const planoConfirmado = ({ nomeAluno, planoPedido }) => ({
         { url: APP_URL, label: "Ver o meu dashboard" }),
 });
 
+const recuperarSenha = ({ nome, url }) => ({
+    subject: "Recuperar a tua senha — MUKANDA PREPA",
+    // O link vai também em texto simples (não só no botão): o modo simulado
+    // desta app mostra o email como texto puro no terminal (sem HTML), por
+    // isso o link tem de estar visível fora do botão para ser utilizável
+    // em teste local sem SMTP configurado.
+    html: base(`Olá, ${nome}`, `
+    <p>Pediste para recuperar o acesso à tua conta na MUKANDA PREPA. Clica no botão abaixo (ou usa o link) para definires uma nova senha — válido por 1 hora.</p>
+    <p style="word-break:break-all;font-family:monospace;font-size:13px;background:#F7F7F9;border-radius:10px;padding:14px 18px;">${url}</p>
+    <p>Se não foste tu a pedir, ignora este email; a tua senha actual continua válida.</p>`,
+        { url, label: "Definir nova senha" }),
+});
+
 module.exports = {
     boasVindasProfessor, senhaRedefinida, planoAlteradoPeloAdmin,
     submissaoRecebida, resultadoValidado, pedidoDeUpgrade, planoConfirmado,
+    recuperarSenha,
 };

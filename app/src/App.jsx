@@ -14,10 +14,12 @@ import ResultDetail from './pages/ResultDetail.jsx';
 import Terms from './pages/Terms.jsx';
 import Profile from './pages/Profile.jsx';
 import ForgotPassword from './pages/ForgotPassword.jsx';
+import ResetPassword from './pages/ResetPassword.jsx';
 import ChangePassword from './pages/ChangePassword.jsx';
 import ProfDashboard from './pages/prof/Dashboard.jsx';
 import CreateMarathon from './pages/prof/CreateMarathon.jsx';
 import Questions from './pages/prof/Questions.jsx';
+import PreviewMarathon from './pages/prof/PreviewMarathon.jsx';
 import Monitor from './pages/prof/Monitor.jsx';
 import Queue from './pages/prof/Queue.jsx';
 import Validate from './pages/prof/Validate.jsx';
@@ -81,6 +83,7 @@ export default function App() {
         <Route path="/registo" element={<Register />} />
         <Route path="/termos" element={<Terms />} />
         <Route path="/recuperar-senha" element={<ForgotPassword />} />
+        <Route path="/redefinir-senha" element={<ResetPassword />} />
         <Route path="/alterar-senha" element={<ChangePassword />} />
         <Route path="/" element={<Private><Dashboard /></Private>} />
         <Route path="/maratonas" element={<Private><Marathons /></Private>} />
@@ -95,6 +98,7 @@ export default function App() {
         <Route path="/prof/maratonas" element={<PrivateProf><ProfMarathons /></PrivateProf>} />
         <Route path="/prof/maratonas/nova" element={<PrivateProf><CreateMarathon /></PrivateProf>} />
         <Route path="/prof/maratonas/nova/questoes" element={<PrivateProf><Questions /></PrivateProf>} />
+        <Route path="/prof/maratonas/nova/pre-visualizar" element={<PrivateProf><PreviewMarathon /></PrivateProf>} />
         <Route path="/prof/monitorizacao/:id" element={<PrivateProf><Monitor /></PrivateProf>} />
         <Route path="/prof/validacao" element={<PrivateProf><Queue /></PrivateProf>} />
         <Route path="/prof/validacao/:id" element={<PrivateProf><Validate /></PrivateProf>} />

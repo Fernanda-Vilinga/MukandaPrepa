@@ -125,6 +125,18 @@ export async function changePassword(currentPassword, newPassword) {
   return { ok: true };
 }
 
+// POST /api/auth/esqueci-senha — pede o email de recuperação.
+// Resposta sempre igual, exista ou não a conta (o backend não revela).
+export async function forgotPassword(email) {
+  return request('/auth/esqueci-senha', { method: 'POST', auth: false, body: { email } });
+}
+
+// POST /api/auth/redefinir-senha — define a nova senha a partir do
+// token recebido por email (link de "Esqueceste a password?").
+export async function resetPassword(token, newPassword) {
+  return request('/auth/redefinir-senha', { method: 'POST', auth: false, body: { token, novaSenha: newPassword } });
+}
+
 // PUT /api/students/me — actualizar dados do perfil
 // (a senha, no backend real, é alterada num endpoint próprio com
 //  verificação da senha actual; aqui é mock)

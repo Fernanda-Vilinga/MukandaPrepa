@@ -7,6 +7,8 @@ const {
     login,
     alterarSenha,
     meuPerfil,
+    esqueciSenha,
+    redefinirSenha,
 } = require("../controllers/authController");
 
 const { verificarToken } = require("../middleware/authMiddleware");
@@ -18,5 +20,8 @@ router.post("/login", login);
 router.get("/me", verificarToken, meuPerfil);
 
 router.post("/alterar-senha", verificarToken, alterarSenha);
+
+router.post("/esqueci-senha", esqueciSenha);
+router.post("/redefinir-senha", redefinirSenha);
 
 module.exports = router;

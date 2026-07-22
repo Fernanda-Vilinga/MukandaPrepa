@@ -1,22 +1,30 @@
-// Recuperação de senha — página estática por agora.
-// TODO backend: envio real do email com link/código de recuperação,
-// expiração do token e página de definição de nova senha.
+// Recuperação de senha — pede o email e chama o backend real
+// (POST /api/auth/esqueci-senha). A resposta é sempre a mesma, exista ou
+// não a conta — por isso não há forma de saber pelo ecrã se um email está
+// registado; o link de recuperação segue no email (ResetPassword.jsx).
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AuthLeft } from './Login.jsx';
+import { forgotPassword } from '../services/api.js';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
 
   const submit = async (e) => {
     e.preventDefault();
+    setError('');
     setBusy(true);
-    // Mock: o backend enviará o email de recuperação
-    await new Promise((r) => setTimeout(r, 500));
-    setBusy(false);
-    setSent(true);
+    try {
+      await forgotPassword(email);
+      setSent(true);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -38,6 +46,11 @@ export default function ForgotPassword() {
                   placeholder="oteu@email.com"
                 />
               </div>
+              {error && (
+                <div className="sm" style={{ background: 'var(--red-l, #fdecec)', color: 'var(--red, #c0392b)', borderRadius: 10, padding: '12px 16px', margin: '4px 0 12px' }}>
+                  {error}
+                </div>
+              )}
               <button className="btn" style={{ width: '100%', marginTop: 6 }} disabled={busy || !email}>
                 {busy ? 'A enviar…' : 'Enviar link de recuperação'}
               </button>
