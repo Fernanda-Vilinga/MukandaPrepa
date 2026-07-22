@@ -2,11 +2,15 @@ const express = require("express");
 const { verificarToken, exigirRole } = require("../middleware/authMiddleware");
 const chat = require("../controllers/chatController");
 
-// /api/chats — canais do estudante (duvidas | suporte)
+// /api/chats — canais do estudante
+// Dúvidas: o aluno escolhe a maratona (logo o professor) manualmente.
 const studentRouter = express.Router();
 studentRouter.use(verificarToken);
-studentRouter.get("/:channel", chat.estudanteObterThread);
-studentRouter.post("/:channel", chat.estudanteEnviar);
+studentRouter.get("/duvidas", chat.duvidasListar);
+studentRouter.get("/duvidas/:maratonaId", chat.duvidasObter);
+studentRouter.post("/duvidas/:maratonaId", chat.duvidasEnviar);
+studentRouter.get("/suporte", chat.suporteObter);
+studentRouter.post("/suporte", chat.suporteEnviar);
 
 // /api/prof/chats — inbox de Dúvidas do professor
 const profRouter = express.Router();

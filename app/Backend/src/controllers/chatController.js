@@ -1,4 +1,5 @@
 const { db } = require("../config/firebase");
+const { decifrar } = require("../utils/crypto");
 
 const CORES = ["var(--orange)", "var(--blue)", "var(--green)", "var(--dark)", "#9333EA"];
 const iniciaisDe = (nome = "") => nome.trim().split(/\s+/).map((p) => p[0]).filter(Boolean).slice(0, 2).join("").toUpperCase() || "?";
@@ -17,118 +18,155 @@ const obterUsuario = async (id) => {
     return doc.exists ? { id, ...doc.data() } : null;
 };
 
-// Determina o professor "de referência" para o canal Dúvidas: o da
-// maratona mais recente do estudante (sessão activa dá prioridade),
-// com referência automática à questão em curso, se houver.
-async function contextoDuvidas(estudanteId) {
-    const sessoes = (await db.collection("sessoes").where("usuarioId", "==", estudanteId).get()).docs
-        .map((d) => ({ id: d.id, ...d.data() }));
-    if (!sessoes.length) return null;
+const minhasConversas = async (estudanteId) =>
+    (await db.collection("conversas").where("estudanteId", "==", estudanteId).get())
+        .docs.map((d) => ({ id: d.id, ...d.data() }));
 
-    sessoes.sort((a, b) => (b.iniciadaEm || "").localeCompare(a.iniciadaEm || ""));
-    const activa = sessoes.find((s) => s.estado === "active");
-    const sessao = activa || sessoes[0];
-
-    const mDoc = await db.collection("maratonas").doc(sessao.maratonaId).get();
+// Contexto de uma maratona específica escolhida pelo estudante: quem é o
+// professor dono e, se houver sessão activa dessa maratona, a questão em
+// curso (referência automática só dentro da maratona já escolhida).
+async function contextoMaratona(maratonaId, estudanteId) {
+    const mDoc = await db.collection("maratonas").doc(maratonaId).get();
     if (!mDoc.exists) return null;
     const m = mDoc.data();
 
+    const sessoes = (await db.collection("sessoes").where("usuarioId", "==", estudanteId).get())
+        .docs.map((d) => d.data()).filter((s) => s.maratonaId === maratonaId);
+    const activa = sessoes.find((s) => s.estado === "active");
+
     let referencia = m.titulo;
-    if (sessao.estado === "active") {
-        const respondidas = Object.keys(sessao.respostas || {}).length;
-        const idx = Math.min(respondidas, Math.max((sessao.questoes || []).length - 1, 0));
+    if (activa) {
+        const respondidas = Object.keys(activa.respostas || {}).length;
+        const idx = Math.min(respondidas, Math.max((activa.questoes || []).length - 1, 0));
         referencia = `Questão ${idx + 1} — ${m.titulo}`;
     }
-    return { professorId: m.professorId, referencia };
+    return { professorId: m.professorId, titulo: m.titulo, icon: m.icon || "🎓", referencia };
 }
 
 const mensagemPublica = (msg) => ({ from: msg.from, text: msg.text, time: hora(msg.criadaEm) });
 
-// ---------- ESTUDANTE ----------
+// ---------- ESTUDANTE — Dúvidas (escolha manual da maratona) ----------
 
-// GET /api/chats/:channel  (duvidas | suporte)
-exports.estudanteObterThread = async (req, res) => {
+// GET /api/chats/duvidas — conversas já iniciadas pelo estudante (uma por maratona)
+exports.duvidasListar = async (req, res) => {
     try {
-        const { channel } = req.params;
-        if (!["duvidas", "suporte"].includes(channel)) {
-            return res.status(400).json({ mensagem: "Canal inválido." });
+        const conversas = (await minhasConversas(req.usuario.id)).filter((c) => c.tipo === "duvidas");
+        const lista = [];
+        for (const c of conversas) {
+            const prof = await obterUsuario(c.professorId);
+            lista.push({
+                maratonaId: c.maratonaId,
+                title: c.maratonaTitulo || null,
+                icon: c.maratonaIcon || "🎓",
+                professorName: prof ? prof.nome : "Professor",
+                ref: c.referencia || null,
+                last: c.ultimaMensagemEm ? haQuanto(c.ultimaMensagemEm) : "",
+                lastMessage: c.ultimaMensagem || null,
+                unread: c.naoLidasEstudante || 0,
+            });
         }
-
-        if (channel === "duvidas") {
-            const ctx = await contextoDuvidas(req.usuario.id);
-            if (!ctx) return res.json({ messages: [], ref: null, available: false });
-
-            const existentes = await db.collection("conversas")
-                .where("estudanteId", "==", req.usuario.id).get();
-            const conversa = existentes.docs
-                .map((d) => ({ id: d.id, ...d.data() }))
-                .find((c) => c.tipo === "duvidas" && c.professorId === ctx.professorId);
-
-            if (!conversa) return res.json({ messages: [], ref: ctx.referencia, available: true });
-
-            await db.collection("conversas").doc(conversa.id).update({ naoLidasEstudante: 0 });
-            return res.json({ messages: (conversa.mensagens || []).map(mensagemPublica), ref: ctx.referencia, available: true });
-        }
-
-        // suporte: uma conversa por estudante, partilhada por todos os admins
-        const existentes = await db.collection("conversas").where("estudanteId", "==", req.usuario.id).get();
-        const conversa = existentes.docs.map((d) => ({ id: d.id, ...d.data() })).find((c) => c.tipo === "suporte");
-        if (!conversa) return res.json({ messages: [], available: true });
-
-        await db.collection("conversas").doc(conversa.id).update({ naoLidasEstudante: 0 });
-        res.json({ messages: (conversa.mensagens || []).map(mensagemPublica), available: true });
+        lista.sort((a, b) => (b.lastMessage ? 1 : 0) - (a.lastMessage ? 1 : 0));
+        res.json({ threads: lista });
     } catch (e) {
         console.error(e);
         res.status(500).json({ mensagem: "Erro no servidor." });
     }
 };
 
-// POST /api/chats/:channel  { text }
-exports.estudanteEnviar = async (req, res) => {
+// GET /api/chats/duvidas/:maratonaId — abre/consulta a conversa com o
+// professor dessa maratona específica (escolhida pelo estudante)
+exports.duvidasObter = async (req, res) => {
     try {
-        const { channel } = req.params;
+        const { maratonaId } = req.params;
+        const ctx = await contextoMaratona(maratonaId, req.usuario.id);
+        if (!ctx) return res.status(404).json({ mensagem: "Maratona não encontrada." });
+        const prof = await obterUsuario(ctx.professorId);
+
+        const conversa = (await minhasConversas(req.usuario.id))
+            .find((c) => c.tipo === "duvidas" && c.maratonaId === maratonaId);
+
+        const base = { ref: ctx.referencia, title: ctx.titulo, professorName: prof ? prof.nome : "Professor" };
+        if (!conversa) return res.json({ ...base, messages: [] });
+
+        await db.collection("conversas").doc(conversa.id).update({ naoLidasEstudante: 0 });
+        res.json({ ...base, messages: (conversa.mensagens || []).map(mensagemPublica) });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ mensagem: "Erro no servidor." });
+    }
+};
+
+// POST /api/chats/duvidas/:maratonaId  { text }
+exports.duvidasEnviar = async (req, res) => {
+    try {
+        const { maratonaId } = req.params;
         const texto = String(req.body.text || "").trim();
         if (!texto) return res.status(400).json({ mensagem: "A mensagem não pode estar vazia." });
-        if (!["duvidas", "suporte"].includes(channel)) {
-            return res.status(400).json({ mensagem: "Canal inválido." });
-        }
 
-        const existentes = (await db.collection("conversas").where("estudanteId", "==", req.usuario.id).get())
-            .docs.map((d) => ({ id: d.id, ...d.data() }));
+        const ctx = await contextoMaratona(maratonaId, req.usuario.id);
+        if (!ctx) return res.status(404).json({ mensagem: "Maratona não encontrada." });
+
+        let conversa = (await minhasConversas(req.usuario.id))
+            .find((c) => c.tipo === "duvidas" && c.maratonaId === maratonaId);
 
         const novaMsg = { from: "estudante", text: texto, criadaEm: new Date().toISOString() };
 
-        if (channel === "duvidas") {
-            const ctx = await contextoDuvidas(req.usuario.id);
-            if (!ctx) return res.status(400).json({ mensagem: "Ainda não tens nenhuma maratona para tirar dúvidas com um professor." });
-
-            let conversa = existentes.find((c) => c.tipo === "duvidas" && c.professorId === ctx.professorId);
-            if (!conversa) {
-                const ref = await db.collection("conversas").add({
-                    tipo: "duvidas", estudanteId: req.usuario.id, professorId: ctx.professorId,
-                    referencia: ctx.referencia, mensagens: [], naoLidasEstudante: 0, naoLidasProfessor: 0,
-                    criadaEm: new Date().toISOString(),
-                });
-                conversa = { id: ref.id, mensagens: [] };
-            }
-            const mensagens = [...(conversa.mensagens || []), novaMsg];
-            await db.collection("conversas").doc(conversa.id).update({
-                mensagens, referencia: ctx.referencia,
-                naoLidasProfessor: (conversa.naoLidasProfessor || 0) + 1,
-                ultimaMensagem: texto, ultimaMensagemEm: novaMsg.criadaEm,
+        if (!conversa) {
+            const ref = await db.collection("conversas").add({
+                tipo: "duvidas", estudanteId: req.usuario.id, maratonaId, professorId: ctx.professorId,
+                maratonaTitulo: ctx.titulo, maratonaIcon: ctx.icon,
+                referencia: ctx.referencia, mensagens: [], naoLidasEstudante: 0, naoLidasProfessor: 0,
+                criadaEm: new Date().toISOString(),
             });
-            return res.status(201).json({ ok: true, message: mensagemPublica(novaMsg) });
+            conversa = { id: ref.id, mensagens: [], naoLidasProfessor: 0 };
         }
 
-        // suporte
-        let conversa = existentes.find((c) => c.tipo === "suporte");
+        const mensagens = [...(conversa.mensagens || []), novaMsg];
+        await db.collection("conversas").doc(conversa.id).update({
+            mensagens, referencia: ctx.referencia,
+            naoLidasProfessor: (conversa.naoLidasProfessor || 0) + 1,
+            ultimaMensagem: texto, ultimaMensagemEm: novaMsg.criadaEm,
+        });
+        res.status(201).json({ ok: true, message: mensagemPublica(novaMsg) });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ mensagem: "Erro no servidor." });
+    }
+};
+
+// ---------- ESTUDANTE — Suporte (um único canal com a administração) ----------
+
+// GET /api/chats/suporte
+exports.suporteObter = async (req, res) => {
+    try {
+        const conversa = (await minhasConversas(req.usuario.id)).find((c) => c.tipo === "suporte");
+        if (!conversa) return res.json({ messages: [] });
+
+        await db.collection("conversas").doc(conversa.id).update({ naoLidasEstudante: 0 });
+        res.json({ messages: (conversa.mensagens || []).map(mensagemPublica) });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ mensagem: "Erro no servidor." });
+    }
+};
+
+// POST /api/chats/suporte  { text }
+exports.suporteEnviar = async (req, res) => {
+    try {
+        const texto = String(req.body.text || "").trim();
+        if (!texto) return res.status(400).json({ mensagem: "A mensagem não pode estar vazia." });
+
+        let conversa = (await minhasConversas(req.usuario.id)).find((c) => c.tipo === "suporte");
+        const novaMsg = { from: "estudante", text: texto, criadaEm: new Date().toISOString() };
+
         if (!conversa) {
             const ref = await db.collection("conversas").add({
                 tipo: "suporte", estudanteId: req.usuario.id, mensagens: [],
                 naoLidasEstudante: 0, naoLidasAdmin: 0, criadaEm: new Date().toISOString(),
             });
-            conversa = { id: ref.id, mensagens: [] };
+            conversa = { id: ref.id, mensagens: [], naoLidasAdmin: 0 };
         }
+
         const mensagens = [...(conversa.mensagens || []), novaMsg];
         await db.collection("conversas").doc(conversa.id).update({
             mensagens,
@@ -160,6 +198,9 @@ exports.profListar = async (req, res) => {
                 color: corDe(c.estudanteId),
                 unread: c.naoLidasProfessor || 0,
                 ref: c.referencia || null,
+                maratonaId: c.maratonaId || null,
+                maratonaTitle: c.maratonaTitulo || null,
+                maratonaIcon: c.maratonaIcon || "🎓",
                 plan: aluno ? String(aluno.plano || "basic").toLowerCase() : "basic",
                 online: false,
                 last: c.ultimaMensagemEm ? haQuanto(c.ultimaMensagemEm) : "",
@@ -196,6 +237,67 @@ exports.profEnviar = async (req, res) => {
             ultimaMensagem: texto, ultimaMensagemEm: novaMsg.criadaEm,
         });
         res.status(201).json({ ok: true, message: mensagemPublica(novaMsg) });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ mensagem: "Erro no servidor." });
+    }
+};
+
+// POST /api/prof/marathons/:id/broadcast-password — envia a password (já
+// revelável na página de maratonas) como mensagem no chat Dúvidas a todos
+// os alunos ligados a esta maratona: quem já conversou sobre ela e quem já
+// tem uma sessão/tentativa registada mas ainda não abriu conversa.
+exports.broadcastPassword = async (req, res) => {
+    try {
+        const maratonaId = req.params.id;
+        const mDoc = await db.collection("maratonas").doc(maratonaId).get();
+        if (!mDoc.exists) return res.status(404).json({ mensagem: "Maratona não encontrada." });
+        const m = mDoc.data();
+        if (m.professorId !== req.usuario.id) {
+            return res.status(403).json({ mensagem: "Esta maratona não é tua." });
+        }
+        if (!m.senhaCifrada) {
+            return res.status(404).json({ mensagem: "Esta maratona ainda não tem password definida." });
+        }
+
+        const password = decifrar(m.senhaCifrada);
+        const texto = `🔑 Password de acesso à maratona "${m.titulo}": ${password}`;
+        const agora = new Date().toISOString();
+
+        const conversasExistentes = (await db.collection("conversas").get()).docs
+            .map((d) => ({ id: d.id, ...d.data() }))
+            .filter((c) => c.tipo === "duvidas" && c.maratonaId === maratonaId && c.professorId === req.usuario.id);
+        const idsComConversa = new Set(conversasExistentes.map((c) => c.estudanteId));
+
+        const idsComSessao = new Set(
+            (await db.collection("sessoes").get()).docs.map((d) => d.data())
+                .filter((s) => s.maratonaId === maratonaId).map((s) => s.usuarioId)
+        );
+        const idsSemConversa = [...idsComSessao].filter((id) => !idsComConversa.has(id));
+
+        let enviados = 0;
+        for (const c of conversasExistentes) {
+            const msg = { from: "professor", text: texto, criadaEm: agora };
+            const mensagens = [...(c.mensagens || []), msg];
+            await db.collection("conversas").doc(c.id).update({
+                mensagens, naoLidasEstudante: (c.naoLidasEstudante || 0) + 1,
+                ultimaMensagem: texto, ultimaMensagemEm: agora,
+            });
+            enviados++;
+        }
+        for (const estudanteId of idsSemConversa) {
+            const msg = { from: "professor", text: texto, criadaEm: agora };
+            await db.collection("conversas").add({
+                tipo: "duvidas", estudanteId, maratonaId, professorId: req.usuario.id,
+                maratonaTitulo: m.titulo, maratonaIcon: m.icon || "🎓",
+                referencia: m.titulo, mensagens: [msg],
+                naoLidasEstudante: 1, naoLidasProfessor: 0,
+                ultimaMensagem: texto, ultimaMensagemEm: agora, criadaEm: agora,
+            });
+            enviados++;
+        }
+
+        res.json({ ok: true, enviados });
     } catch (e) {
         console.error(e);
         res.status(500).json({ mensagem: "Erro no servidor." });

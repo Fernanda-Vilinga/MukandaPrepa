@@ -1,7 +1,7 @@
 // Lista de maratonas do professor + botão para criar nova.
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getProfOverview, openDraft, newDraft, getMarathonPassword } from './profDeps.js';
+import { getProfOverview, openDraft, newDraft, getMarathonPassword, broadcastMarathonPassword } from './profDeps.js';
 import { ProfTopbar, Pill } from '../../components/ProfUi.jsx';
 import { Badge } from '../../components/Ui.jsx';
 
@@ -10,6 +10,8 @@ export default function ProfMarathons() {
   const [filter, setFilter] = useState('all');
   const [copiedFor, setCopiedFor] = useState(null);
   const [pwError, setPwError] = useState('');
+  const [sendingFor, setSendingFor] = useState(null);
+  const [sentFor, setSentFor] = useState(null);
 
   const copyPassword = async (m) => {
     setPwError('');
@@ -20,6 +22,20 @@ export default function ProfMarathons() {
       setTimeout(() => setCopiedFor(null), 2000);
     } catch (err) {
       setPwError(err.message);
+    }
+  };
+
+  const sendPasswordToChat = async (m) => {
+    setPwError('');
+    setSendingFor(m.id);
+    try {
+      const { enviados } = await broadcastMarathonPassword(m.id);
+      setSentFor({ id: m.id, enviados });
+      setTimeout(() => setSentFor(null), 3000);
+    } catch (err) {
+      setPwError(err.message);
+    } finally {
+      setSendingFor(null);
     }
   };
 
@@ -72,6 +88,18 @@ export default function ProfMarathons() {
                 <>
                   <button className="btn sm ghost" onClick={() => copyPassword(m)} title="Copiar a password para partilhar com os alunos">
                     {copiedFor === m.id ? '✓ Copiada!' : '🔑 Copiar password'}
+                  </button>
+                  <button
+                    className="btn sm ghost"
+                    onClick={() => sendPasswordToChat(m)}
+                    disabled={sendingFor === m.id}
+                    title="Enviar a password como mensagem no chat Dúvidas a todos os alunos ligados a esta maratona"
+                  >
+                    {sendingFor === m.id
+                      ? 'A enviar…'
+                      : (sentFor && sentFor.id === m.id
+                        ? (sentFor.enviados > 0 ? `✓ Enviada a ${sentFor.enviados}` : 'Sem alunos ainda')
+                        : '📤 Enviar no chat')}
                   </button>
                   <Link to={`/prof/monitorizacao/${m.id}`} className="btn sm blue" style={{ textDecoration: 'none' }}>Monitorizar</Link>
                   <Link to={`/prof/estatisticas/${m.id}`} className="btn sm ghost" style={{ textDecoration: 'none' }}>Estatísticas</Link>

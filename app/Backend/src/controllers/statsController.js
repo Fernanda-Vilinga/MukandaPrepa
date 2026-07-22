@@ -213,6 +213,38 @@ async function calcularStatsGlobais() {
     }
 }
 
+// GET /api/prof/overview  (professor) — KPIs reais do dashboard principal:
+// submissões por validar, alunos conectados agora (sessões activas dentro
+// da tolerância, como em liveController) e chats de Dúvidas não lidos.
+exports.visaoGeralProfessor = async (req, res) => {
+    try {
+        const profId = req.usuario.id;
+        const minhas = (await db.collection("maratonas").where("professorId", "==", profId).get())
+            .docs.map((d) => d.id);
+        const idsSet = new Set(minhas);
+
+        const sessoes = (await todasSessoes()).filter((s) => idsSet.has(s.maratonaId));
+
+        const agora = Date.now();
+        const connectedNow = sessoes.filter((s) => {
+            if (s.estado !== "active") return false;
+            const fimMs = new Date(s.iniciadaEm).getTime() + s.duracaoSegundos * 1000;
+            return agora <= fimMs + 30 * 1000; // mesma tolerância do liveController
+        }).length;
+
+        const pendingValidations = sessoes.filter((s) => s.estado === "submitted").length;
+
+        const conversas = (await db.collection("conversas").where("professorId", "==", profId).get())
+            .docs.map((d) => d.data()).filter((c) => c.tipo === "duvidas");
+        const unreadChats = conversas.reduce((n, c) => n + (c.naoLidasProfessor || 0), 0);
+
+        res.json({ pendingValidations, connectedNow, unreadChats });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ mensagem: "Erro no servidor." });
+    }
+};
+
 // GET /api/admin/stats  (só admin)
 exports.estatisticasGlobais = async (req, res) => {
     try {

@@ -10,17 +10,11 @@ import { request, API_BASE } from './api.js';
 
 const delay = (ms = 250) => new Promise((r) => setTimeout(r, ms));
 
-// GET /api/prof/overview
+// REAL — GET /api/prof/marathons + /api/prof/marathons/overview/kpis
 export async function getProfOverview() {
-  await delay();
-  // Maratonas REAIS do professor; KPIs/pendentes continuam mock até à fase de sessões
   const { marathons } = await request('/prof/marathons');
-  const { submissions } = await request('/prof/submissions');
-  return {
-    marathons,
-    pending: submissions.filter((x) => x.status === 'pending').length,
-    connectedNow: marathons.reduce((n, m) => n + (m.connectedNow || 0), 0),
-  };
+  const kpis = await request('/prof/marathons/overview/kpis');
+  return { marathons, ...kpis };
 }
 
 // GET /api/prof/submissions?status=pending
@@ -91,6 +85,13 @@ export async function exportMarathonCSV(id, filename = `maratona-${id}.csv`) {
 export async function getMarathonPassword(id) {
   const { password } = await request(`/prof/marathons/${id}/password`);
   return password;
+}
+
+// REAL — POST /api/prof/marathons/:id/broadcast-password
+// Envia a password como mensagem no chat Dúvidas a todos os alunos ligados
+// a esta maratona (quem já conversou + quem já tem sessão/tentativa nela).
+export async function broadcastMarathonPassword(id) {
+  return request(`/prof/marathons/${id}/broadcast-password`, { method: 'POST' });
 }
 
 export function newDraft() { sessionStorage.removeItem('mkp_draft_id'); }

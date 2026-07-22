@@ -227,24 +227,48 @@ export async function requestPlanUpgrade(planId) {
 }
 
 // --- Chat --------------------------------------------------------
-// REAL — GET /api/chats/:channel (duvidas | suporte)
 // "Tempo real" aproximado por polling (sem WebSocket/Socket.io nesta
 // fase — decisão pragmática, igual à monitorização ao vivo do professor).
-export async function getChat(channel) {
-  const data = await request(`/chats/${channel}`);
+
+const mapMsgs = (messages = []) => messages.map((m) => ({
+  from: m.from === 'estudante' ? 'me' : 'prof',
+  text: m.text,
+  time: m.time,
+}));
+
+// REAL — GET /api/chats/duvidas — conversas de Dúvidas já iniciadas pelo
+// estudante (uma por maratona escolhida). A escolha da maratona é manual;
+// usa getMarathons() para listar as activas e abrir uma nova conversa.
+export async function getDuvidasThreads() {
+  const { threads } = await request('/chats/duvidas');
+  return threads;
+}
+
+// REAL — GET /api/chats/duvidas/:maratonaId
+export async function getDuvidasThread(maratonaId) {
+  const data = await request(`/chats/duvidas/${maratonaId}`);
   return {
-    messages: (data.messages || []).map((m) => ({
-      from: m.from === 'estudante' ? 'me' : 'prof',
-      text: m.text,
-      time: m.time,
-    })),
+    messages: mapMsgs(data.messages),
     ref: data.ref ?? null,
-    available: data.available !== false,
+    title: data.title ?? null,
+    professorName: data.professorName ?? null,
   };
 }
 
-// REAL — POST /api/chats/:channel { text }
-export async function sendChat(channel, text) {
-  const { message } = await request(`/chats/${channel}`, { method: 'POST', body: { text } });
+// REAL — POST /api/chats/duvidas/:maratonaId { text }
+export async function sendDuvidas(maratonaId, text) {
+  const { message } = await request(`/chats/duvidas/${maratonaId}`, { method: 'POST', body: { text } });
+  return { from: 'me', text: message.text, time: message.time };
+}
+
+// REAL — GET /api/chats/suporte
+export async function getSuporte() {
+  const data = await request('/chats/suporte');
+  return { messages: mapMsgs(data.messages) };
+}
+
+// REAL — POST /api/chats/suporte { text }
+export async function sendSuporte(text) {
+  const { message } = await request('/chats/suporte', { method: 'POST', body: { text } });
   return { from: 'me', text: message.text, time: message.time };
 }

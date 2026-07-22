@@ -29,7 +29,7 @@ const statusEfectivo = (m) => {
 const questoesPreenchidas = (m) => (m.questoes || []).filter((q) => q && q.filled).length;
 
 // → formato esperado pela lista do professor (PROF_MARATHONS)
-const paraProfessor = (m) => ({
+const paraProfessor = (m, connectedNow = 0) => ({
     id: m.id,
     title: m.titulo,
     icon: m.icon,
@@ -40,7 +40,7 @@ const paraProfessor = (m) => ({
         ? new Date(m.acessoFim).toLocaleDateString("pt-PT", { day: "numeric", month: "short" })
         : null,
     participants: m.participantes || 0,
-    connectedNow: 0,
+    connectedNow,
     questionsUploaded: questoesPreenchidas(m),
 });
 
@@ -263,7 +263,22 @@ exports.obterPassword = async (req, res) => {
 exports.listarDoProfessor = async (req, res) => {
     try {
         const r = await db.collection("maratonas").where("professorId", "==", req.usuario.id).get();
-        const lista = r.docs.map((d) => paraProfessor({ id: d.id, ...d.data() }));
+        const maratonas = r.docs.map((d) => ({ id: d.id, ...d.data() }));
+
+        // Conectados agora, por maratona: sessões activas dentro da tolerância
+        // (mesma regra do liveController/visaoGeralProfessor).
+        const todasSessoes = (await db.collection("sessoes").get()).docs.map((d) => d.data());
+        const agora = Date.now();
+        const conectadosPorMaratona = {};
+        todasSessoes.forEach((s) => {
+            if (s.estado !== "active") return;
+            const fimMs = new Date(s.iniciadaEm).getTime() + s.duracaoSegundos * 1000;
+            if (agora <= fimMs + 30 * 1000) {
+                conectadosPorMaratona[s.maratonaId] = (conectadosPorMaratona[s.maratonaId] || 0) + 1;
+            }
+        });
+
+        const lista = maratonas.map((m) => paraProfessor(m, conectadosPorMaratona[m.id] || 0));
         res.json({ marathons: lista });
     } catch (e) {
         console.error(e);
