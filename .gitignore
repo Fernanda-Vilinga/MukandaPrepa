@@ -22,3 +22,19 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+.env
+serviceAccountKey.json
+# Backend secrets
+Backend/.env
+Backend/*.json
+# Firebase secret
+app/Backend/*.json
+
+# Environment
+.env
+app/Backend/.env
+
+# Node
+node_modules
+app/node_modules
+app/Backend/node_modules

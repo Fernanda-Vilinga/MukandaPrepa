@@ -1,0 +1,146 @@
+// ============================================================
+// Camada de API MOCK — perfil ADMINISTRADOR
+// ============================================================
+import {
+  ADMIN_KPIS, ACTIVITY_WEEKS, SYSTEM_ALERTS, USERS, GLOBAL_STATS,
+  MARATHON_DATA,
+} from '../data/adminMock.js';
+import { request, API_BASE } from './api.js';
+
+const delay = (ms = 250) => new Promise((r) => setTimeout(r, ms));
+
+// GET /api/admin/overview
+// REAL — GET /api/admin/overview
+export async function getAdminOverview() {
+  return request('/admin/overview');
+}
+
+// GET /api/admin/users?role=&q=
+// REAL — GET /api/admin/users
+export async function getUsers() {
+  const { users } = await request('/admin/users');
+  return users;
+}
+
+// POST /api/admin/professors  — endpoint PROTEGIDO (apenas token admin, regra da spec)
+// → cria conta de professor + envia email de boas-vindas com senha temporária
+// → force_password_change = true no primeiro login
+// REAL — POST /api/admin/professores (token de admin obrigatório)
+export async function registerProfessor(data) {
+  const res = await request('/admin/professores', {
+    method: 'POST',
+    body: {
+      nome: data.name,
+      email: data.email,
+      contacto: data.phone,
+      area: data.area,
+      disciplinas: data.disciplines,
+      senhaTemporaria: data.tempPassword,
+    },
+  });
+  return { ok: true, ...data, id: res.usuario.id };
+}
+
+// PATCH /api/admin/users/:id  (activar, suspender, alterar plano, redefinir senha)
+// REAL — PATCH /api/admin/users/:id
+// patch: { active } | { plan } | { resetPassword: true }
+export async function updateUser(id, patch) {
+  return request(`/admin/users/${id}`, { method: 'PATCH', body: patch });
+}
+
+// GET /api/admin/stats
+// REAL — GET /api/admin/stats
+export async function getGlobalStats() {
+  const { stats } = await request('/admin/stats');
+  return stats;
+}
+
+// REAL — GET /api/admin/stats/export.csv (download)
+export async function exportGlobalReportCSV(filename = `relatorio-global-${new Date().toISOString().slice(0, 10)}.csv`) {
+  const token = sessionStorage.getItem('mkp_token');
+  const res = await fetch(`${API_BASE}/admin/stats/export.csv`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.mensagem || `Erro ao exportar (${res.status}).`);
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+// REAL — GET /api/admin/plans (planos, promoções, dados de pagamento — tudo, incluindo inactivos)
+export async function getPlansConfig() {
+  return request('/admin/plans');
+}
+
+// REAL — PUT /api/admin/plans  { plans, promos, payment }
+export async function savePlansConfig(config) {
+  return request('/admin/plans', { method: 'PUT', body: config });
+}
+
+// REAL — GET /api/admin/purchases (pedidos de upgrade, mais recentes primeiro)
+export async function getPurchases() {
+  const { purchases } = await request('/admin/purchases');
+  return purchases;
+}
+
+// REAL — POST /api/admin/purchases/:id/confirm
+export async function confirmPurchase(id) {
+  return request(`/admin/purchases/${id}/confirm`, { method: 'POST' });
+}
+
+// REAL — POST /api/admin/purchases/:id/reject  { motivo }
+export async function rejectPurchase(id, motivo) {
+  return request(`/admin/purchases/${id}/reject`, { method: 'POST', body: { motivo } });
+}
+
+// GET /api/admin/marathons/:id/data  (+ /export.csv)
+// REAL — GET /api/admin/marathons
+export async function getAllMarathons() {
+  const { marathons } = await request('/admin/marathons');
+  return marathons;
+}
+
+// REAL — GET /api/admin/marathons/:id
+export async function getMarathonData(id) {
+  const { data } = await request(`/admin/marathons/${id}`);
+  return data;
+}
+
+// REAL — GET /api/admin/marathons/:id/export.csv (download)
+export async function exportAdminMarathonCSV(id, filename = `maratona-${id}.csv`) {
+  const token = sessionStorage.getItem('mkp_token');
+  const res = await fetch(`${API_BASE}/admin/marathons/${id}/export.csv`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.mensagem || `Erro ao exportar (${res.status}).`);
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+// REAL — GET /api/admin/chats (inbox de Suporte, partilhado por todos os admins)
+export async function getSupportChats() {
+  const { chats } = await request('/admin/chats');
+  return chats.map((c) => ({
+    ...c,
+    messages: c.messages.map((m) => ({ ...m, from: m.from === 'admin' ? 'admin' : 'student' })),
+  }));
+}
+
+// REAL — POST /api/admin/chats/:id { text }
+export async function sendSupportChat(conversaId, text) {
+  const { message } = await request(`/admin/chats/${conversaId}`, { method: 'POST', body: { text } });
+  return { from: 'admin', text: message.text, time: message.time };
+}
