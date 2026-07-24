@@ -27,6 +27,11 @@ export default function CreateMarathon() {
   const [hasPassword, setHasPassword] = useState(false);
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
+  // Janela de acesso inválida (vazia ou fim <= início) — avisar já aqui, em vez
+  // de só descobrir no fim das 15 questões ao tentar publicar.
+  const janelaIncompleta = !form.start || !form.end;
+  const janelaInvalida = !janelaIncompleta && new Date(form.end) <= new Date(form.start);
+
   // Recarrega o rascunho em curso (se existir) ao abrir a página
   useEffect(() => {
     getDraft().then((d) => {
@@ -126,9 +131,14 @@ export default function CreateMarathon() {
             </div>
             <div className="col field">
               <label className="label">Fim da janela de acesso</label>
-              <input className="input" type="datetime-local" value={form.end} onChange={set('end')} />
+              <input className="input" type="datetime-local" value={form.end} onChange={set('end')} style={janelaInvalida ? { borderColor: 'var(--red, #c0392b)' } : undefined} />
             </div>
           </div>
+          {janelaInvalida && (
+            <div className="sm" style={{ background: 'var(--red-l, #fdecec)', color: 'var(--red, #c0392b)', borderRadius: 10, padding: '10px 14px', marginTop: -8, marginBottom: 20 }}>
+              O fim da janela tem de ser depois do início — corrige antes de continuar.
+            </div>
+          )}
 
           <div className="row" style={{ gap: 16, alignItems: 'flex-end' }}>
             <div className="col field" style={{ marginBottom: 0 }}>
@@ -144,7 +154,7 @@ export default function CreateMarathon() {
 
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 32, flexWrap: 'wrap', gap: 12 }}>
             <button className="btn ghost" onClick={draft}>Guardar rascunho</button>
-            <button className="btn" onClick={next} disabled={!form.title || !form.discipline || (!hasPassword && form.password.length < 4)}>
+            <button className="btn" onClick={next} disabled={!form.title || !form.discipline || (!hasPassword && form.password.length < 4) || janelaIncompleta || janelaInvalida}>
               Continuar → Banco de questões
             </button>
           </div>

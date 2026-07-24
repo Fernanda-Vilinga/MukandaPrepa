@@ -1,7 +1,7 @@
 // Banco de questões — passo 2/4: grid de 15 slots + editor por questão.
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { saveQuestion, publishMarathon, getDraft } from './profDeps.js';
+import { saveQuestion, getDraft } from './profDeps.js';
 import { ProfTopbar, Steps, Pill } from '../../components/ProfUi.jsx';
 
 const TYPES = [
@@ -34,7 +34,6 @@ export default function Questions() {
   }, []);
   const [savedMsg, setSavedMsg] = useState(false);
   const [error, setError] = useState('');
-  const [publishing, setPublishing] = useState(false);
   const q = slots[cur];
   const filled = slots.filter((s) => s.filled).length;
 
@@ -49,7 +48,7 @@ export default function Questions() {
       await saveQuestion(q.slot, q);
       update({ filled: true });
       setSavedMsg(true);
-      setTimeout(() => setSavedMsg(false), 2000);
+      setTimeout(() => setSavedMsg(false), 700);
       if (cur < 14) setCur(cur + 1); // passa automaticamente à questão seguinte
     } catch (err) {
       setError(err.message);
@@ -191,22 +190,11 @@ export default function Questions() {
           </div>
           <button
             className="btn"
-            disabled={filled < 15 || publishing}
+            disabled={filled < 15}
             title={filled < 15 ? `Faltam ${15 - filled} questões` : ''}
-            onClick={async () => {
-              setError('');
-              setPublishing(true);
-              try {
-                await publishMarathon();
-                navigate('/prof/maratonas');
-              } catch (err) {
-                setError(err.message);
-              } finally {
-                setPublishing(false);
-              }
-            }}
+            onClick={() => navigate('/prof/maratonas/nova/pre-visualizar')}
           >
-            {filled < 15 ? `Publicar (faltam ${15 - filled} questões)` : publishing ? 'A publicar…' : 'Publicar maratona ✓'}
+            {filled < 15 ? `Pré-visualizar (faltam ${15 - filled} questões)` : 'Pré-visualizar →'}
           </button>
         </div>
         {error && (

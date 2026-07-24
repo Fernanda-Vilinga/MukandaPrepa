@@ -1,7 +1,7 @@
 // Estatísticas da maratona — erros por questão, distribuição, exportar.
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { getMarathonStats } from './profDeps.js';
+import { getMarathonStats, exportMarathonCSV } from './profDeps.js';
 import { ProfTopbar } from '../../components/ProfUi.jsx';
 import { Stat } from '../../components/Ui.jsx';
 
@@ -18,8 +18,23 @@ function Bar({ label, pct, color = 'var(--orange)' }) {
 export default function Stats() {
   const { id } = useParams();
   const [s, setS] = useState(null);
+  const [exporting, setExporting] = useState(false);
+  const [error, setError] = useState('');
   useEffect(() => { getMarathonStats(id).then(setS); }, [id]);
   if (!s) return <ProfTopbar />;
+
+  const exportCSV = async () => {
+    setError('');
+    setExporting(true);
+    try {
+      const slug = s.title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      await exportMarathonCSV(id, `estatisticas-${slug || id}.csv`);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const barColor = (pct) => (pct >= 50 ? 'var(--red)' : pct <= 20 ? 'var(--green)' : 'var(--orange)');
 
@@ -29,12 +44,19 @@ export default function Stats() {
       <div className="wrap" style={{ maxWidth: 1080 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
           <div>
-            <h1 style={{ fontSize: 24, fontWeight: 800 }}>Estatísticas — Álgebra Linear</h1>
-            <div className="mut sm">Janela: 12–19 Jul 2026 · 15 questões no banco · 5 por sessão</div>
+            <h1 style={{ fontSize: 24, fontWeight: 800 }}>Estatísticas — {s.title}</h1>
+            <div className="mut sm">Janela: {s.window} · {s.totalQuestions} questões no banco · {s.questionsPerSession} por sessão</div>
           </div>
-          {/* TODO backend: GET /api/prof/marathons/:id/export.csv */}
-          <button className="btn dark">⬇ Exportar CSV</button>
+          <button className="btn dark" onClick={exportCSV} disabled={exporting}>
+            {exporting ? 'A exportar…' : '⬇ Exportar CSV'}
+          </button>
         </div>
+
+        {error && (
+          <div className="sm" style={{ background: 'var(--red-l, #fdecec)', color: 'var(--red, #c0392b)', borderRadius: 10, padding: '12px 16px', marginBottom: 16 }}>
+            {error}
+          </div>
+        )}
 
         <div className="row" style={{ marginBottom: 24 }}>
           <Stat value={s.participants} label="Alunos participantes" />

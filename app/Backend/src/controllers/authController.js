@@ -1,6 +1,9 @@
 const { db } = require("../config/firebase");
 const bcrypt = require("bcrypt");
+const crypto = require("crypto");
 const gerarToken = require("../utils/jwt");
+const { enviarEmail } = require("../utils/email");
+const tpl = require("../utils/emailTemplates");
 
 // Planos válidos — sempre em minúsculas (alinhado com o frontend da app)
 const PLANOS = ["basic", "plus", "premium"];
@@ -114,6 +117,10 @@ exports.login = async (req, res) => {
             return res.status(401).json({ mensagem: "Usuário não encontrado." });
         }
 
+        if (usuario.estado === "suspenso") {
+            return res.status(403).json({ mensagem: "Esta conta está suspensa. Contacta a administração." });
+        }
+
         const token = gerarToken(usuario);
 
         res.json({
@@ -121,6 +128,26 @@ exports.login = async (req, res) => {
             token,
             usuario: usuarioPublico(usuario),
         });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ mensagem: "Erro no servidor." });
+    }
+};
+
+// GET /api/auth/me  (autenticado) — perfil actual, sempre lido do Firestore.
+// Usado para re-sincronizar sessionStorage depois de um F5, já que o
+// token/plano/estado só ficam gravados no browser no momento do login.
+exports.meuPerfil = async (req, res) => {
+    try {
+        const doc = await db.collection("usuarios").doc(req.usuario.id).get();
+        if (!doc.exists) return res.status(404).json({ mensagem: "Conta não encontrada." });
+
+        const usuario = { id: doc.id, ...doc.data() };
+        if (usuario.estado === "suspenso") {
+            return res.status(403).json({ mensagem: "Esta conta está suspensa. Contacta a administração." });
+        }
+
+        res.json({ usuario: usuarioPublico(usuario) });
     } catch (error) {
         console.error(error);
         res.status(500).json({ mensagem: "Erro no servidor." });
@@ -161,6 +188,88 @@ exports.alterarSenha = async (req, res) => {
         });
 
         res.json({ mensagem: "Senha alterada com sucesso." });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ mensagem: "Erro no servidor." });
+    }
+};
+
+// POST /api/auth/esqueci-senha  { email }
+// Gera um token de recuperação (válido 1h) e envia por email. A resposta é
+// sempre a mesma, exista ou não a conta com este email — mesma lógica de
+// segurança do login (não revelar quais emails estão registados).
+exports.esqueciSenha = async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({ mensagem: "Email é obrigatório." });
+        }
+
+        const emailNormalizado = String(email).trim().toLowerCase();
+        const resultado = await db.collection("usuarios").where("email", "==", emailNormalizado).get();
+
+        if (!resultado.empty) {
+            const documento = resultado.docs[0];
+            const usuario = { id: documento.id, ...documento.data() };
+
+            const tokenBruto = crypto.randomBytes(32).toString("hex");
+            const tokenHash = crypto.createHash("sha256").update(tokenBruto).digest("hex");
+            const expiraEm = Date.now() + 60 * 60 * 1000; // 1 hora
+
+            await db.collection("usuarios").doc(usuario.id).update({
+                resetTokenHash: tokenHash,
+                resetTokenExpira: expiraEm,
+            });
+
+            const appUrl = process.env.APP_URL || "http://localhost:5173";
+            const url = `${appUrl}/redefinir-senha?token=${tokenBruto}`;
+            const { subject, html } = tpl.recuperarSenha({ nome: usuario.nome, url });
+            enviarEmail({ to: usuario.email, subject, html }).catch(() => {});
+        }
+
+        // Mesma mensagem quer a conta exista quer não — evita confirmar/negar emails registados.
+        res.json({ mensagem: "Se existir uma conta com este email, vais receber instruções para definires uma nova senha." });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ mensagem: "Erro no servidor." });
+    }
+};
+
+// POST /api/auth/redefinir-senha  { token, novaSenha }
+// Define uma nova senha a partir do token recebido por email (esqueciSenha).
+exports.redefinirSenha = async (req, res) => {
+    try {
+        const { token, novaSenha } = req.body;
+
+        if (!token || !novaSenha) {
+            return res.status(400).json({ mensagem: "Token e nova senha são obrigatórios." });
+        }
+        if (String(novaSenha).length < 8) {
+            return res.status(400).json({ mensagem: "A nova senha deve ter pelo menos 8 caracteres." });
+        }
+
+        const tokenHash = crypto.createHash("sha256").update(String(token)).digest("hex");
+        const resultado = await db.collection("usuarios").where("resetTokenHash", "==", tokenHash).get();
+
+        if (resultado.empty) {
+            return res.status(400).json({ mensagem: "Link de recuperação inválido ou já utilizado." });
+        }
+
+        const documento = resultado.docs[0];
+        const usuario = { id: documento.id, ...documento.data() };
+
+        if (!usuario.resetTokenExpira || Date.now() > usuario.resetTokenExpira) {
+            return res.status(400).json({ mensagem: "Link de recuperação expirado. Pede um novo em \"Esqueceste a password?\"." });
+        }
+
+        await db.collection("usuarios").doc(usuario.id).update({
+            senha: await bcrypt.hash(novaSenha, 10),
+            trocarSenha: false,
+            resetTokenHash: null,
+            resetTokenExpira: null,
+        });
+
+        res.json({ mensagem: "Senha redefinida com sucesso. Já podes entrar com a nova senha." });
     } catch (error) {
         console.error(error);
         res.status(500).json({ mensagem: "Erro no servidor." });

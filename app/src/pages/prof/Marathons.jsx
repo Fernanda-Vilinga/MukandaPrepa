@@ -1,13 +1,43 @@
 // Lista de maratonas do professor + botão para criar nova.
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getProfOverview, openDraft, newDraft } from './profDeps.js';
+import { getProfOverview, openDraft, newDraft, getMarathonPassword, broadcastMarathonPassword } from './profDeps.js';
 import { ProfTopbar, Pill } from '../../components/ProfUi.jsx';
 import { Badge } from '../../components/Ui.jsx';
 
 export default function ProfMarathons() {
   const [marathons, setMarathons] = useState([]);
   const [filter, setFilter] = useState('all');
+  const [copiedFor, setCopiedFor] = useState(null);
+  const [pwError, setPwError] = useState('');
+  const [sendingFor, setSendingFor] = useState(null);
+  const [sentFor, setSentFor] = useState(null);
+
+  const copyPassword = async (m) => {
+    setPwError('');
+    try {
+      const password = await getMarathonPassword(m.id);
+      await navigator.clipboard.writeText(password);
+      setCopiedFor(m.id);
+      setTimeout(() => setCopiedFor(null), 2000);
+    } catch (err) {
+      setPwError(err.message);
+    }
+  };
+
+  const sendPasswordToChat = async (m) => {
+    setPwError('');
+    setSendingFor(m.id);
+    try {
+      const { enviados } = await broadcastMarathonPassword(m.id);
+      setSentFor({ id: m.id, enviados });
+      setTimeout(() => setSentFor(null), 3000);
+    } catch (err) {
+      setPwError(err.message);
+    } finally {
+      setSendingFor(null);
+    }
+  };
 
   useEffect(() => { getProfOverview().then((ov) => setMarathons(ov.marathons)); }, []);
 
@@ -24,6 +54,12 @@ export default function ProfMarathons() {
           </div>
           <Link to="/prof/maratonas/nova" className="btn" style={{ textDecoration: 'none' }} onClick={() => newDraft()}>+ Nova maratona</Link>
         </div>
+
+        {pwError && (
+          <div className="sm" style={{ background: 'var(--red-l, #fdecec)', color: 'var(--red, #c0392b)', borderRadius: 10, padding: '12px 16px', marginBottom: 16 }}>
+            {pwError}
+          </div>
+        )}
 
         <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
           <button className={`btn sm ${filter === 'all' ? 'dark' : 'ghost'}`} onClick={() => setFilter('all')}>Todas ({marathons.length})</button>
@@ -50,7 +86,22 @@ export default function ProfMarathons() {
                 <Link to="/prof/maratonas/nova" className="btn sm" style={{ textDecoration: 'none' }} onClick={() => openDraft(m.id)}>Continuar</Link>
               ) : (
                 <>
-                  <Link to="/prof/monitorizacao" className="btn sm blue" style={{ textDecoration: 'none' }}>Monitorizar</Link>
+                  <button className="btn sm ghost" onClick={() => copyPassword(m)} title="Copiar a password para partilhar com os alunos">
+                    {copiedFor === m.id ? '✓ Copiada!' : '🔑 Copiar password'}
+                  </button>
+                  <button
+                    className="btn sm ghost"
+                    onClick={() => sendPasswordToChat(m)}
+                    disabled={sendingFor === m.id}
+                    title="Enviar a password como mensagem no chat Dúvidas a todos os alunos ligados a esta maratona"
+                  >
+                    {sendingFor === m.id
+                      ? 'A enviar…'
+                      : (sentFor && sentFor.id === m.id
+                        ? (sentFor.enviados > 0 ? `✓ Enviada a ${sentFor.enviados}` : 'Sem alunos ainda')
+                        : '📤 Enviar no chat')}
+                  </button>
+                  <Link to={`/prof/monitorizacao/${m.id}`} className="btn sm blue" style={{ textDecoration: 'none' }}>Monitorizar</Link>
                   <Link to={`/prof/estatisticas/${m.id}`} className="btn sm ghost" style={{ textDecoration: 'none' }}>Estatísticas</Link>
                 </>
               )}

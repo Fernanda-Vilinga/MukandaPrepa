@@ -6,7 +6,7 @@
 // ============================================================
 import {
   MARATHONS, QUESTIONS, RESULTS, CURRENT_USER,
-  PLAN_ATTEMPTS, CHAT_THREADS,
+  PLAN_ATTEMPTS,
 } from '../data/mock.js';
 
 const delay = (ms = 250) => new Promise((r) => setTimeout(r, ms));
@@ -91,6 +91,23 @@ export function currentUser() {
   return raw ? JSON.parse(raw) : null;
 }
 
+// REAL — GET /api/auth/me — re-sincroniza sessionStorage com o backend.
+// currentUser() só lê a fotografia gravada no login; sem isto, mudanças
+// feitas pelo admin (plano, suspensão) só apareciam depois de sair e
+// entrar de novo, mesmo com F5. Silencioso em caso de falha de rede —
+// mantém a sessão cacheada em vez de deslogar por uma falha momentânea.
+export async function refreshUser() {
+  if (!sessionStorage.getItem('mkp_token')) return null;
+  try {
+    const data = await request('/auth/me');
+    const user = mapUser(data.usuario);
+    sessionStorage.setItem('mkp_user', JSON.stringify(user));
+    return user;
+  } catch {
+    return currentUser();
+  }
+}
+
 export function logout() {
   sessionStorage.removeItem('mkp_token');
   sessionStorage.removeItem('mkp_user');
@@ -106,6 +123,18 @@ export async function changePassword(currentPassword, newPassword) {
   const u = currentUser();
   if (u) sessionStorage.setItem('mkp_user', JSON.stringify({ ...u, mustChangePassword: false }));
   return { ok: true };
+}
+
+// POST /api/auth/esqueci-senha — pede o email de recuperação.
+// Resposta sempre igual, exista ou não a conta (o backend não revela).
+export async function forgotPassword(email) {
+  return request('/auth/esqueci-senha', { method: 'POST', auth: false, body: { email } });
+}
+
+// POST /api/auth/redefinir-senha — define a nova senha a partir do
+// token recebido por email (link de "Esqueceste a password?").
+export async function resetPassword(token, newPassword) {
+  return request('/auth/redefinir-senha', { method: 'POST', auth: false, body: { token, novaSenha: newPassword } });
 }
 
 // PUT /api/students/me — actualizar dados do perfil
@@ -210,25 +239,67 @@ export async function getResult(id) {
 }
 
 // --- Planos / upgrade -------------------------------------------
-// POST /api/plans/upgrade-request  { plan }
-// FLUXO DE COMPRA (regra de produto — importante para o backend):
-// 1. Toda a compra de plano passa pelo CHAT SUPORTE (administradores).
-// 2. Este endpoint cria a mensagem automática no chat e envia email de
-//    notificação para a conta Gmail suporte da MUKANDA (os admins dão
-//    seguimento à conversa). WhatsApp = contacto directo com os gestores
-//    comerciais para esclarecimentos.
-// 3. O estudante envia o comprovativo de pagamento pelo mesmo chat.
-// 4. Confirmado o pagamento, o ADMIN actualiza o plano do estudante,
-//    convida-o a actualizar a página, e o sistema envia email de
-//    confirmação ao estudante.
-export async function requestPlanUpgrade(planId) {
-  await delay(300);
-  return { ok: true, planId };
+// REAL — GET /api/plans (planos activos, promoções activas, dados de
+// pagamento configurados pelo admin em admin/Plans.jsx)
+export async function getPlans() {
+  return request('/plans');
 }
 
-// --- Chat ------------------------------------------------------
-// GET /api/chats/:channel  (real: WebSocket via Socket.io)
-export async function getChat(channel) {
-  await delay(150);
-  return CHAT_THREADS[channel] ?? [];
+// REAL — POST /api/plans/upgrade-request  { planId, promoCode }
+// FLUXO DE COMPRA:
+// 1. Cria um pedido pendente e a mensagem automática no chat Suporte;
+//    os administradores são notificados por email.
+// 2. O estudante envia o comprovativo de pagamento pelo mesmo chat.
+// 3. Confirmado o pagamento, o ADMIN confirma o pedido (Suporte →
+//    "Confirmar e actualizar plano"): o plano é actualizado, o
+//    estudante recebe uma mensagem no chat e um email de confirmação.
+export async function requestPlanUpgrade(planId, promoCode) {
+  return request('/plans/upgrade-request', { method: 'POST', body: { planId, promoCode } });
+}
+
+// --- Chat --------------------------------------------------------
+// "Tempo real" aproximado por polling (sem WebSocket/Socket.io nesta
+// fase — decisão pragmática, igual à monitorização ao vivo do professor).
+
+const mapMsgs = (messages = []) => messages.map((m) => ({
+  from: m.from === 'estudante' ? 'me' : 'prof',
+  text: m.text,
+  time: m.time,
+}));
+
+// REAL — GET /api/chats/duvidas — conversas de Dúvidas já iniciadas pelo
+// estudante (uma por maratona escolhida). A escolha da maratona é manual;
+// usa getMarathons() para listar as activas e abrir uma nova conversa.
+export async function getDuvidasThreads() {
+  const { threads } = await request('/chats/duvidas');
+  return threads;
+}
+
+// REAL — GET /api/chats/duvidas/:maratonaId
+export async function getDuvidasThread(maratonaId) {
+  const data = await request(`/chats/duvidas/${maratonaId}`);
+  return {
+    messages: mapMsgs(data.messages),
+    ref: data.ref ?? null,
+    title: data.title ?? null,
+    professorName: data.professorName ?? null,
+  };
+}
+
+// REAL — POST /api/chats/duvidas/:maratonaId { text }
+export async function sendDuvidas(maratonaId, text) {
+  const { message } = await request(`/chats/duvidas/${maratonaId}`, { method: 'POST', body: { text } });
+  return { from: 'me', text: message.text, time: message.time };
+}
+
+// REAL — GET /api/chats/suporte
+export async function getSuporte() {
+  const data = await request('/chats/suporte');
+  return { messages: mapMsgs(data.messages) };
+}
+
+// REAL — POST /api/chats/suporte { text }
+export async function sendSuporte(text) {
+  const { message } = await request('/chats/suporte', { method: 'POST', body: { text } });
+  return { from: 'me', text: message.text, time: message.time };
 }

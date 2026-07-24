@@ -67,6 +67,7 @@ export default function AdminDashboard() {
             <div className="card" style={{ borderTop: '4px solid var(--red)', marginBottom: 24 }}>
               <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 14 }}>🔔 Alertas do sistema</h3>
               <div className="sm" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {alerts.length === 0 && <div className="mut">Tudo em ordem — sem alertas de momento.</div>}
                 {alerts.map((a, i) => (
                   <div key={i} style={{ ...ALERT_STYLE[a.level], borderRadius: 10, padding: '12px 14px' }}>{a.text}</div>
                 ))}

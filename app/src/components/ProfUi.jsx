@@ -21,7 +21,7 @@ export function ProfTopbar() {
     ['Dashboard', '/prof'],
     ['Maratonas', '/prof/maratonas'],
     ['Validação', '/prof/validacao'],
-    ['Monitorização', '/prof/monitorizacao'],
+    ['Monitorização', '/prof/maratonas'],
     ['Chats', '/prof/chats'],
   ];
 

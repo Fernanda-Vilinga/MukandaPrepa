@@ -1,4 +1,6 @@
 const { db } = require("../config/firebase");
+const { enviarEmail } = require("../utils/email");
+const tpl = require("../utils/emailTemplates");
 
 const LIMITE_PLANO = { basic: 2, plus: 5, premium: Infinity };
 
@@ -183,7 +185,24 @@ exports.submeter = async (req, res) => {
         if (req.body && req.body.answers) patch.respostas = req.body.answers;
         await db.collection("sessoes").doc(s.id).update(patch);
         res.json({ ok: true, submittedAt: patch.submetidaEm, auto: false });
-        // TODO fase de emails: notificar o professor "submissão recebida"
+
+        // Notifica o professor dono da maratona — não bloqueia a resposta.
+        (async () => {
+            const [mDoc, uDoc] = await Promise.all([
+                db.collection("maratonas").doc(s.maratonaId).get(),
+                db.collection("usuarios").doc(s.usuarioId).get(),
+            ]);
+            if (!mDoc.exists) return;
+            const m = mDoc.data();
+            const prof = await db.collection("usuarios").doc(m.professorId).get();
+            if (!prof.exists || !prof.data().email) return;
+            const { subject, html } = tpl.submissaoRecebida({
+                nomeProfessor: prof.data().nome,
+                nomeAluno: uDoc.exists ? uDoc.data().nome : "Um estudante",
+                maratona: m.titulo,
+            });
+            await enviarEmail({ to: prof.data().email, subject, html });
+        })().catch(() => {});
     } catch (e) {
         console.error(e);
         res.status(500).json({ mensagem: "Erro no servidor." });

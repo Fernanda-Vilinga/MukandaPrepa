@@ -55,23 +55,6 @@ export const GLOBAL_STATS = {
   ],
 };
 
-// Config dos planos — TODO: preços provisórios, confirmar com equipa comercial
-export const PLANS_CONFIG = [
-  { id: 'basic', name: 'Basic', price: 'Grátis', attempts: '2', accent: '#64748B', active: true,
-    features: ['2 tentativas por maratona', 'Resultados por email + dashboard', 'Chat de suporte'],
-    missing: ['Chat de dúvidas com professor', 'Tentativas ilimitadas'] },
-  { id: 'plus', name: 'Plus', price: '4 900 Kz/mês', attempts: '5', accent: '#1742E7', active: true, popular: true,
-    features: ['5 tentativas por maratona', 'Feedback detalhado', 'Chat de dúvidas com professor', 'Suporte prioritário'],
-    missing: ['Tentativas ilimitadas'] },
-  { id: 'premium', name: 'Premium', price: '9 900 Kz/mês', attempts: '∞', accent: '#FB6D1D', active: true,
-    features: ['Tentativas ilimitadas', 'Feedback detalhado', 'Chat de dúvidas com professor', 'Suporte prioritário', 'Acesso antecipado'],
-    missing: [] },
-];
-
-export const PROMO_CODES = [
-  { code: 'MUKANDA26', desc: '30% de desconto no 1º mês Plus/Premium', expires: '31 Ago 2026', used: 41, active: true },
-];
-
 // Dados completos de uma maratona (visão admin)
 export const MARATHON_DATA = {
   m1: {
@@ -91,28 +74,3 @@ export const MARATHON_DATA = {
 };
 
 // Chat Suporte (admins) — inclui pedidos de compra de planos
-export const SUPPORT_CHATS = [
-  {
-    id: 's1', student: 'Adilson Manuel', initials: 'AM', color: 'var(--orange)', unread: 1,
-    topic: '💳 Upgrade de plano', last: '16:02', plan: 'plus',
-    messages: [
-      { from: 'student', text: 'Olá! Quero actualizar o meu plano Plus para o plano Premium (9 900 Kz/mês). Podem dar seguimento à compra? — mensagem automática', time: '16:00' },
-      { from: 'student', text: 'Já fiz a transferência, envio o comprovativo aqui?', time: '16:02' },
-    ],
-  },
-  {
-    id: 's2', student: 'Carla Sebastião', initials: 'CS', color: '#9333EA', unread: 1,
-    topic: '🔑 Problema de acesso', last: '14:47', plan: 'basic',
-    messages: [
-      { from: 'student', text: 'Boa tarde, a password da maratona de Física não funciona…', time: '14:47' },
-    ],
-  },
-  {
-    id: 's3', student: 'Rui Muteka', initials: 'RM', color: 'var(--blue)', unread: 0,
-    topic: '💳 Upgrade de plano', last: 'ontem', plan: 'basic',
-    messages: [
-      { from: 'student', text: 'Quero passar para o Plus. Como pago?', time: 'ontem' },
-      { from: 'admin', text: 'Olá Rui! Enviámos os dados de pagamento para o teu email. Qualquer dúvida, os gestores comerciais estão no WhatsApp: +244 9XX XXX XXX.', time: 'ontem' },
-    ],
-  },
-];

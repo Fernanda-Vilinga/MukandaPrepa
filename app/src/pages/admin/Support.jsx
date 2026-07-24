@@ -1,29 +1,118 @@
 // Chat Suporte — EXCLUSIVO dos administradores.
 // Canal onde passam todas as compras de planos (comprovativo, confirmação)
-// e problemas de acesso. Após confirmar pagamento: actualizar o plano do
-// estudante em Utilizadores → Acções → Alterar plano, e o sistema envia
-// o email de confirmação (TODO backend).
-import { useEffect, useState } from 'react';
-import { getSupportChats } from '../../services/adminApi.js';
+// e problemas de acesso. Uma conversa com um pedido de upgrade pendente
+// mostra os atalhos reais: enviar os dados de pagamento configurados em
+// Gestão de planos, ou confirmar o pedido (actualiza o plano do estudante
+// e envia o email de confirmação).
+import { useEffect, useRef, useState } from 'react';
+import { getSupportChats, sendSupportChat, getPlansConfig, confirmPurchase, rejectPurchase } from '../../services/adminApi.js';
 import { AdminTopbar, PlanPill } from '../../components/AdminUi.jsx';
+
+const PLANO_LABEL = { basic: 'Basic', plus: 'Plus', premium: 'Premium' };
+
+function mensagemDadosPagamento(config, pendente) {
+  const plan = (config.plans || []).find((p) => p.id === pendente.planoPedido);
+  const pay = config.payment || {};
+  if (!pay.banco && !pay.iban && !pay.mobileMoneyNumero) return null;
+
+  const linhas = [`Aqui estão os dados para pagares o plano ${plan ? plan.name : PLANO_LABEL[pendente.planoPedido]}${plan ? ` (${plan.price})` : ''}:`];
+  if (pay.banco || pay.iban) {
+    linhas.push(`\n🏦 Transferência bancária${pay.banco ? ` — ${pay.banco}` : ''}${pay.iban ? `\nIBAN: ${pay.iban}` : ''}${pay.titular ? `\nTitular: ${pay.titular}` : ''}`);
+  }
+  if (pay.mobileMoneyNumero) {
+    linhas.push(`\n📱 ${pay.mobileMoneyOperadora || 'Mobile money'}: ${pay.mobileMoneyNumero}`);
+  }
+  if (pay.instrucoes) linhas.push(`\n${pay.instrucoes}`);
+  linhas.push(`\nDepois de pagares, envia o comprovativo aqui mesmo neste chat.`);
+  return linhas.join('\n');
+}
 
 export default function Support() {
   const [chats, setChats] = useState([]);
   const [cur, setCur] = useState(null);
   const [text, setText] = useState('');
+  const [actionBusy, setActionBusy] = useState(false);
+  const [actionError, setActionError] = useState('');
+
+  const curIdRef = useRef(null);
+  useEffect(() => { curIdRef.current = cur?.id ?? null; }, [cur]);
+
+  const refresh = async () => {
+    const c = await getSupportChats();
+    setChats(c);
+    setCur((prev) => {
+      if (!prev) return c[0] ?? null;
+      return c.find((x) => x.id === curIdRef.current) ?? prev;
+    });
+  };
 
   useEffect(() => {
-    getSupportChats().then((c) => { setChats(c); setCur(c[0] ?? null); });
+    refresh();
+    // Sem WebSocket nesta fase — "tempo real" aproximado por polling (ver Monitor.jsx).
+    const timer = setInterval(refresh, 6000);
+    return () => clearInterval(timer);
   }, []);
 
   const unread = chats.reduce((n, c) => n + c.unread, 0);
 
-  const send = () => {
-    if (!text.trim() || !cur) return;
-    const msg = { from: 'admin', text, time: new Date().toTimeString().slice(0, 5) };
+  const send = async () => {
+    const value = text.trim();
+    if (!value || !cur) return;
+    setText('');
+    const msg = await sendSupportChat(cur.id, value);
     setChats((all) => all.map((c) => (c.id === cur.id ? { ...c, messages: [...c.messages, msg], unread: 0 } : c)));
     setCur((c) => ({ ...c, messages: [...c.messages, msg], unread: 0 }));
-    setText('');
+  };
+
+  const enviarDadosPagamento = async () => {
+    if (!cur?.pendingPurchase) return;
+    setActionBusy(true);
+    setActionError('');
+    try {
+      const config = await getPlansConfig();
+      const texto = mensagemDadosPagamento(config, cur.pendingPurchase);
+      if (!texto) {
+        setActionError('Ainda não configuraste os dados de pagamento — vai a Gestão de planos → Dados de pagamento.');
+      } else {
+        const msg = await sendSupportChat(cur.id, texto);
+        setChats((all) => all.map((c) => (c.id === cur.id ? { ...c, messages: [...c.messages, msg], unread: 0 } : c)));
+        setCur((c) => ({ ...c, messages: [...c.messages, msg], unread: 0 }));
+      }
+    } catch (err) {
+      setActionError(err.message);
+    } finally {
+      setActionBusy(false);
+    }
+  };
+
+  const confirmarPlano = async () => {
+    if (!cur?.pendingPurchase) return;
+    setActionBusy(true);
+    setActionError('');
+    try {
+      await confirmPurchase(cur.pendingPurchase.id);
+      await refresh();
+    } catch (err) {
+      setActionError(err.message);
+    } finally {
+      setActionBusy(false);
+    }
+  };
+
+  const recusarPlano = async () => {
+    if (!cur?.pendingPurchase) return;
+    const motivo = window.prompt('Motivo (opcional) — o aluno vê esta mensagem no chat:', '');
+    if (motivo === null) return; // cancelou
+    setActionBusy(true);
+    setActionError('');
+    try {
+      await rejectPurchase(cur.pendingPurchase.id, motivo);
+      await refresh();
+    } catch (err) {
+      setActionError(err.message);
+    } finally {
+      setActionBusy(false);
+    }
   };
 
   return (
@@ -45,7 +134,7 @@ export default function Support() {
               {chats.map((c) => (
                 <button
                   key={c.id}
-                  onClick={() => { setCur(c); setChats((all) => all.map((x) => (x.id === c.id ? { ...x, unread: 0 } : x))); }}
+                  onClick={() => { setCur(c); setActionError(''); setChats((all) => all.map((x) => (x.id === c.id ? { ...x, unread: 0 } : x))); }}
                   style={{
                     display: 'flex', gap: 12, alignItems: 'center', width: '100%', textAlign: 'left',
                     padding: '16px 24px', border: 'none', borderBottom: '1px solid #EFEFF2',
@@ -76,16 +165,28 @@ export default function Support() {
                   <b>{cur.student}</b>
                   <div className="xs mut" style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 2 }}>
                     {cur.topic} · plano actual: <PlanPill plan={cur.plan} />
+                    {cur.pendingPurchase && <> → pedido: <PlanPill plan={cur.pendingPurchase.planoPedido} />{cur.pendingPurchase.promoCode && ` (código ${cur.pendingPurchase.promoCode})`}</>}
                   </div>
                 </div>
-                {cur.topic.includes('Upgrade') && (
+                {cur.pendingPurchase && (
                   <div style={{ display: 'flex', gap: 8 }}>
-                    {/* Atalhos do fluxo de compra */}
-                    <button className="btn sm ghost" title="Enviar dados de pagamento por email">📧 Enviar dados de pagamento</button>
-                    <button className="btn sm green" title="Após confirmar o comprovativo">✓ Confirmar e actualizar plano</button>
+                    <button className="btn sm ghost" disabled={actionBusy} onClick={enviarDadosPagamento} title="Enviar os dados de pagamento configurados em Gestão de planos">
+                      📧 Enviar dados de pagamento
+                    </button>
+                    <button className="btn sm ghost" disabled={actionBusy} onClick={recusarPlano} title="Recusar este pedido">
+                      ✗ Recusar
+                    </button>
+                    <button className="btn sm green" disabled={actionBusy} onClick={confirmarPlano} title="Após confirmar o comprovativo">
+                      {actionBusy ? '…' : '✓ Confirmar e actualizar plano'}
+                    </button>
                   </div>
                 )}
               </div>
+              {actionError && (
+                <div className="sm" style={{ background: 'var(--red-l, #fdecec)', color: 'var(--red, #c0392b)', padding: '10px 28px' }}>
+                  {actionError}
+                </div>
+              )}
               <div style={{ flex: 1, padding: 28, display: 'flex', flexDirection: 'column', gap: 14, background: 'var(--bg)', overflowY: 'auto' }}>
                 {cur.messages.map((m, i) => (
                   <div
@@ -93,6 +194,7 @@ export default function Support() {
                     className="sm"
                     style={{
                       maxWidth: '70%',
+                      whiteSpace: 'pre-line',
                       alignSelf: m.from === 'admin' ? 'flex-end' : 'flex-start',
                       background: m.from === 'admin' ? 'var(--dark)' : '#fff',
                       color: m.from === 'admin' ? '#fff' : 'var(--dark)',

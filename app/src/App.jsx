@@ -1,5 +1,6 @@
+import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { currentUser } from './services/api.js';
+import { currentUser, refreshUser } from './services/api.js';
 import Login from './pages/Login.jsx';
 import Register from './pages/Register.jsx';
 import Dashboard from './pages/Dashboard.jsx';
@@ -13,10 +14,12 @@ import ResultDetail from './pages/ResultDetail.jsx';
 import Terms from './pages/Terms.jsx';
 import Profile from './pages/Profile.jsx';
 import ForgotPassword from './pages/ForgotPassword.jsx';
+import ResetPassword from './pages/ResetPassword.jsx';
 import ChangePassword from './pages/ChangePassword.jsx';
 import ProfDashboard from './pages/prof/Dashboard.jsx';
 import CreateMarathon from './pages/prof/CreateMarathon.jsx';
 import Questions from './pages/prof/Questions.jsx';
+import PreviewMarathon from './pages/prof/PreviewMarathon.jsx';
 import Monitor from './pages/prof/Monitor.jsx';
 import Queue from './pages/prof/Queue.jsx';
 import Validate from './pages/prof/Validate.jsx';
@@ -29,6 +32,7 @@ import Users from './pages/admin/Users.jsx';
 import GlobalStats from './pages/admin/GlobalStats.jsx';
 import Plans from './pages/admin/Plans.jsx';
 import MarathonData from './pages/admin/MarathonData.jsx';
+import AdminMarathons from './pages/admin/Marathons.jsx';
 import Support from './pages/admin/Support.jsx';
 
 function Private({ children }) {
@@ -57,6 +61,21 @@ function PrivateProf({ children }) {
 }
 
 export default function App() {
+  // Re-sincroniza o utilizador com o backend uma vez ao carregar a app
+  // (F5 inclusive) — sem isto, mudanças feitas pelo admin (plano,
+  // suspensão) só apareciam depois de sair e voltar a entrar, mesmo
+  // com a página actualizada, porque currentUser() só lia a fotografia
+  // gravada no sessionStorage no momento do login.
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    refreshUser().finally(() => setReady(true));
+  }, []);
+
+  if (!ready) {
+    return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', color: 'var(--mut)' }}>A carregar…</div>;
+  }
+
   return (
     <BrowserRouter>
       <Routes>
@@ -64,6 +83,7 @@ export default function App() {
         <Route path="/registo" element={<Register />} />
         <Route path="/termos" element={<Terms />} />
         <Route path="/recuperar-senha" element={<ForgotPassword />} />
+        <Route path="/redefinir-senha" element={<ResetPassword />} />
         <Route path="/alterar-senha" element={<ChangePassword />} />
         <Route path="/" element={<Private><Dashboard /></Private>} />
         <Route path="/maratonas" element={<Private><Marathons /></Private>} />
@@ -78,7 +98,8 @@ export default function App() {
         <Route path="/prof/maratonas" element={<PrivateProf><ProfMarathons /></PrivateProf>} />
         <Route path="/prof/maratonas/nova" element={<PrivateProf><CreateMarathon /></PrivateProf>} />
         <Route path="/prof/maratonas/nova/questoes" element={<PrivateProf><Questions /></PrivateProf>} />
-        <Route path="/prof/monitorizacao" element={<PrivateProf><Monitor /></PrivateProf>} />
+        <Route path="/prof/maratonas/nova/pre-visualizar" element={<PrivateProf><PreviewMarathon /></PrivateProf>} />
+        <Route path="/prof/monitorizacao/:id" element={<PrivateProf><Monitor /></PrivateProf>} />
         <Route path="/prof/validacao" element={<PrivateProf><Queue /></PrivateProf>} />
         <Route path="/prof/validacao/:id" element={<PrivateProf><Validate /></PrivateProf>} />
         <Route path="/prof/estatisticas/:id" element={<PrivateProf><Stats /></PrivateProf>} />
@@ -88,6 +109,7 @@ export default function App() {
         <Route path="/admin/utilizadores" element={<PrivateAdmin><Users /></PrivateAdmin>} />
         <Route path="/admin/estatisticas" element={<PrivateAdmin><GlobalStats /></PrivateAdmin>} />
         <Route path="/admin/planos" element={<PrivateAdmin><Plans /></PrivateAdmin>} />
+        <Route path="/admin/maratonas" element={<PrivateAdmin><AdminMarathons /></PrivateAdmin>} />
         <Route path="/admin/maratonas/:id" element={<PrivateAdmin><MarathonData /></PrivateAdmin>} />
         <Route path="/admin/suporte" element={<PrivateAdmin><Support /></PrivateAdmin>} />
         <Route path="*" element={<Navigate to="/" replace />} />

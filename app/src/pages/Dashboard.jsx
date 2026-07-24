@@ -10,6 +10,7 @@ export default function Dashboard() {
   const user = currentUser();
   const [marathons, setMarathons] = useState([]);
   const [results, setResults] = useState([]);
+  const [selectedId, setSelectedId] = useState(null);
 
   useEffect(() => {
     getMarathons().then(setMarathons);
@@ -18,6 +19,15 @@ export default function Dashboard() {
 
   const active = marathons.filter((m) => m.status === 'active');
   const soon = marathons.filter((m) => m.status === 'soon');
+
+  // Maratona escolhida para ver as tentativas restantes — por omissão a
+  // primeira activa, mas o estudante pode trocar na lista de acesso rápido.
+  useEffect(() => {
+    if (active.length && !active.some((m) => m.id === selectedId)) {
+      setSelectedId(active[0].id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [marathons]);
   const validated = results.filter((r) => r.status === 'validated');
   const pending = results.filter((r) => r.status === 'pending');
   const best = validated.reduce((b, r) => (r.rank && (!b || r.rank < b) ? r.rank : b), null);
@@ -26,7 +36,7 @@ export default function Dashboard() {
     : null;
   const maxAtt = PLAN_ATTEMPTS[user?.plan ?? 'basic'];
   const firstName = (user?.name ?? 'Estudante').split(' ')[0];
-  const featured = active[0];
+  const featured = active.find((m) => m.id === selectedId) ?? active[0];
 
   return (
     <>
@@ -110,7 +120,20 @@ export default function Dashboard() {
             {featured && (
               <div className="card">
                 <h3 style={{ fontSize: 16.5, fontWeight: 700, marginBottom: 14 }}>As tuas tentativas — plano {PLAN_LABEL[user?.plan]}</h3>
-                <div className="sm mut" style={{ marginBottom: 12 }}>{featured.title}</div>
+                {active.length > 1 ? (
+                  <select
+                    className="input sm"
+                    style={{ marginBottom: 12, width: '100%' }}
+                    value={featured.id}
+                    onChange={(e) => setSelectedId(e.target.value)}
+                  >
+                    {active.map((m) => (
+                      <option key={m.id} value={m.id}>{m.icon} {m.title}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <div className="sm mut" style={{ marginBottom: 12 }}>{featured.title}</div>
+                )}
                 <AttemptDots used={featured.attemptsUsed} max={maxAtt} />
                 <div className="sm mut" style={{ marginTop: 12 }}>
                   {featured.attemptsUsed} usada{featured.attemptsUsed !== 1 && 's'} ·{' '}

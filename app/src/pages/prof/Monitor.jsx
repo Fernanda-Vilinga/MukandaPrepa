@@ -1,15 +1,26 @@
 // Monitorização ao vivo — alunos conectados, progresso, tempos.
-// (Real: WebSocket/Socket.io; aqui os dados são mock.)
+// Sem WebSocket ainda: polling a cada 8s (ver POLL_MS).
 import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { getLiveSessions } from './profDeps.js';
 import { ProfTopbar } from '../../components/ProfUi.jsx';
 import { Stat } from '../../components/Ui.jsx';
 
+const POLL_MS = 8000;
+
 export default function Monitor() {
+  const { id } = useParams();
   const [data, setData] = useState(null);
   const [tab, setTab] = useState('live');
 
-  useEffect(() => { getLiveSessions().then(setData); }, []);
+  useEffect(() => {
+    let activo = true;
+    const carregar = () => getLiveSessions(id).then((d) => { if (activo) setData(d); });
+    carregar();
+    const t = setInterval(carregar, POLL_MS);
+    return () => { activo = false; clearInterval(t); };
+  }, [id]);
+
   if (!data) return <ProfTopbar />;
 
   return (
@@ -19,7 +30,7 @@ export default function Monitor() {
         <div className="card" style={{ background: 'var(--dark)', color: '#fff', display: 'flex', alignItems: 'center', gap: 32, padding: '24px 32px', marginBottom: 24, flexWrap: 'wrap' }}>
           <div style={{ flex: 1, minWidth: 220 }}>
             <div className="xs" style={{ color: '#8A8B9A', letterSpacing: '.15em' }}>MONITORIZAÇÃO AO VIVO</div>
-            <h1 style={{ fontSize: 22, fontWeight: 800, marginTop: 4 }}>Matemática — Álgebra Linear</h1>
+            <h1 style={{ fontSize: 22, fontWeight: 800, marginTop: 4 }}>{data.title}</h1>
           </div>
           <div style={{ textAlign: 'center' }}>
             <div className="mont" style={{ fontSize: 26, fontWeight: 800, color: 'var(--green)' }}>● {data.connected}</div>
@@ -30,7 +41,7 @@ export default function Monitor() {
             <div className="xs" style={{ color: '#B9BAC6' }}>TOTAL PARTICIPANTES</div>
           </div>
           <div className="timer" style={{ background: 'rgba(251,109,29,.15)', border: '1px solid var(--orange)', fontSize: 15 }}>
-            <span className="dot" />Janela fecha em 2d 08h
+            <span className="dot" />Janela fecha em {data.windowCloses}
           </div>
         </div>
 

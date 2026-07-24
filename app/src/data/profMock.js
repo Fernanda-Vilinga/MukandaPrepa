@@ -73,24 +73,4 @@ export const MARATHON_STATS = {
 };
 
 // Chats do professor
-export const PROF_CHATS = [
-  {
-    id: 'c1', student: 'Adilson Manuel', initials: 'AM', color: 'var(--orange)', unread: 2,
-    ref: 'Questão 3 — Álgebra Linear', plan: 'Plus', online: true, last: '15:04',
-    messages: [
-      { from: 'student', text: 'Boa tarde, professor! Na questão 3, o enunciado pede a inversa ou só o determinante?', time: '15:04' },
-    ],
-  },
-  {
-    id: 'c2', student: 'Maria Teixeira', initials: 'MT', color: '#9333EA', unread: 1,
-    ref: 'Questão 1 — Orgânica II', plan: 'Premium', online: false, last: '14:31',
-    messages: [{ from: 'student', text: 'Professor, a imagem da questão 1 não abre no meu telemóvel…', time: '14:31' }],
-  },
-  {
-    id: 'c3', student: 'Luena Kiala', initials: 'LK', color: 'var(--blue)', unread: 0,
-    ref: null, plan: 'Basic', online: false, last: 'ontem',
-    messages: [{ from: 'student', text: 'Obrigada, professor! 🙏', time: 'ontem' }],
-  },
-];
-
 export const AREAS_PROF = ['Engenharia e Tecnologia', 'Ciências Sociais'];
