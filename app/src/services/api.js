@@ -14,7 +14,30 @@ const delay = (ms = 250) => new Promise((r) => setTimeout(r, ms));
 // URL base da API — definir VITE_API_BASE no ficheiro .env
 // (ex.: VITE_API_BASE=http://localhost:5000/api em dev,
 //  ou o URL do deploy: VITE_API_BASE=https://<backend>.vercel.app/api)
-export const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:5000/api';
+//
+// Atenção: as variáveis VITE_* são lidas no momento do BUILD, não em
+// execução. Se faltarem na hospedagem, a app compila e publica sem
+// qualquer erro — e só falha no browser de quem a usa.
+const API_BASE_CONFIGURADA = import.meta.env.VITE_API_BASE;
+
+// Em desenvolvimento é conveniente assumir o servidor local. Em produção
+// esse fallback é uma armadilha: a app tenta ligar-se ao localhost do
+// visitante e o erro que aparece é um críptico "problema de rede", que não
+// diz a ninguém que o que falta é uma variável de ambiente.
+const EM_PRODUCAO = import.meta.env.PROD;
+
+if (EM_PRODUCAO && !API_BASE_CONFIGURADA) {
+  console.error(
+    '[MUKANDA PREPA] VITE_API_BASE não está definida neste build.\n' +
+    'A app foi compilada sem saber onde está o backend, por isso nenhum ' +
+    'pedido vai funcionar.\n' +
+    'Corrigir na hospedagem: definir VITE_API_BASE (ex.: ' +
+    'https://<backend>.vercel.app/api) e voltar a fazer o build — ' +
+    'guardar a variável não chega, é preciso compilar de novo.'
+  );
+}
+
+export const API_BASE = API_BASE_CONFIGURADA ?? 'http://localhost:5000/api';
 
 // Helper: pedido JSON com tratamento de erros do backend ({ mensagem })
 export async function request(path, { method = 'GET', body, auth = true } = {}) {
@@ -29,6 +52,12 @@ export async function request(path, { method = 'GET', body, auth = true } = {}) 
       body: body ? JSON.stringify(body) : undefined,
     });
   } catch {
+    if (EM_PRODUCAO && !API_BASE_CONFIGURADA) {
+      throw new Error(
+        'A aplicação não está configurada: falta indicar o endereço do ' +
+        'servidor (VITE_API_BASE). Contacta o suporte.'
+      );
+    }
     throw new Error('Sem ligação ao servidor. Verifica a tua internet e tenta de novo.');
   }
   const data = await res.json().catch(() => ({}));
