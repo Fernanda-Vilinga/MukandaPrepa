@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { APP_LOGIN, APP_REGISTO } from '../config/appLinks';
 import './Navbar.css';
 
 export default function Navbar() {
@@ -46,8 +47,8 @@ export default function Navbar() {
         </nav>
 
         <div className="navbar__actions">
-          <Link to="/login" className="btn btn-outline">Login</Link>
-          <Link to="/registo" className="btn btn-primary">Inscrever-me</Link>
+          <a href={APP_LOGIN} className="btn btn-outline" target="_blank" rel="noreferrer">Login</a>
+          <a href={APP_REGISTO} className="btn btn-primary" target="_blank" rel="noreferrer">Inscrever-me</a>
         </div>
       </div>
     </header>

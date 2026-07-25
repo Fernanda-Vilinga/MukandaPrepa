@@ -1,8 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import MainLayout from './layouts/MainLayout';
 import Homepage from './pages/Homepage';
-import Login from './pages/Login';
-import Registo from './pages/Registo';
 import Planos from './pages/Planos';
 import Maratonas from './pages/Maratonas';
 import AulasOnline from './pages/AulasOnline';
@@ -36,8 +34,6 @@ export default function App() {
         <Route path="/identidade-visual" element={<IdentidadeVisual />} />
         <Route path="*" element={<PaginaNaoEncontrada />} />
       </Route>
-      <Route path="/login" element={<Login />} />
-      <Route path="/registo" element={<Registo />} />
     </Routes>
   );
 }

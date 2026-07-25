@@ -1,5 +1,6 @@
 import MaratonaCountdown from '../components/MaratonaCountdown';
 import './Maratonas.css';
+import { APP_REGISTO } from '../config/appLinks';
 
 const PILARES = [
   {
@@ -38,7 +39,7 @@ export default function Maratonas() {
               Sessões intensivas de exercícios cronometrados, por área e por
               universidade, para chegares preparado ao dia do exame.
             </p>
-            <a href="/registo" className="btn btn-primary">Inscrever-me numa Maratona</a>
+            <a href={APP_REGISTO} className="btn btn-primary" target="_blank" rel="noreferrer">Inscrever-me numa Maratona</a>
           </div>
           <div className="maratonas-hero__illustration" aria-hidden="true">
             <svg viewBox="0 0 400 320" xmlns="http://www.w3.org/2000/svg">
@@ -64,7 +65,7 @@ export default function Maratonas() {
         </div>
       </section>
 
-      <MaratonaCountdown ctaHref="/registo" secondaryHref="#calendario" secondaryLabel="Ver calendário" />
+      <MaratonaCountdown ctaHref={APP_REGISTO} secondaryHref="#calendario" secondaryLabel="Ver calendário" />
 
       <section className="maratonas-calendario" id="calendario">
         <div className="container">
