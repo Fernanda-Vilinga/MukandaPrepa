@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import './Planos.css';
+import { appRegisto } from '../config/appLinks';
 
 const PLANOS = [
   { key: 'basic', nome: 'Basic', preco: 'Grátis', destaque: false },
@@ -93,7 +94,9 @@ export default function Planos() {
               </ul>
 
               <a
-                href={`/registo?plano=${plano.nome}`}
+                href={appRegisto(plano.nome)}
+                target="_blank"
+                rel="noreferrer"
                 className={`btn ${plano.destaque ? 'btn-primary' : 'btn-outline'} plano-card-full__cta`}
               >
                 Escolher {plano.nome}

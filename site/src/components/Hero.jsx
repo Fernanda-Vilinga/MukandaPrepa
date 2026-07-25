@@ -1,5 +1,6 @@
 import heroImage from '../assets/Hero.jpg';
 import './Hero.css';
+import { APP_REGISTO } from '../config/appLinks';
 
 export default function Hero() {
   return (
@@ -12,7 +13,7 @@ export default function Hero() {
             exames passados, maratonas online e aulas ao vivo, para
             estudares ao teu ritmo e onde quiseres.
           </p>
-          <a href="/registo" className="btn btn-primary hero__cta">
+          <a href={APP_REGISTO} className="btn btn-primary hero__cta" target="_blank" rel="noreferrer">
             Inscrever-me agora gratuitamente
           </a>
         </div>

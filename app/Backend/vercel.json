@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/api" }
+  ],
+  "crons": [
+    { "path": "/api/cron/sessoes-expiradas", "schedule": "0 3 * * *" }
+  ]
+}

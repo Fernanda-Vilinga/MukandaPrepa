@@ -24,11 +24,19 @@ dist-ssr
 *.sw?
 .env
 serviceAccountKey.json
-# Backend secrets
+# Backend secrets — a regra é propositadamente larga para nunca deixar
+# escapar a chave da conta de serviço do Firebase. As excepções abaixo são
+# ficheiros de configuração que TÊM de ir para o repositório.
 Backend/.env
 Backend/*.json
+!Backend/package.json
+!Backend/package-lock.json
+!Backend/vercel.json
 # Firebase secret
 app/Backend/*.json
+!app/Backend/package.json
+!app/Backend/package-lock.json
+!app/Backend/vercel.json
 
 # Environment
 .env

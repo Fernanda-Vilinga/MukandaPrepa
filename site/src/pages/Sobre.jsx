@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import './Sobre.css';
+import { APP_REGISTO } from '../config/appLinks';
 
 // Conteúdo provisório — esta página aguardava protótipo do designer (Briefing
 // v1.0, secção 2.1). Avançou-se sem protótipo por decisão da equipa; rever
@@ -95,7 +96,7 @@ export default function Sobre() {
       <section className="sobre-cta-final">
         <div className="container sobre-cta-final__inner">
           <h2>Queres fazer parte desta comunidade?</h2>
-          <a href="/registo" className="btn btn-white">Criar Conta Grátis</a>
+          <a href={APP_REGISTO} className="btn btn-white" target="_blank" rel="noreferrer">Criar Conta Grátis</a>
         </div>
       </section>
     </>
