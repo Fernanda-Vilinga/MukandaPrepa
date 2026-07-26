@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import './Footer.css';
+import { CONTACTO } from '../config/contactos';
 
 export default function Footer() {
   return (
@@ -34,9 +35,9 @@ export default function Footer() {
           <h4>Contactos</h4>
           <p>Luanda, Angola</p>
           <a href="mailto:mukandaprepa@gmail.com">mukandaprepa@gmail.com</a>
-          <a href="tel:+244931256328">+244 931 256 328</a>
-          <a href="https://wa.me/244923124578" target="_blank" rel="noreferrer">
-            WhatsApp: +244 923 124 578
+          <a href={CONTACTO.telefoneLink}>{CONTACTO.telefoneLegivel}</a>
+          <a href={CONTACTO.whatsappLink} target="_blank" rel="noreferrer">
+            WhatsApp: {CONTACTO.telefoneLegivel}
           </a>
         </div>
       </div>

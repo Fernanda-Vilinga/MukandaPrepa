@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import './Planos.css';
 import { appRegisto, propsLink } from '../config/appLinks';
+import { whatsappCom } from '../config/contactos';
 
 const PLANOS = [
   { key: 'basic', nome: 'Basic', preco: 'Grátis', destaque: false },
@@ -158,7 +159,7 @@ export default function Planos() {
         <div className="container planos-cta-final__inner">
           <h2>Ainda tens dúvidas?</h2>
           <a
-            href="https://wa.me/244923124578"
+            href={whatsappCom('Olá! Tenho dúvidas sobre os planos da MUKANDA PREPA.')}
             target="_blank"
             rel="noreferrer"
             className="btn btn-primary"

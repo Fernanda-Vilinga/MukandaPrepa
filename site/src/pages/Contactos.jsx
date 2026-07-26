@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import './Contactos.css';
+import { CONTACTO } from '../config/contactos';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -113,12 +114,12 @@ export default function Contactos() {
             </div>
             <div className="contactos-info__card">
               <h3>Telefone</h3>
-              <a href="tel:+244931256328">+244 931 256 328</a>
+              <a href={CONTACTO.telefoneLink}>{CONTACTO.telefoneLegivel}</a>
             </div>
             <div className="contactos-info__card">
               <h3>WhatsApp</h3>
-              <a href="https://wa.me/244923124578" target="_blank" rel="noreferrer">
-                +244 923 124 578
+              <a href={CONTACTO.whatsappLink} target="_blank" rel="noreferrer">
+                {CONTACTO.telefoneLegivel}
               </a>
             </div>
 
