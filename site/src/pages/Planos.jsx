@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import './Planos.css';
-import { appRegisto } from '../config/appLinks';
+import { appRegisto, propsLink } from '../config/appLinks';
 
 const PLANOS = [
   { key: 'basic', nome: 'Basic', preco: 'Grátis', destaque: false },
@@ -95,8 +95,7 @@ export default function Planos() {
 
               <a
                 href={appRegisto(plano.nome)}
-                target="_blank"
-                rel="noreferrer"
+                {...propsLink(appRegisto(plano.nome))}
                 className={`btn ${plano.destaque ? 'btn-primary' : 'btn-outline'} plano-card-full__cta`}
               >
                 Escolher {plano.nome}

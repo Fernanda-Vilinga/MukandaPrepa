@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import './MaratonaCountdown.css';
+import { APP_REGISTO, propsLink } from '../config/appLinks';
 
 // Data da 1ª Maratona: 22 de Julho de 2026, 14h00 (Briefing 1.3 / Spec 2.x)
 const MARATONA_DATE = new Date('2026-07-22T14:00:00');
@@ -15,8 +16,10 @@ function getTimeLeft() {
   return { dias, horas, minutos, terminou: false };
 }
 
+// O botão principal leva sempre ao registo na app — é a acção que se quer
+// desta secção. O secundário é que fica para "saber mais" dentro do site.
 export default function MaratonaCountdown({
-  ctaHref = '/maratonas',
+  ctaHref = APP_REGISTO,
   ctaLabel = 'Inscrever-me na Maratona',
   secondaryHref = '/maratonas',
   secondaryLabel = 'Saber mais',
@@ -53,8 +56,8 @@ export default function MaratonaCountdown({
         )}
 
         <div className="maratona__actions">
-          <a href={ctaHref} className="btn btn-primary">{ctaLabel}</a>
-          <a href={secondaryHref} className="btn btn-outline">{secondaryLabel}</a>
+          <a href={ctaHref} className="btn btn-primary" {...propsLink(ctaHref)}>{ctaLabel}</a>
+          <a href={secondaryHref} className="btn btn-outline" {...propsLink(secondaryHref)}>{secondaryLabel}</a>
         </div>
       </div>
     </section>

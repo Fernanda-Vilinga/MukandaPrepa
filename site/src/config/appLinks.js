@@ -17,3 +17,12 @@ export const APP_REGISTO = `${base}/registo`;
 // Alguns cartões de plano passam o plano escolhido para a app.
 export const appRegisto = (plano) =>
   plano ? `${APP_REGISTO}?plano=${encodeURIComponent(plano)}` : APP_REGISTO;
+
+// Links para a app abrem sempre num separador novo: a pessoa está a ler o site
+// e não deve perder o sítio onde estava ao ir criar conta. Links internos do
+// site continuam a navegar normalmente, no mesmo separador.
+export const ehLinkExterno = (href) => /^https?:\/\//i.test(String(href || ''));
+
+// Espalhar sobre um <a>: <a href={x} {...propsLink(x)}>
+export const propsLink = (href) =>
+  ehLinkExterno(href) ? { target: '_blank', rel: 'noreferrer' } : {};
