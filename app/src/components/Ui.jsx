@@ -165,3 +165,32 @@ export function Timer({ seconds }) {
     </div>
   );
 }
+
+
+// Texto de mensagem de chat: preserva as quebras de linha e transforma
+// endereços http(s) em links clicáveis. Sem isto, a mensagem com os dados
+// de pagamento (multilinha, com o link de WhatsApp) chegava ao aluno como
+// um bloco colado e o link não era clicável — ou seja, inútil.
+export function TextoComLinks({ children }) {
+  const texto = String(children ?? '');
+  const partes = texto.split(/(https?:\/\/[^\s]+)/g);
+  return (
+    <span style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+      {partes.map((parte, i) =>
+        /^https?:\/\//.test(parte) ? (
+          <a
+            key={i}
+            href={parte}
+            target="_blank"
+            rel="noreferrer"
+            style={{ color: 'inherit', textDecoration: 'underline', fontWeight: 600 }}
+          >
+            {parte}
+          </a>
+        ) : (
+          parte
+        )
+      )}
+    </span>
+  );
+}

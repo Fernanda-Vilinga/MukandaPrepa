@@ -4,6 +4,7 @@ const crypto = require("crypto");
 const gerarToken = require("../utils/jwt");
 const { enviarEmail } = require("../utils/email");
 const tpl = require("../utils/emailTemplates");
+const val = require("../utils/validacao");
 
 // Planos válidos — sempre em minúsculas (alinhado com o frontend da app)
 const PLANOS = ["basic", "plus", "premium"];
@@ -42,27 +43,30 @@ exports.register = async (req, res) => {
             });
         }
 
-        const emailNormalizado = String(email).trim().toLowerCase();
+        if (!val.contactoValido(contacto)) {
+            return res.status(400).json({ mensagem: val.MENSAGEM_CONTACTO });
+        }
 
-        // verificar se email já existe
-        const usuarioExistente = await db
-            .collection("usuarios")
-            .where("email", "==", emailNormalizado)
-            .get();
+        const emailNormalizado = val.normalizarEmail(email);
+        const contactoFormatado = val.formatarContacto(contacto);
 
-        if (!usuarioExistente.empty) {
-            return res.status(400).json({
-                mensagem: "Este email já está registrado.",
-            });
+        // Nome, email e contacto têm de ser únicos em toda a plataforma —
+        // duas contas com o mesmo contacto tornam impossível saber a quem
+        // pertence um comprovativo de pagamento.
+        const duplicado = await val.procurarDuplicados(db, {
+            nome, email: emailNormalizado, contacto: contactoFormatado,
+        });
+        if (duplicado) {
+            return res.status(400).json({ mensagem: duplicado });
         }
 
         const senhaHash = await bcrypt.hash(senha, 10);
 
         const novoUsuario = {
-            nome,
+            nome: String(nome).trim().replace(/\s+/g, " "),
             email: emailNormalizado,
             senha: senhaHash,
-            contacto,
+            contacto: contactoFormatado,
             area,
             role: "student",          // registo público cria SEMPRE estudante
             plano: "basic",           // toda a conta nova entra no Basic (grátis)
@@ -182,9 +186,14 @@ exports.alterarSenha = async (req, res) => {
             return res.status(401).json({ mensagem: "Senha actual incorrecta." });
         }
 
+        // Qualquer link de recuperação pendente deixa de valer: quem acabou
+        // de definir uma senha nova não quer um email antigo a permitir
+        // trocá-la outra vez.
         await db.collection("usuarios").doc(req.usuario.id).update({
             senha: await bcrypt.hash(novaSenha, 10),
             trocarSenha: false,
+            resetTokenHash: null,
+            resetTokenExpira: null,
         });
 
         res.json({ mensagem: "Senha alterada com sucesso." });

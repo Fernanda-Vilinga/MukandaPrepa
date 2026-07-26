@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const { enviarEmail } = require("../utils/email");
 const tpl = require("../utils/emailTemplates");
+const val = require("../utils/validacao");
 
 // POST /api/admin/professores  (protegido: só admin)
 // Cria conta de professor com senha temporária — o professor deve
@@ -11,10 +12,14 @@ exports.criarProfessor = async (req, res) => {
     try {
         const { nome, email, contacto, area, disciplinas, senhaTemporaria } = req.body;
 
-        if (!nome || !email || !area || !senhaTemporaria) {
+        if (!nome || !email || !area || !senhaTemporaria || !contacto) {
             return res.status(400).json({
-                mensagem: "Campos obrigatórios: nome, email, área e senha temporária.",
+                mensagem: "Campos obrigatórios: nome, email, contacto, área e senha temporária.",
             });
+        }
+
+        if (!val.contactoValido(contacto)) {
+            return res.status(400).json({ mensagem: val.MENSAGEM_CONTACTO });
         }
 
         if (String(senhaTemporaria).length < 8) {
@@ -23,24 +28,25 @@ exports.criarProfessor = async (req, res) => {
             });
         }
 
-        const emailNormalizado = String(email).trim().toLowerCase();
+        const emailNormalizado = val.normalizarEmail(email);
+        const contactoFormatado = val.formatarContacto(contacto);
 
-        const existente = await db
-            .collection("usuarios")
-            .where("email", "==", emailNormalizado)
-            .get();
-
-        if (!existente.empty) {
-            return res.status(400).json({ mensagem: "Este email já está registrado." });
+        // Mesmas regras do auto-registo de estudantes: nome, email e
+        // contacto únicos em toda a plataforma.
+        const duplicado = await val.procurarDuplicados(db, {
+            nome, email: emailNormalizado, contacto: contactoFormatado,
+        });
+        if (duplicado) {
+            return res.status(400).json({ mensagem: duplicado });
         }
 
         const senhaHash = await bcrypt.hash(senhaTemporaria, 10);
 
         const novoProfessor = {
-            nome,
+            nome: String(nome).trim().replace(/\s+/g, " "),
             email: emailNormalizado,
             senha: senhaHash,
-            contacto: contacto || "",
+            contacto: contactoFormatado,
             area,
             disciplinas: disciplinas || "",
             role: "professor",
@@ -155,6 +161,10 @@ exports.actualizarUtilizador = async (req, res) => {
             novaSenhaTemporaria = `MKP-${crypto.randomInt(100000, 999999)}`;
             patch.senha = await bcrypt.hash(novaSenhaTemporaria, 10);
             patch.trocarSenha = true;   // o utilizador troca no próximo login
+            // Um link de recuperação pendente deixaria de fazer sentido e
+            // seria uma porta aberta — invalida-se aqui também.
+            patch.resetTokenHash = null;
+            patch.resetTokenExpira = null;
         }
 
         await db.collection("usuarios").doc(id).update(patch);

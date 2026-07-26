@@ -24,7 +24,7 @@ const DEFAULT_CONFIG = {
         },
     ],
     promos: [],
-    payment: { banco: "", iban: "", titular: "", mobileMoneyOperadora: "", mobileMoneyNumero: "", instrucoes: "" },
+    payment: { banco: "", iban: "", titular: "", mobileMoneyOperadora: "", mobileMoneyNumero: "", instrucoes: "", whatsapp: "" },
 };
 
 const obterDocConfig = async () => {
@@ -114,6 +114,8 @@ exports.actualizarPlanos = async (req, res) => {
                 mobileMoneyOperadora: String(payment.mobileMoneyOperadora || "").trim(),
                 mobileMoneyNumero: String(payment.mobileMoneyNumero || "").trim(),
                 instrucoes: String(payment.instrucoes || "").trim(),
+                // Número de WhatsApp para onde o aluno envia o comprovativo.
+                whatsapp: String(payment.whatsapp || "").trim(),
             }
             : DEFAULT_CONFIG.payment;
 

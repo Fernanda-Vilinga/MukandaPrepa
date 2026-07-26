@@ -7,6 +7,7 @@ import {
   getDuvidasThreads, getDuvidasThread, sendDuvidas,
   getSuporte, sendSuporte, getMarathons,
 } from '../services/api.js';
+import { TextoComLinks } from './Ui.jsx';
 
 const POLL_MS = 6000;
 
@@ -248,7 +249,7 @@ function Bubble({ m }) {
         padding: '12px 16px',
       }}
     >
-      {m.text}
+      <TextoComLinks>{m.text}</TextoComLinks>
       <div className="xs" style={{ opacity: .7, marginTop: 4 }}>{m.time}</div>
     </div>
   );

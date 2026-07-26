@@ -6,7 +6,7 @@ import { getPlansConfig, savePlansConfig } from '../../services/adminApi.js';
 import { AdminTopbar } from '../../components/AdminUi.jsx';
 
 const ACCENT = { basic: '#64748B', plus: '#1742E7', premium: '#FB6D1D' };
-const PAYMENT_VAZIO = { banco: '', iban: '', titular: '', mobileMoneyOperadora: '', mobileMoneyNumero: '', instrucoes: '' };
+const PAYMENT_VAZIO = { banco: '', iban: '', titular: '', mobileMoneyOperadora: '', mobileMoneyNumero: '', instrucoes: '', whatsapp: '' };
 
 export default function Plans() {
   const [plans, setPlans] = useState([]);
@@ -200,6 +200,15 @@ export default function Plans() {
             <div className="col">
               <label className="xs mut">Número de mobile money</label>
               <input className="input sm" style={{ width: '100%', marginTop: 4 }} value={payment.mobileMoneyNumero} disabled={!editing} onChange={(e) => setPayment((p) => ({ ...p, mobileMoneyNumero: e.target.value }))} />
+            </div>
+          </div>
+          <div className="row" style={{ gap: 14, marginTop: 14 }}>
+            <div className="col">
+              <label className="xs mut">WhatsApp para receber comprovativos</label>
+              <input className="input sm" style={{ width: '100%', marginTop: 4 }} placeholder="9XX XXX XXX" value={payment.whatsapp || ''} disabled={!editing} onChange={(e) => setPayment((p) => ({ ...p, whatsapp: e.target.value }))} />
+              <div className="xs mut" style={{ marginTop: 4 }}>
+                O aluno recebe um link que abre a conversa com este número, já com a mensagem preenchida — só tem de anexar a foto. Sem número preenchido, o botão não aparece na mensagem.
+              </div>
             </div>
           </div>
           <div style={{ marginTop: 14 }}>

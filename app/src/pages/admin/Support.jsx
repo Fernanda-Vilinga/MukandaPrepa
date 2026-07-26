@@ -7,10 +7,23 @@
 import { useEffect, useRef, useState } from 'react';
 import { getSupportChats, sendSupportChat, getPlansConfig, confirmPurchase, rejectPurchase } from '../../services/adminApi.js';
 import { AdminTopbar, PlanPill } from '../../components/AdminUi.jsx';
+import { TextoComLinks } from '../../components/Ui.jsx';
 
 const PLANO_LABEL = { basic: 'Basic', plus: 'Plus', premium: 'Premium' };
 
-function mensagemDadosPagamento(config, pendente) {
+// Link de WhatsApp com o texto já preenchido: o aluno clica, abre a conversa
+// com o MUKANDA e só tem de anexar a foto do comprovativo. Sem isto, a
+// mensagem dizia "envia o comprovativo aqui neste chat" e o chat não tinha
+// forma nenhuma de anexar ficheiros — era um beco sem saída.
+function linkWhatsApp(numero, { nomeAluno, nomePlano }) {
+  const digitos = String(numero || '').replace(/\D/g, '');
+  if (!digitos) return null;
+  const comIndicativo = digitos.startsWith('244') ? digitos : `244${digitos}`;
+  const texto = `Olá! Sou ${nomeAluno || 'aluno'} da MUKANDA PREPA. Envio o comprovativo de pagamento do plano ${nomePlano || ''}.`.trim();
+  return `https://wa.me/${comIndicativo}?text=${encodeURIComponent(texto)}`;
+}
+
+function mensagemDadosPagamento(config, pendente, nomeAluno) {
   const plan = (config.plans || []).find((p) => p.id === pendente.planoPedido);
   const pay = config.payment || {};
   if (!pay.banco && !pay.iban && !pay.mobileMoneyNumero) return null;
@@ -23,7 +36,15 @@ function mensagemDadosPagamento(config, pendente) {
     linhas.push(`\n📱 ${pay.mobileMoneyOperadora || 'Mobile money'}: ${pay.mobileMoneyNumero}`);
   }
   if (pay.instrucoes) linhas.push(`\n${pay.instrucoes}`);
-  linhas.push(`\nDepois de pagares, envia o comprovativo aqui mesmo neste chat.`);
+
+  const nomePlano = plan ? plan.name : PLANO_LABEL[pendente.planoPedido];
+  const wa = linkWhatsApp(pay.whatsapp, { nomeAluno, nomePlano });
+  if (wa) {
+    linhas.push(`\n📎 Depois de pagares, envia-nos o comprovativo por WhatsApp:\n${wa}`);
+    linhas.push(`\n(Clica no link acima — a mensagem já vai preenchida, só tens de anexar a foto.)`);
+  } else {
+    linhas.push(`\nDepois de pagares, avisa-nos aqui neste chat para combinarmos o envio do comprovativo.`);
+  }
   return linhas.join('\n');
 }
 
@@ -70,7 +91,7 @@ export default function Support() {
     setActionError('');
     try {
       const config = await getPlansConfig();
-      const texto = mensagemDadosPagamento(config, cur.pendingPurchase);
+      const texto = mensagemDadosPagamento(config, cur.pendingPurchase, cur.student);
       if (!texto) {
         setActionError('Ainda não configuraste os dados de pagamento — vai a Gestão de planos → Dados de pagamento.');
       } else {
@@ -203,7 +224,7 @@ export default function Support() {
                       boxShadow: m.from === 'admin' ? 'none' : 'var(--sh)',
                     }}
                   >
-                    {m.text}
+                    <TextoComLinks>{m.text}</TextoComLinks>
                     <div className="xs" style={{ opacity: .7, marginTop: 4 }}>{m.time}</div>
                   </div>
                 ))}

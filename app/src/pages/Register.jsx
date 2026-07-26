@@ -59,7 +59,18 @@ export default function Register() {
           </div>
           <div className="field">
             <label className="label" htmlFor="phone">Contacto</label>
-            <input id="phone" className="input" required value={form.phone} onChange={set('phone')} placeholder="+244 9XX XXX XXX" />
+            <input
+              id="phone"
+              className="input"
+              required
+              value={form.phone}
+              onChange={set('phone')}
+              placeholder="9XX XXX XXX"
+              inputMode="numeric"
+              pattern="^\s*9\d{2}\s*\d{3}\s*\d{3}\s*$"
+              title="Nove dígitos começados por 9 — ex.: 923 456 789"
+            />
+            <div className="xs mut" style={{ marginTop: 4 }}>Nove dígitos começados por 9 — ex.: 923 456 789</div>
           </div>
           <div className="field">
             <label className="label" htmlFor="area">Área de conhecimento</label>

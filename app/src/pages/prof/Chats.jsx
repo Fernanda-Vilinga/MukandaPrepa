@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { getProfChats, sendProfChat } from './profDeps.js';
 import { ProfTopbar, Pill } from '../../components/ProfUi.jsx';
+import { TextoComLinks } from '../../components/Ui.jsx';
 
 export default function ProfChats() {
   const [chats, setChats] = useState([]);
@@ -105,7 +106,7 @@ export default function ProfChats() {
                       boxShadow: m.from === 'prof' ? 'none' : 'var(--sh)',
                     }}
                   >
-                    {m.text}
+                    <TextoComLinks>{m.text}</TextoComLinks>
                     <div className="xs" style={{ opacity: .7, marginTop: 4 }}>{m.time}</div>
                   </div>
                 ))}

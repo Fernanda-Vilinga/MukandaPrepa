@@ -4,6 +4,11 @@ import { getAdminOverview } from '../../services/adminApi.js';
 import { AdminTopbar, RolePill, PlanPill } from '../../components/AdminUi.jsx';
 import { Stat } from '../../components/Ui.jsx';
 
+// Antes era `role === 'professor' ? 'professor' : 'estudante'`, o que fazia
+// qualquer papel que não fosse professor — incluindo admin — aparecer como
+// estudante na lista de últimos registos.
+const PAPEL_LABEL = { admin: 'administrador', professor: 'professor', student: 'estudante' };
+
 const ALERT_STYLE = {
   red: { background: 'var(--red-l)' },
   amber: { background: 'var(--amber-l)' },
@@ -81,7 +86,7 @@ export default function AdminDashboard() {
                     <div className="avatar" style={{ width: 32, height: 32, fontSize: 12, background: u.color }}>{u.initials}</div>
                     <div style={{ flex: 1 }}>
                       {u.name}
-                      <div className="xs mut">{u.role === 'professor' ? 'professor' : 'estudante'} · {u.created}</div>
+                      <div className="xs mut">{PAPEL_LABEL[u.role] || 'estudante'} · {u.created}</div>
                     </div>
                     {u.role === 'student' ? <PlanPill plan={u.plan} /> : <RolePill role={u.role} />}
                   </div>
