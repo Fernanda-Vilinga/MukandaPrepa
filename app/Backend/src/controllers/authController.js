@@ -1,4 +1,4 @@
-const { db, admin } = require("../config/firebase");
+const { db, FieldValue } = require("../config/firebase");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const gerarToken = require("../utils/jwt");
@@ -255,8 +255,8 @@ exports.esqueciSenha = async (req, res) => {
 // basta alguém escrever uma consulta diferente para o link "morto" voltar a
 // aparecer. FieldValue.delete() remove mesmo o campo do documento.
 const apagarTokenReset = () => ({
-    resetTokenHash: admin.firestore.FieldValue.delete(),
-    resetTokenExpira: admin.firestore.FieldValue.delete(),
+    resetTokenHash: FieldValue.delete(),
+    resetTokenExpira: FieldValue.delete(),
 });
 
 // GET /api/auth/validar-token-recuperacao?token=...

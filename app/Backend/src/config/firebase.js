@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const admin = require("firebase-admin");
 const { getApps, initializeApp, cert } = require("firebase-admin/app");
-const { getFirestore } = require("firebase-admin/firestore");
+const { getFirestore, FieldValue } = require("firebase-admin/firestore");
 
 // Credenciais do Firebase.
 //
@@ -67,5 +67,9 @@ const db = getFirestore();
 
 module.exports = {
     admin,
-    db
+    db,
+    // Vem do módulo firebase-admin/firestore, não do espaço de nomes `admin`:
+    // no firebase-admin v13+ `admin.firestore` deixou de existir (tal como
+    // `admin.apps`). Usar `admin.firestore.FieldValue` rebenta em execução.
+    FieldValue,
 };
