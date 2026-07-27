@@ -4,3 +4,7 @@ dist/
 .env.local
 *.log
 .DS_Store
+
+# Ficheiros temporarios que o Vite cria ao carregar o vite.config.js
+vite.config.js.timestamp-*
+vite.config.*.timestamp-*
