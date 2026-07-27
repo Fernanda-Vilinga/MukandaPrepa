@@ -1,9 +1,9 @@
 // Definir nova senha a partir do link recebido por email
 // (?token=... — ver ForgotPassword.jsx / authController.esqueciSenha).
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { AuthLeft } from './Login.jsx';
-import { resetPassword } from '../services/api.js';
+import { resetPassword, checkResetToken } from '../services/api.js';
 
 export default function ResetPassword() {
   const navigate = useNavigate();
@@ -13,10 +13,24 @@ export default function ResetPassword() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
+  // null = ainda a verificar · true/false = resultado
+  const [tokenValido, setTokenValido] = useState(null);
+
+  // Verifica o link assim que a página abre. Antes o formulário aparecia
+  // sempre, mesmo para links já usados ou expirados, e a pessoa só descobria
+  // ao submeter — o que dava a impressão de que o link continuava a servir.
+  useEffect(() => {
+    if (!token) return;
+    let cancelado = false;
+    checkResetToken(token)
+      .then((v) => { if (!cancelado) setTokenValido(v); })
+      .catch(() => { if (!cancelado) setTokenValido(true); }); // na dúvida, deixa tentar
+    return () => { cancelado = true; };
+  }, [token]);
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
-  if (!token) {
+  if (!token || tokenValido === false) {
     return (
       <div className="auth">
         <AuthLeft />
@@ -24,7 +38,8 @@ export default function ResetPassword() {
           <div className="card" style={{ width: 460, padding: 44, textAlign: 'center' }}>
             <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 10 }}>Link inválido</h2>
             <p className="mut sm" style={{ marginBottom: 20 }}>
-              Este link de recuperação está incompleto ou já não é válido.
+              Este link já foi utilizado ou expirou. Por segurança, cada link de
+              recuperação só serve uma vez e é válido durante 1 hora.
             </p>
             <Link to="/recuperar-senha" className="btn sm">Pedir novo link</Link>
           </div>
@@ -48,6 +63,19 @@ export default function ResetPassword() {
       setBusy(false);
     }
   };
+
+  if (tokenValido === null) {
+    return (
+      <div className="auth">
+        <AuthLeft />
+        <div className="auth-right">
+          <div className="card" style={{ width: 460, padding: 44, textAlign: 'center' }}>
+            <p className="mut sm">A verificar o link…</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="auth">

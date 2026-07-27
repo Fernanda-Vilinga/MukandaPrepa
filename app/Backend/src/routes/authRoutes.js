@@ -9,6 +9,7 @@ const {
     meuPerfil,
     esqueciSenha,
     redefinirSenha,
+    validarTokenRecuperacao,
 } = require("../controllers/authController");
 
 const { verificarToken } = require("../middleware/authMiddleware");
@@ -23,5 +24,6 @@ router.post("/alterar-senha", verificarToken, alterarSenha);
 
 router.post("/esqueci-senha", esqueciSenha);
 router.post("/redefinir-senha", redefinirSenha);
+router.get("/validar-token-recuperacao", validarTokenRecuperacao);
 
 module.exports = router;

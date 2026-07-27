@@ -332,3 +332,11 @@ export async function sendSuporte(text) {
   const { message } = await request('/chats/suporte', { method: 'POST', body: { text } });
   return { from: 'me', text: message.text, time: message.time };
 }
+
+// REAL — GET /api/auth/validar-token-recuperacao?token=...
+// Chamado ao abrir a página de redefinir senha, para dizer logo que o link
+// já não serve em vez de mostrar um formulário condenado a falhar.
+export async function checkResetToken(token) {
+  const r = await request(`/auth/validar-token-recuperacao?token=${encodeURIComponent(token)}`, { auth: false });
+  return !!r.valido;
+}

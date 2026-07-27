@@ -1,4 +1,4 @@
-const { db } = require("../config/firebase");
+const { db, admin } = require("../config/firebase");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const gerarToken = require("../utils/jwt");
@@ -197,8 +197,7 @@ exports.alterarSenha = async (req, res) => {
         await db.collection("usuarios").doc(req.usuario.id).update({
             senha: await bcrypt.hash(novaSenha, 10),
             trocarSenha: false,
-            resetTokenHash: null,
-            resetTokenExpira: null,
+            ...apagarTokenReset(),
         });
 
         res.json({ mensagem: "Senha alterada com sucesso." });
@@ -249,6 +248,39 @@ exports.esqueciSenha = async (req, res) => {
     }
 };
 
+// Apaga o token de recuperação de forma definitiva.
+//
+// Punha-se o campo a null, o que no Firestore não remove nada: o campo fica
+// lá, com valor nulo. Funciona para a consulta por igualdade, mas é frágil —
+// basta alguém escrever uma consulta diferente para o link "morto" voltar a
+// aparecer. FieldValue.delete() remove mesmo o campo do documento.
+const apagarTokenReset = () => ({
+    resetTokenHash: admin.firestore.FieldValue.delete(),
+    resetTokenExpira: admin.firestore.FieldValue.delete(),
+});
+
+// GET /api/auth/validar-token-recuperacao?token=...
+// A página de redefinir senha chama isto ao abrir, para dizer logo que o link
+// já não serve em vez de mostrar um formulário que vai falhar na submissão.
+// Não revela nada sobre a conta — devolve apenas se o link ainda é utilizável.
+exports.validarTokenRecuperacao = async (req, res) => {
+    try {
+        const token = String(req.query.token || "");
+        if (!token) return res.json({ valido: false });
+
+        const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+        const r = await db.collection("usuarios").where("resetTokenHash", "==", tokenHash).get();
+        if (r.empty) return res.json({ valido: false });
+
+        const u = r.docs[0].data();
+        const valido = !!u.resetTokenExpira && Date.now() <= u.resetTokenExpira;
+        res.json({ valido, expirado: !valido });
+    } catch (error) {
+        console.error(error);
+        res.json({ valido: false });
+    }
+};
+
 // POST /api/auth/redefinir-senha  { token, novaSenha }
 // Define uma nova senha a partir do token recebido por email (esqueciSenha).
 exports.redefinirSenha = async (req, res) => {
@@ -279,8 +311,7 @@ exports.redefinirSenha = async (req, res) => {
         await db.collection("usuarios").doc(usuario.id).update({
             senha: await bcrypt.hash(novaSenha, 10),
             trocarSenha: false,
-            resetTokenHash: null,
-            resetTokenExpira: null,
+            ...apagarTokenReset(),
         });
 
         res.json({ mensagem: "Senha redefinida com sucesso. Já podes entrar com a nova senha." });
