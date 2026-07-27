@@ -63,28 +63,30 @@ export default function MarathonData() {
         </div>
 
         <div className="card" style={{ padding: '8px 28px' }}>
-          <table>
-            <thead>
-              <tr><th>Aluno</th><th>Plano</th><th>Tentativa</th><th>Nota</th><th>Tempo</th><th>Estado</th></tr>
-            </thead>
-            <tbody>
-              {d.rows.map((r) => (
-                <tr key={r.name}>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <div className="avatar" style={{ width: 34, height: 34, fontSize: 13, background: r.color }}>{r.initials}</div>
-                      <b>{r.name}</b>
-                    </div>
-                  </td>
-                  <td><PlanPill plan={r.plan} /></td>
-                  <td>{r.attempt}</td>
-                  <td>{r.score}</td>
-                  <td className="mut">{r.time}</td>
-                  <td><span className="badge" style={STATE[r.state].style}>{STATE[r.state].label}</span></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Aluno</th><th>Plano</th><th>Tentativa</th><th>Nota</th><th>Tempo</th><th>Estado</th></tr>
+              </thead>
+              <tbody>
+                {d.rows.map((r) => (
+                  <tr key={r.name}>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div className="avatar" style={{ width: 34, height: 34, fontSize: 13, background: r.color }}>{r.initials}</div>
+                        <b>{r.name}</b>
+                      </div>
+                    </td>
+                    <td><PlanPill plan={r.plan} /></td>
+                    <td>{r.attempt}</td>
+                    <td>{r.score}</td>
+                    <td className="mut">{r.time}</td>
+                    <td><span className="badge" style={STATE[r.state].style}>{STATE[r.state].label}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <div className="row" style={{ marginTop: 24 }}>

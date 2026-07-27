@@ -83,7 +83,7 @@ export default function Users() {
             Utilizadores <span className="mut" style={{ fontSize: 16, fontWeight: 500 }}>{users.length}</span>
           </h1>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            <input className="input" placeholder="🔍 Pesquisar por nome ou email…" value={q} onChange={(e) => setQ(e.target.value)} style={{ width: 300, padding: '11px 16px' }} />
+            <input className="input" placeholder="🔍 Pesquisar por nome ou email…" value={q} onChange={(e) => setQ(e.target.value)} style={{ width: 300, maxWidth: '100%', flex: '1 1 200px', padding: '11px 16px' }} />
             <Link to="/admin/professores/novo" className="btn" style={{ textDecoration: 'none' }}>+ Registar professor</Link>
           </div>
         </div>
@@ -103,48 +103,50 @@ export default function Users() {
         </div>
 
         <div className="card" style={{ padding: '8px 28px' }}>
-          <table>
-            <thead>
-              <tr><th>Utilizador</th><th>Perfil</th><th>Plano</th><th>Estado</th><th>Acções</th></tr>
-            </thead>
-            <tbody>
-              {list.map((u) => (
-                <tr key={u.id}>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <div className="avatar" style={{ width: 36, height: 36, fontSize: 13, background: u.color }}>{u.initials}</div>
-                      <div><b>{u.name}</b><div className="xs mut">{u.email}</div></div>
-                    </div>
-                  </td>
-                  <td><RolePill role={u.role} /></td>
-                  <td><PlanPill plan={u.plan} /></td>
-                  <td>
-                    <span className="badge" style={u.active ? { background: 'var(--green-l)', color: 'var(--green)' } : { background: 'var(--amber-l)', color: '#B45309' }}>
-                      {u.active ? 'Activo' : 'Suspenso'}
-                    </span>
-                  </td>
-                  <td style={{ position: 'relative' }}>
-                    <button className="btn sm ghost" onClick={() => setActionsFor(actionsFor === u.id ? null : u.id)}>⋯ Acções</button>
-                    {actionsFor === u.id && (
-                      <div ref={actionsRef} style={{ position: 'absolute', right: 16, top: 52, background: '#fff', borderRadius: 12, boxShadow: 'var(--sh)', border: '1px solid var(--brd)', minWidth: 210, padding: 6, zIndex: 30 }}>
-                        <button className="sm" style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: '9px 12px', borderRadius: 8 }} onClick={() => toggleActive(u)}>
-                          {u.active ? '⏸ Suspender conta' : '✅ Activar conta'}
-                        </button>
-                        {u.role === 'student' && (
-                          <button className="sm" style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: '9px 12px', borderRadius: 8 }} onClick={() => { setPlanModalFor(u); setActionsFor(null); }}>
-                            💳 Alterar plano
-                          </button>
-                        )}
-                        <button className="sm" style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: '9px 12px', borderRadius: 8 }} onClick={() => resetPassword(u)}>
-                          🔑 Redefinir senha
-                        </button>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Utilizador</th><th>Perfil</th><th>Plano</th><th>Estado</th><th>Acções</th></tr>
+              </thead>
+              <tbody>
+                {list.map((u) => (
+                  <tr key={u.id}>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <div className="avatar" style={{ width: 36, height: 36, fontSize: 13, background: u.color }}>{u.initials}</div>
+                        <div><b>{u.name}</b><div className="xs mut">{u.email}</div></div>
                       </div>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    </td>
+                    <td><RolePill role={u.role} /></td>
+                    <td><PlanPill plan={u.plan} /></td>
+                    <td>
+                      <span className="badge" style={u.active ? { background: 'var(--green-l)', color: 'var(--green)' } : { background: 'var(--amber-l)', color: '#B45309' }}>
+                        {u.active ? 'Activo' : 'Suspenso'}
+                      </span>
+                    </td>
+                    <td style={{ position: 'relative' }}>
+                      <button className="btn sm ghost" onClick={() => setActionsFor(actionsFor === u.id ? null : u.id)}>⋯ Acções</button>
+                      {actionsFor === u.id && (
+                        <div ref={actionsRef} style={{ position: 'absolute', right: 16, top: 52, background: '#fff', borderRadius: 12, boxShadow: 'var(--sh)', border: '1px solid var(--brd)', minWidth: 210, padding: 6, zIndex: 30 }}>
+                          <button className="sm" style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: '9px 12px', borderRadius: 8 }} onClick={() => toggleActive(u)}>
+                            {u.active ? '⏸ Suspender conta' : '✅ Activar conta'}
+                          </button>
+                          {u.role === 'student' && (
+                            <button className="sm" style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: '9px 12px', borderRadius: 8 }} onClick={() => { setPlanModalFor(u); setActionsFor(null); }}>
+                              💳 Alterar plano
+                            </button>
+                          )}
+                          <button className="sm" style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: '9px 12px', borderRadius: 8 }} onClick={() => resetPassword(u)}>
+                            🔑 Redefinir senha
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
         <div className="mut sm" style={{ marginTop: 16 }}>A mostrar {list.length} de {users.length} utilizadores</div>
       </div>

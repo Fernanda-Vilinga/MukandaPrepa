@@ -69,7 +69,7 @@ export default function Monitor() {
                         </div>
                       </td>
                       <td>{s.question}</td>
-                      <td><div className="prog" style={{ width: 140, height: 8 }}><div style={{ width: `${s.progress}%` }} /></div></td>
+                      <td><div className="prog" style={{ width: 140, maxWidth: '100%', height: 8 }}><div style={{ width: `${s.progress}%` }} /></div></td>
                       <td className="mut">{s.time}</td>
                       <td>
                         <span className="badge" style={s.state === 'A rever' ? { background: 'var(--amber-l)', color: '#B45309' } : { background: 'var(--green-l)', color: 'var(--green)' }}>

@@ -70,7 +70,7 @@ export default function GlobalStats() {
               <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Taxa de conclusão por área</h3>
               {s.byArea.map((a) => (
                 <div key={a.label} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-                  <span className="sm" style={{ width: 160, fontWeight: 600 }}>{a.label}</span>
+                  <span className="sm" style={{ flex: '0 0 160px', maxWidth: '45%', fontWeight: 600 }}>{a.label}</span>
                   <div className="prog" style={{ flex: 1, height: 8 }}><div style={{ width: `${a.pct}%`, background: a.color }} /></div>
                   <b className="sm">{a.pct}%</b>
                 </div>
@@ -101,22 +101,24 @@ export default function GlobalStats() {
             </div>
             <div className="card">
               <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 14 }}>Professores mais activos</h3>
-              <table>
-                <thead><tr><th>Professor</th><th>Maratonas</th><th>Validação média</th></tr></thead>
-                <tbody>
-                  {s.topProfessors.map((p) => (
-                    <tr key={p.name}>
-                      <td style={{ fontWeight: 600 }}>{p.name}</td>
-                      <td>{p.marathons}</td>
-                      <td>
-                        <span className="badge" style={p.ok ? { background: 'var(--green-l)', color: 'var(--green)' } : { background: 'var(--amber-l)', color: '#B45309' }}>
-                          {p.avgValidation}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div className="table-wrap">
+                <table>
+                  <thead><tr><th>Professor</th><th>Maratonas</th><th>Validação média</th></tr></thead>
+                  <tbody>
+                    {s.topProfessors.map((p) => (
+                      <tr key={p.name}>
+                        <td style={{ fontWeight: 600 }}>{p.name}</td>
+                        <td>{p.marathons}</td>
+                        <td>
+                          <span className="badge" style={p.ok ? { background: 'var(--green-l)', color: 'var(--green)' } : { background: 'var(--amber-l)', color: '#B45309' }}>
+                            {p.avgValidation}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>

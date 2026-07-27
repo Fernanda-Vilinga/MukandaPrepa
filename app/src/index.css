@@ -178,6 +178,10 @@ td { padding: 16px; border-bottom: 1px solid #EFEFF2; font-size: 14.5px; }
 .auth-card { width: 100%; max-width: 460px; padding: 44px; }
 .auth-card.wide { max-width: 520px; }
 
+/* Modal de planos: em telemóvel 40px de margem interna comem quase metade
+   da largura útil. */
+.modal-card { padding: 40px; }
+
 /* Grelha dos 15 slots de questões. Eram 5 colunas fixas: num telemóvel
    cada uma ficava com cerca de 50px, ilegível. O número de colunas passa a
    acompanhar o espaço, mantendo as 5 no computador. */
@@ -257,5 +261,6 @@ td { padding: 16px; border-bottom: 1px solid #EFEFF2; font-size: 14.5px; }
   .grid-slots { grid-template-columns: repeat(3, 1fr); gap: 10px; }
   .auth-right { padding: 24px 12px; }
   .auth-card { padding: 28px 22px; }
+  .modal-card { padding: 22px 18px; }
   .field { margin-bottom: 14px; }
 }

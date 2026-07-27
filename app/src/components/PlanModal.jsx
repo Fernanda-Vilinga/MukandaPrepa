@@ -54,7 +54,7 @@ export default function PlanModal() {
       style={{ position: 'fixed', inset: 0, background: 'rgba(20,20,31,.55)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
       onClick={() => setOpen(false)}
     >
-      <div className="card" style={{ maxWidth: 980, width: '100%', padding: 40, maxHeight: '90vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
+      <div className="card modal-card" style={{ maxWidth: 980, width: '100%', maxHeight: '90vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: 8 }}>
           <div style={{ flex: 1 }}>
             <h2 style={{ fontSize: 22, fontWeight: 800 }}>Planos MUKANDA PREPA</h2>
@@ -118,7 +118,7 @@ export default function PlanModal() {
           <label className="sm" style={{ fontWeight: 600 }}>🎟 Tens um código promocional?</label>
           <input
             className="input"
-            style={{ width: 220, padding: '10px 14px', textTransform: 'uppercase', fontWeight: 600 }}
+            style={{ flex: '1 1 180px', maxWidth: 220, padding: '10px 14px', textTransform: 'uppercase', fontWeight: 600 }}
             placeholder="Ex.: MUKANDA26"
             value={promo}
             onChange={(e) => setPromo(e.target.value)}

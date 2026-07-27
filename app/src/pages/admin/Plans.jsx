@@ -167,9 +167,9 @@ export default function Plans() {
 
           {editing && (
             <div style={{ display: 'flex', gap: 10, marginTop: 16, flexWrap: 'wrap', alignItems: 'center' }}>
-              <input className="input sm" style={{ width: 140, textTransform: 'uppercase' }} placeholder="CÓDIGO" value={newPromo.code} onChange={(e) => setNewPromo((n) => ({ ...n, code: e.target.value }))} />
+              <input className="input sm" style={{ flex: '1 1 120px', minWidth: 110, textTransform: 'uppercase' }} placeholder="CÓDIGO" value={newPromo.code} onChange={(e) => setNewPromo((n) => ({ ...n, code: e.target.value }))} />
               <input className="input sm" style={{ flex: 1, minWidth: 160 }} placeholder="Descrição (ex.: 30% no 1º mês)" value={newPromo.desc} onChange={(e) => setNewPromo((n) => ({ ...n, desc: e.target.value }))} />
-              <input className="input sm" style={{ width: 140 }} placeholder="Expira (ex.: 31 Ago 2026)" value={newPromo.expires} onChange={(e) => setNewPromo((n) => ({ ...n, expires: e.target.value }))} />
+              <input className="input sm" style={{ flex: '1 1 140px', minWidth: 130 }} placeholder="Expira (ex.: 31 Ago 2026)" value={newPromo.expires} onChange={(e) => setNewPromo((n) => ({ ...n, expires: e.target.value }))} />
               <button className="btn sm" onClick={addPromo}>+ Adicionar</button>
             </div>
           )}
