@@ -5,7 +5,7 @@
 // Gestão de planos, ou confirmar o pedido (actualiza o plano do estudante
 // e envia o email de confirmação).
 import { useEffect, useRef, useState } from 'react';
-import { getSupportChats, sendSupportChat, getPlansConfig, confirmPurchase, rejectPurchase } from '../../services/adminApi.js';
+import { getSupportChats, sendSupportChat, getPlansConfig, confirmPurchase, rejectPurchase, markSupportChatRead } from '../../services/adminApi.js';
 import { AdminTopbar, PlanPill } from '../../components/AdminUi.jsx';
 import { TextoComLinks } from '../../components/Ui.jsx';
 
@@ -75,6 +75,17 @@ export default function Support() {
   }, []);
 
   const unread = chats.reduce((n, c) => n + c.unread, 0);
+
+  // Ver nota em prof/Chats.jsx: marcar como lida tem de ir ao servidor,
+  // senão o polling repõe o contador.
+  const abrirConversa = async (c) => {
+    setCur(c);
+    setActionError('');
+    setChats((all) => all.map((x) => (x.id === c.id ? { ...x, unread: 0 } : x)));
+    if (c.unread > 0) {
+      try { await markSupportChatRead(c.id); } catch { /* nova tentativa no próximo clique */ }
+    }
+  };
 
   const send = async () => {
     const value = text.trim();
@@ -155,7 +166,7 @@ export default function Support() {
               {chats.map((c) => (
                 <button
                   key={c.id}
-                  onClick={() => { setCur(c); setActionError(''); setChats((all) => all.map((x) => (x.id === c.id ? { ...x, unread: 0 } : x))); }}
+                  onClick={() => { abrirConversa(c); }}
                   style={{
                     display: 'flex', gap: 12, alignItems: 'center', width: '100%', textAlign: 'left',
                     padding: '16px 24px', border: 'none', borderBottom: '1px solid #EFEFF2',

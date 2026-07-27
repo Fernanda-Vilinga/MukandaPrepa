@@ -1,7 +1,7 @@
 // Gestão de chats — apenas Dúvidas (privado por aluno).
 // O canal Suporte é gerido exclusivamente pelos ADMINISTRADORES.
 import { useEffect, useRef, useState } from 'react';
-import { getProfChats, sendProfChat } from './profDeps.js';
+import { getProfChats, sendProfChat, markProfChatRead } from './profDeps.js';
 import { ProfTopbar, Pill } from '../../components/ProfUi.jsx';
 import { TextoComLinks } from '../../components/Ui.jsx';
 
@@ -29,6 +29,16 @@ export default function ProfChats() {
 
   const unread = chats.reduce((n, c) => n + c.unread, 0);
 
+  // Abrir a conversa marca-a como lida NO SERVIDOR. Zerar só no estado local
+  // não chegava: o polling de 6 em 6 segundos trazia o contador de volta.
+  const abrirConversa = async (c) => {
+    setCur(c);
+    setChats((all) => all.map((x) => (x.id === c.id ? { ...x, unread: 0 } : x)));
+    if (c.unread > 0) {
+      try { await markProfChatRead(c.id); } catch { /* nova tentativa no próximo clique */ }
+    }
+  };
+
   const send = async () => {
     const value = text.trim();
     if (!value || !cur) return;
@@ -55,7 +65,7 @@ export default function ProfChats() {
               {chats.map((c) => (
                 <button
                   key={c.id}
-                  onClick={() => { setCur(c); setChats((all) => all.map((x) => (x.id === c.id ? { ...x, unread: 0 } : x))); }}
+                  onClick={() => { abrirConversa(c); }}
                   style={{
                     display: 'flex', gap: 12, alignItems: 'center', width: '100%', textAlign: 'left',
                     padding: '16px 24px', border: 'none', borderBottom: '1px solid #EFEFF2',

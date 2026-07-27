@@ -144,3 +144,8 @@ export async function sendSupportChat(conversaId, text) {
   const { message } = await request(`/admin/chats/${conversaId}`, { method: 'POST', body: { text } });
   return { from: 'admin', text: message.text, time: message.time };
 }
+
+// REAL — PUT /api/admin/chats/:id/lida (ver nota em profApi.js)
+export async function markSupportChatRead(conversaId) {
+  await request(`/admin/chats/${conversaId}/lida`, { method: 'PUT' });
+}

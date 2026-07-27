@@ -153,3 +153,10 @@ export async function sendProfChat(conversaId, text) {
   const { message } = await request(`/prof/chats/${conversaId}`, { method: 'POST', body: { text } });
   return { from: 'prof', text: message.text, time: message.time };
 }
+
+// REAL — PUT /api/prof/chats/:id/lida
+// Chamado ao ABRIR a conversa. Sem isto o contador de não lidas só zerava
+// quando o professor respondia, e o polling trazia-o de volta a cada ciclo.
+export async function markProfChatRead(conversaId) {
+  await request(`/prof/chats/${conversaId}/lida`, { method: 'PUT' });
+}

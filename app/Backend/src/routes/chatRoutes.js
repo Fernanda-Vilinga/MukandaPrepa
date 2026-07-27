@@ -17,11 +17,13 @@ const profRouter = express.Router();
 profRouter.use(verificarToken, exigirRole("professor"));
 profRouter.get("/", chat.profListar);
 profRouter.post("/:id", chat.profEnviar);
+profRouter.put("/:id/lida", chat.profMarcarLida);
 
 // /api/admin/chats — inbox de Suporte do admin
 const adminRouter = express.Router();
 adminRouter.use(verificarToken, exigirRole("admin"));
 adminRouter.get("/", chat.adminListar);
 adminRouter.post("/:id", chat.adminEnviar);
+adminRouter.put("/:id/lida", chat.adminMarcarLida);
 
 module.exports = { studentRouter, profRouter, adminRouter };

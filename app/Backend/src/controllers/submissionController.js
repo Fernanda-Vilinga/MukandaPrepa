@@ -173,21 +173,26 @@ exports.validar = async (req, res) => {
             percent: total ? Math.round((score / total) * 100) : 0,
         });
 
-        res.json({ ok: true, score, total });
-
-        // Notifica o estudante — não bloqueia a resposta.
-        (async () => {
+        // Notifica o estudante ANTES de responder — em serverless, o que
+        // ficasse depois do res.json() nunca chegava a correr.
+        try {
             const aluno = await nomeDoUtilizador(s.usuarioId);
-            if (!aluno.email) return;
-            const minhas = await maratonasDoProf(req.usuario.id);
-            const maratona = minhas[s.maratonaId];
-            const percent = total ? Math.round((score / total) * 100) : 0;
-            const { subject, html } = tpl.resultadoValidado({
-                nomeAluno: aluno.nome, maratona: maratona ? maratona.titulo : "a maratona",
-                score, total, percent,
-            });
-            await enviarEmail({ to: aluno.email, subject, html });
-        })().catch(() => {});
+            if (aluno.email) {
+                const minhas = await maratonasDoProf(req.usuario.id);
+                const maratona = minhas[s.maratonaId];
+                const percent = total ? Math.round((score / total) * 100) : 0;
+                const { subject, html } = tpl.resultadoValidado({
+                    nomeAluno: aluno.nome, maratona: maratona ? maratona.titulo : "a maratona",
+                    score, total, percent,
+                });
+                await enviarEmail({ to: aluno.email, subject, html });
+            }
+        } catch (e) {
+            // A validação já está gravada — um email falhado não a desfaz.
+            console.error("Aviso de resultado ao estudante:", e.message);
+        }
+
+        res.json({ ok: true, score, total });
     } catch (e) {
         console.error(e);
         res.status(500).json({ mensagem: "Erro no servidor." });

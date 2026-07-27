@@ -59,7 +59,7 @@ exports.criarProfessor = async (req, res) => {
         const docRef = await db.collection("usuarios").add(novoProfessor);
 
         const { subject, html } = tpl.boasVindasProfessor({ nome, email: emailNormalizado, senhaTemporaria });
-        enviarEmail({ to: emailNormalizado, subject, html }).catch(() => {});
+        await enviarEmail({ to: emailNormalizado, subject, html });
 
         res.status(201).json({
             mensagem: "Professor registado com sucesso.",
@@ -171,12 +171,12 @@ exports.actualizarUtilizador = async (req, res) => {
 
         if (novaSenhaTemporaria && alvo.email) {
             const { subject, html } = tpl.senhaRedefinida({ nome: alvo.nome, email: alvo.email, senhaTemporaria: novaSenhaTemporaria });
-            enviarEmail({ to: alvo.email, subject, html }).catch(() => {});
+            await enviarEmail({ to: alvo.email, subject, html });
         }
         if (patch.plano && alvo.email) {
             const PLANO_LABEL = { basic: "Basic", plus: "Plus", premium: "Premium" };
             const { subject, html } = tpl.planoAlteradoPeloAdmin({ nome: alvo.nome, plano: PLANO_LABEL[patch.plano] || patch.plano });
-            enviarEmail({ to: alvo.email, subject, html }).catch(() => {});
+            await enviarEmail({ to: alvo.email, subject, html });
         }
 
         res.json({

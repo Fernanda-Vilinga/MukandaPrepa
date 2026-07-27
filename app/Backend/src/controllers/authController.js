@@ -79,6 +79,11 @@ exports.register = async (req, res) => {
         const usuario = { id: docRef.id, ...novoUsuario };
         const token = gerarToken(usuario);
 
+        // Esperado antes de responder: em serverless a função é congelada
+        // assim que a resposta sai (ver nota em utils/email.js).
+        const bv = tpl.boasVindasEstudante({ nome: usuario.nome });
+        await enviarEmail({ to: usuario.email, subject: bv.subject, html: bv.html });
+
         res.status(201).json({
             mensagem: "Usuário criado com sucesso.",
             token,
@@ -233,7 +238,7 @@ exports.esqueciSenha = async (req, res) => {
             const appUrl = process.env.APP_URL || "http://localhost:5173";
             const url = `${appUrl}/redefinir-senha?token=${tokenBruto}`;
             const { subject, html } = tpl.recuperarSenha({ nome: usuario.nome, url });
-            enviarEmail({ to: usuario.email, subject, html }).catch(() => {});
+            await enviarEmail({ to: usuario.email, subject, html });
         }
 
         // Mesma mensagem quer a conta exista quer não — evita confirmar/negar emails registados.

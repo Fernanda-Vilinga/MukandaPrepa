@@ -243,6 +243,39 @@ exports.profEnviar = async (req, res) => {
     }
 };
 
+// PUT /api/prof/chats/:id/lida — o professor abriu a conversa.
+//
+// Antes só existia do lado do estudante: as conversas do professor e do
+// admin só ficavam lidas quando eles RESPONDIAM. Como a lista é recarregada
+// de 6 em 6 segundos, o contador que a interface zerava localmente voltava a
+// aparecer no ciclo seguinte — daí parecer que ora estava lida ora não.
+exports.profMarcarLida = async (req, res) => {
+    try {
+        const c = await obterConversaDoProf(req);
+        if (!c) return res.status(404).json({ mensagem: "Conversa não encontrada." });
+        await db.collection("conversas").doc(c.id).update({ naoLidasProfessor: 0 });
+        res.json({ ok: true });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ mensagem: "Erro no servidor." });
+    }
+};
+
+// PUT /api/admin/chats/:id/lida — o admin abriu a conversa.
+exports.adminMarcarLida = async (req, res) => {
+    try {
+        const doc = await db.collection("conversas").doc(req.params.id).get();
+        if (!doc.exists || doc.data().tipo !== "suporte") {
+            return res.status(404).json({ mensagem: "Conversa não encontrada." });
+        }
+        await db.collection("conversas").doc(req.params.id).update({ naoLidasAdmin: 0 });
+        res.json({ ok: true });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ mensagem: "Erro no servidor." });
+    }
+};
+
 // POST /api/prof/marathons/:id/broadcast-password — envia a password (já
 // revelável na página de maratonas) como mensagem no chat Dúvidas a todos
 // os alunos ligados a esta maratona: quem já conversou sobre ela e quem já

@@ -21,6 +21,20 @@ const base = (titulo, corpoHtml, cta) => `
 
 const APP_URL = process.env.APP_URL || "http://localhost:5173";
 
+const boasVindasEstudante = ({ nome }) => ({
+    subject: "Bem-vindo(a) à MUKANDA PREPA 🎓",
+    html: base(`Bem-vindo(a), ${nome} 👋`, `
+    <p>A tua conta de estudante na Plataforma de Maratonas MUKANDA PREPA está criada. Já podes entrar e começar a preparar-te.</p>
+    <p>O que te espera:</p>
+    <ul style="padding-left:18px;margin:8px 0;">
+      <li>Maratonas cronometradas, por área e por universidade</li>
+      <li>Correcção pelos professores e resultados no teu dashboard</li>
+      <li>Chat de dúvidas com o professor de cada maratona</li>
+    </ul>
+    <p>Entraste no plano <b>Basic</b>, que é gratuito. Podes mudar de plano a qualquer momento a partir da app.</p>`,
+        { url: APP_URL, label: "Entrar na plataforma" }),
+});
+
 const boasVindasProfessor = ({ nome, email, senhaTemporaria }) => ({
     subject: "Bem-vindo(a) à MUKANDA PREPA — a tua conta de professor",
     html: base(`Bem-vindo(a), Prof. ${nome} 👋`, `
@@ -98,7 +112,7 @@ const recuperarSenha = ({ nome, url }) => ({
 });
 
 module.exports = {
-    boasVindasProfessor, senhaRedefinida, planoAlteradoPeloAdmin,
+    boasVindasEstudante, boasVindasProfessor, senhaRedefinida, planoAlteradoPeloAdmin,
     submissaoRecebida, resultadoValidado, pedidoDeUpgrade, planoConfirmado,
     recuperarSenha,
 };

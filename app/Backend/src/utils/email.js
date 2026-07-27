@@ -4,8 +4,16 @@
 //    enviado (destinatário, assunto, corpo em texto) e não falha nada. Isto
 //    permite testar todo o fluxo localmente sem precisar de credenciais
 //    reais de email.
-// NOTA: nunca deve bloquear o pedido principal — todas as chamadas a
-// enviarEmail() são "fire and forget" com o próprio catch interno.
+// IMPORTANTE (serverless): o envio TEM de ser esperado com await ANTES de
+// responder ao pedido. Em Vercel/Lambda a função é congelada assim que a
+// resposta sai, e qualquer promessa ainda a decorrer nunca chega ao fim —
+// nem envia, nem regista erro. O padrão antigo ("fire and forget", com
+// .catch() e sem await) funcionava num servidor sempre a correr e deixou de
+// funcionar silenciosamente ao passar para serverless.
+//
+// Para que um SMTP lento não estoire o tempo máximo da função, o envio tem
+// limite de tempo próprio: se exceder, desiste e regista, sem quebrar o
+// fluxo principal (registo, submissão, compra, etc.).
 const nodemailer = require("nodemailer");
 
 const configurado = !!(process.env.EMAIL_HOST && process.env.EMAIL_USER && process.env.EMAIL_PASS);
@@ -22,6 +30,10 @@ if (configurado) {
 } else {
     console.log("⚠ MODO TESTE: emails simulados no terminal (sem EMAIL_HOST/EMAIL_USER/EMAIL_PASS)");
 }
+
+// Limite de tempo do envio. A função serverless tem orçamento próprio
+// (10s no plano gratuito do Vercel); ficamos folgadamente abaixo.
+const LIMITE_MS = Number(process.env.EMAIL_TIMEOUT_MS || 7000);
 
 const remetente = process.env.EMAIL_FROM || "MUKANDA PREPA <no-reply@mukandaprepa.ao>";
 
@@ -40,7 +52,14 @@ async function enviarEmail({ to, subject, html }) {
         return { simulado: true };
     }
     try {
-        const info = await transporter.sendMail({ from: remetente, to, subject, html, text: texto });
+        const envio = transporter.sendMail({ from: remetente, to, subject, html, text: texto });
+        const info = await Promise.race([
+            envio,
+            new Promise((_, rejeitar) =>
+                setTimeout(() => rejeitar(new Error(`tempo esgotado (${LIMITE_MS}ms)`)), LIMITE_MS)
+            ),
+        ]);
+        console.log(`✉ Email enviado para ${to} ("${subject}")`);
         return { simulado: false, messageId: info.messageId };
     } catch (e) {
         console.error(`✖ Falha ao enviar email para ${to} ("${subject}"):`, e.message);

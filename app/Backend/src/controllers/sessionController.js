@@ -184,25 +184,34 @@ exports.submeter = async (req, res) => {
         };
         if (req.body && req.body.answers) patch.respostas = req.body.answers;
         await db.collection("sessoes").doc(s.id).update(patch);
-        res.json({ ok: true, submittedAt: patch.submetidaEm, auto: false });
-
-        // Notifica o professor dono da maratona — não bloqueia a resposta.
-        (async () => {
+        // Notifica o professor dono da maratona ANTES de responder: em
+        // serverless, tudo o que ficasse para depois do res.json() nunca
+        // chegava a correr (ver nota em utils/email.js). Era por isso que o
+        // professor nunca era avisado das submissões.
+        try {
             const [mDoc, uDoc] = await Promise.all([
                 db.collection("maratonas").doc(s.maratonaId).get(),
                 db.collection("usuarios").doc(s.usuarioId).get(),
             ]);
-            if (!mDoc.exists) return;
-            const m = mDoc.data();
-            const prof = await db.collection("usuarios").doc(m.professorId).get();
-            if (!prof.exists || !prof.data().email) return;
-            const { subject, html } = tpl.submissaoRecebida({
-                nomeProfessor: prof.data().nome,
-                nomeAluno: uDoc.exists ? uDoc.data().nome : "Um estudante",
-                maratona: m.titulo,
-            });
-            await enviarEmail({ to: prof.data().email, subject, html });
-        })().catch(() => {});
+            if (mDoc.exists) {
+                const m = mDoc.data();
+                const prof = await db.collection("usuarios").doc(m.professorId).get();
+                if (prof.exists && prof.data().email) {
+                    const { subject, html } = tpl.submissaoRecebida({
+                        nomeProfessor: prof.data().nome,
+                        nomeAluno: uDoc.exists ? uDoc.data().nome : "Um estudante",
+                        maratona: m.titulo,
+                    });
+                    await enviarEmail({ to: prof.data().email, subject, html });
+                }
+            }
+        } catch (e) {
+            // A submissão do aluno já está guardada — um email falhado não a
+            // pode pôr em causa.
+            console.error("Aviso de submissão ao professor:", e.message);
+        }
+
+        res.json({ ok: true, submittedAt: patch.submetidaEm, auto: false });
     } catch (e) {
         console.error(e);
         res.status(500).json({ mensagem: "Erro no servidor." });
