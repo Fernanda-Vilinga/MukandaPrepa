@@ -52,8 +52,8 @@ export default function ProfChats() {
     <>
       <ProfTopbar />
       <div className="wrap">
-        <div style={{ display: 'flex', gap: 24, height: 700 }}>
-          <div className="card" style={{ width: 380, padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+        <div className="split">
+          <div className="card side" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
             <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--brd)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <h3 className="mont" style={{ fontSize: 17, fontWeight: 800, flex: 1 }}>💬 Dúvidas dos alunos</h3>

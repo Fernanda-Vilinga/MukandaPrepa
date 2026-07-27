@@ -54,31 +54,33 @@ export default function Monitor() {
             </div>
           </div>
           {tab === 'live' ? (
-            <table>
-              <thead>
-                <tr><th>Aluno</th><th>Questão actual</th><th>Progresso</th><th>Tempo de sessão</th><th>Estado</th></tr>
-              </thead>
-              <tbody>
-                {data.sessions.map((s) => (
-                  <tr key={s.student}>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <div className="avatar" style={{ width: 34, height: 34, fontSize: 13, background: s.color }}>{s.initials}</div>
-                        <b>{s.student}</b>
-                      </div>
-                    </td>
-                    <td>{s.question}</td>
-                    <td><div className="prog" style={{ width: 140, height: 8 }}><div style={{ width: `${s.progress}%` }} /></div></td>
-                    <td className="mut">{s.time}</td>
-                    <td>
-                      <span className="badge" style={s.state === 'A rever' ? { background: 'var(--amber-l)', color: '#B45309' } : { background: 'var(--green-l)', color: 'var(--green)' }}>
-                        {s.state}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr><th>Aluno</th><th>Questão actual</th><th>Progresso</th><th>Tempo de sessão</th><th>Estado</th></tr>
+                </thead>
+                <tbody>
+                  {data.sessions.map((s) => (
+                    <tr key={s.student}>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <div className="avatar" style={{ width: 34, height: 34, fontSize: 13, background: s.color }}>{s.initials}</div>
+                          <b>{s.student}</b>
+                        </div>
+                      </td>
+                      <td>{s.question}</td>
+                      <td><div className="prog" style={{ width: 140, height: 8 }}><div style={{ width: `${s.progress}%` }} /></div></td>
+                      <td className="mut">{s.time}</td>
+                      <td>
+                        <span className="badge" style={s.state === 'A rever' ? { background: 'var(--amber-l)', color: '#B45309' } : { background: 'var(--green-l)', color: 'var(--green)' }}>
+                          {s.state}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           ) : (
             <div className="mut sm" style={{ padding: 20, textAlign: 'center' }}>
               Histórico: {data.completed} submissões completas · {data.abandoned} sessões abandonadas · tempo médio {data.avgTime}.

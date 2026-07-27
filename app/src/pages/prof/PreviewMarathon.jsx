@@ -125,7 +125,7 @@ export default function PreviewMarathon() {
               {['mcq', 'text', 'photo'].map((t) => (contagem[t] ? `${pillLabel[t]}: ${contagem[t]}` : null)).filter(Boolean).join(' · ')}
             </span>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12 }}>
+          <div className="grid-slots">
             {questoes.map((q, i) => (
               <div key={i} style={{
                 aspectRatio: '1', borderRadius: 12, display: 'flex', flexDirection: 'column',

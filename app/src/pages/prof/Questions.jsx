@@ -74,7 +74,7 @@ export default function Questions() {
               <div className="prog" style={{ height: 8, marginBottom: 20 }}>
                 <div style={{ width: `${(filled / 15) * 100}%` }} />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12 }}>
+              <div className="grid-slots">
                 {slots.map((s, i) => (
                   <button
                     key={s.slot}
