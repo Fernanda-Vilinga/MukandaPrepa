@@ -1,12 +1,11 @@
 // Componentes partilhados do perfil ADMINISTRADOR
 import { useEffect, useRef, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { currentUser, logout } from '../services/api.js';
-import { Brand } from './Ui.jsx';
+import { Brand, TopbarNav } from './Ui.jsx';
 
 export function AdminTopbar() {
   const user = currentUser();
-  const { pathname } = useLocation();
   const navigate = useNavigate();
   const [menu, setMenu] = useState(false);
   const menuRef = useRef(null);
@@ -29,13 +28,11 @@ export function AdminTopbar() {
   return (
     <header className="topbar">
       <Brand />
-      <nav className="nav">
-        {items.map(([label, to]) => (
-          <Link key={to} to={to} className={pathname === to || (to !== '/admin' && pathname.startsWith(to.split('/').slice(0, 3).join('/'))) ? 'on' : ''}>
-            {label}
-          </Link>
-        ))}
-      </nav>
+      <TopbarNav
+        items={items}
+        activo={(to, actual) =>
+          actual === to || (to !== '/admin' && actual.startsWith(to.split('/').slice(0, 3).join('/')))}
+      />
       <span className="plan-chip" style={{ background: 'var(--dark)', color: '#fff' }}>⚙️ Administrador</span>
       <div ref={menuRef} style={{ position: 'relative' }}>
         <div className="avatar" style={{ background: 'var(--dark)', cursor: 'pointer' }} onClick={() => setMenu((m) => !m)}>

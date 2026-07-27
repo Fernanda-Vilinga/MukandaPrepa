@@ -1,12 +1,11 @@
 // Componentes partilhados do perfil PROFESSOR
 import { useEffect, useRef, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { currentUser, logout } from '../services/api.js';
-import { Brand } from './Ui.jsx';
+import { Brand, TopbarNav } from './Ui.jsx';
 
 export function ProfTopbar() {
   const user = currentUser();
-  const { pathname } = useLocation();
   const navigate = useNavigate();
   const [menu, setMenu] = useState(false);
   const menuRef = useRef(null);
@@ -28,13 +27,10 @@ export function ProfTopbar() {
   return (
     <header className="topbar">
       <Brand />
-      <nav className="nav">
-        {items.map(([label, to]) => (
-          <Link key={to} to={to} className={pathname === to || (to !== '/prof' && pathname.startsWith(to)) ? 'on' : ''}>
-            {label}
-          </Link>
-        ))}
-      </nav>
+      <TopbarNav
+        items={items}
+        activo={(to, actual) => actual === to || (to !== '/prof' && actual.startsWith(to))}
+      />
       <span className="plan-chip" style={{ background: 'var(--orange-l)', color: 'var(--orange-d)' }}>👨‍🏫 Professor</span>
       <div ref={menuRef} style={{ position: 'relative' }}>
         <div className="avatar" style={{ background: 'var(--blue)', cursor: 'pointer' }} onClick={() => setMenu((m) => !m)}>

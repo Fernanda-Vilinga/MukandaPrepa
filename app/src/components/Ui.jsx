@@ -77,6 +77,45 @@ export function AttemptDots({ used, max }) {
   );
 }
 
+// Navegação partilhada pelas três topbars (estudante, professor, admin).
+//
+// Em ecrãs largos é a barra de links de sempre. Abaixo de 900px o CSS
+// transforma-a num painel por baixo da topbar, aberto pelo botão de
+// hambúrguer. Antes destes ecrãs a navegação era simplesmente escondida:
+// quem entrasse pelo telemóvel ficava sem forma de mudar de página.
+export function TopbarNav({ items, activo }) {
+  const [aberto, setAberto] = useState(false);
+  const { pathname } = useLocation();
+
+  // Mudar de página fecha o menu — senão ficava aberto por cima do conteúdo.
+  useEffect(() => { setAberto(false); }, [pathname]);
+
+  // Escape fecha, para quem navega por teclado.
+  useEffect(() => {
+    const h = (e) => { if (e.key === 'Escape') setAberto(false); };
+    document.addEventListener('keydown', h);
+    return () => document.removeEventListener('keydown', h);
+  }, []);
+
+  return (
+    <>
+      <button
+        className="nav-toggle"
+        aria-label={aberto ? 'Fechar menu' : 'Abrir menu'}
+        aria-expanded={aberto}
+        onClick={() => setAberto((a) => !a)}
+      >
+        {aberto ? '✕' : '☰'}
+      </button>
+      <nav className={`nav${aberto ? ' open' : ''}`}>
+        {items.map(([label, to]) => (
+          <Link key={to} to={to} className={activo(to, pathname) ? 'on' : ''}>{label}</Link>
+        ))}
+      </nav>
+    </>
+  );
+}
+
 export function Topbar() {
   const user = currentUser();
   const { pathname } = useLocation();
@@ -98,11 +137,7 @@ export function Topbar() {
   return (
     <header className="topbar">
       <Brand />
-      <nav className="nav">
-        {items.map(([label, to]) => (
-          <Link key={to} to={to} className={pathname === to ? 'on' : ''}>{label}</Link>
-        ))}
-      </nav>
+      <TopbarNav items={items} activo={(to, actual) => actual === to} />
       <button
         className="plan-chip"
         style={{ border: 'none', cursor: 'pointer' }}
