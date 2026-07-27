@@ -1,13 +1,25 @@
 // Modelos HTML simples para os emails transaccionais — uma única moldura
 // (base()) com a identidade da MUKANDA PREPA, para não repetir CSS em
 // cada controller. Texto sempre em português de Angola, directo.
+const APP_URL = process.env.APP_URL || "http://localhost:5173";
+
 const ORANGE = "#FB6D1D";
 const DARK = "#14161A";
+
+// Logótipo do cabeçalho. Tem de ser um endereço público e absoluto: o email
+// é lido fora da aplicação, portanto caminhos relativos não resolvem. Usa-se
+// a versão branca, sobre o laranja da marca.
+//
+// O nome em texto continua ao lado de propósito — a maioria dos clientes de
+// email bloqueia imagens externas por omissão, e sem isso o cabeçalho ficaria
+// vazio até a pessoa autorizar o carregamento.
+const LOGO_URL = process.env.EMAIL_LOGO_URL || `${APP_URL}/logo-icon-branco.png`;
 
 const base = (titulo, corpoHtml, cta) => `
 <div style="font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif; max-width: 560px; margin: 0 auto; color: ${DARK};">
   <div style="background: ${ORANGE}; padding: 24px 32px; border-radius: 14px 14px 0 0;">
-    <span style="color: #fff; font-weight: 800; font-size: 18px; letter-spacing: .3px;">MUKANDA PREPA</span>
+    <img src="${LOGO_URL}" alt="" width="28" height="28" style="vertical-align: middle; margin-right: 10px; border: 0;" />
+    <span style="color: #fff; font-weight: 800; font-size: 18px; letter-spacing: .3px; vertical-align: middle;">MUKANDA PREPA</span>
   </div>
   <div style="border: 1px solid #EFEFF2; border-top: none; border-radius: 0 0 14px 14px; padding: 32px;">
     <h2 style="margin: 0 0 16px; font-size: 20px;">${titulo}</h2>
@@ -18,8 +30,6 @@ const base = (titulo, corpoHtml, cta) => `
     Plataforma de Maratonas · MUKANDA PREPA
   </div>
 </div>`;
-
-const APP_URL = process.env.APP_URL || "http://localhost:5173";
 
 const boasVindasEstudante = ({ nome }) => ({
     subject: "Bem-vindo(a) à MUKANDA PREPA 🎓",
