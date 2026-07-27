@@ -40,7 +40,7 @@ export default function Marathons() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
           <h1 style={{ fontSize: 26, fontWeight: 800 }}>Maratonas</h1>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <input className="input" placeholder="🔍 Pesquisar…" value={q} onChange={(e) => setQ(e.target.value)} style={{ width: 220, padding: '10px 14px' }} />
+            <input className="input" placeholder="🔍 Pesquisar…" value={q} onChange={(e) => setQ(e.target.value)} style={{ width: 220, maxWidth: '100%', flex: '1 1 180px', padding: '10px 14px' }} />
             {FILTERS.map(([id, label]) => (
               <button key={id} className={`btn sm ${filter === id ? 'dark' : 'ghost'}`} onClick={() => setFilter(id)}>{label}</button>
             ))}

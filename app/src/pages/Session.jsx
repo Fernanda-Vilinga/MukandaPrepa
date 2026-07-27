@@ -60,7 +60,7 @@ export default function Session() {
 
   return (
     <>
-      <header className="topbar" style={{ gap: 24 }}>
+      <header className="topbar session" style={{ gap: 24 }}>
         <Brand size={36} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className="mont" style={{ fontWeight: 700, fontSize: 15, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.title}</div>

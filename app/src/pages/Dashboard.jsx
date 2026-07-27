@@ -89,22 +89,24 @@ export default function Dashboard() {
 
             <div className="card">
               <h3 style={{ fontSize: 16.5, fontWeight: 700, marginBottom: 14 }}>Histórico</h3>
-              <table>
-                <thead>
-                  <tr><th>Maratona</th><th>Data</th><th>Nota</th><th>Ranking</th><th>Estado</th></tr>
-                </thead>
-                <tbody>
-                  {results.map((r) => (
-                    <tr key={r.id}>
-                      <td style={{ fontWeight: 600 }}>{r.marathonTitle}</td>
-                      <td className="mut">{r.date}</td>
-                      <td>{r.score != null ? `${r.score}/${r.total} · ${r.percent}%` : '—'}</td>
-                      <td>{r.rank ? `#${r.rank}` : '—'}</td>
-                      <td><Badge status={r.status} /></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div className="table-wrap">
+                <table>
+                  <thead>
+                    <tr><th>Maratona</th><th>Data</th><th>Nota</th><th>Ranking</th><th>Estado</th></tr>
+                  </thead>
+                  <tbody>
+                    {results.map((r) => (
+                      <tr key={r.id}>
+                        <td style={{ fontWeight: 600 }}>{r.marathonTitle}</td>
+                        <td className="mut">{r.date}</td>
+                        <td>{r.score != null ? `${r.score}/${r.total} · ${r.percent}%` : '—'}</td>
+                        <td>{r.rank ? `#${r.rank}` : '—'}</td>
+                        <td><Badge status={r.status} /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
 
