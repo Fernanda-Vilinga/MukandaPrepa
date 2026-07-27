@@ -163,6 +163,13 @@ td { padding: 16px; border-bottom: 1px solid #EFEFF2; font-size: 14.5px; }
 }
 .auth-right { flex: 1; display: flex; align-items: center; justify-content: center; background: var(--bg); padding: 48px 24px; }
 
+/* Cartão dos ecrãs de autenticação (entrar, registo, senhas).
+   Tinha largura fixa de 460px escrita em cada página, o que transbordava
+   em qualquer telemóvel mais estreito do que isso. Passa a ocupar o espaço
+   disponível até esse limite. */
+.auth-card { width: 100%; max-width: 460px; padding: 44px; }
+.auth-card.wide { max-width: 520px; }
+
 .prog { height: 6px; background: #EEEEF0; border-radius: 99px; overflow: hidden; }
 .prog > div { height: 100%; background: var(--orange); border-radius: 99px; transition: width .3s; }
 
@@ -217,4 +224,6 @@ td { padding: 16px; border-bottom: 1px solid #EFEFF2; font-size: 14.5px; }
   .stat { padding: 18px 20px; }
   .stat .v { font-size: 28px; }
   .auth-right { padding: 24px 12px; }
+  .auth-card { padding: 28px 22px; }
+  .field { margin-bottom: 14px; }
 }

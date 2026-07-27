@@ -41,7 +41,7 @@ export default function Register() {
     <div className="auth">
       <AuthLeft />
       <div className="auth-right">
-        <form className="card" style={{ width: 520, padding: 44 }} onSubmit={submit}>
+        <form className="card auth-card wide" onSubmit={submit}>
           <h2 style={{ fontSize: 24, fontWeight: 800 }}>Criar conta de estudante</h2>
           <p className="mut sm" style={{ margin: '6px 0 20px' }}>Rápido e simples — só precisas destes dados.</p>
 

@@ -48,7 +48,7 @@ export default function ChangePassword() {
     <div className="auth">
       <AuthLeft />
       <div className="auth-right">
-        <form className="card" style={{ width: 460, padding: 44 }} onSubmit={submit}>
+        <form className="card auth-card" onSubmit={submit}>
           <h2 style={{ fontSize: 24, fontWeight: 800 }}>Define a tua nova senha</h2>
           <p className="mut sm" style={{ margin: '6px 0 28px' }}>
             Olá, <b style={{ color: 'var(--dark)' }}>{user.name?.split(' ')[0]}</b>. Por segurança,

@@ -35,7 +35,7 @@ export default function ResetPassword() {
       <div className="auth">
         <AuthLeft />
         <div className="auth-right">
-          <div className="card" style={{ width: 460, padding: 44, textAlign: 'center' }}>
+          <div className="card auth-card" style={{ textAlign: 'center' }}>
             <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 10 }}>Link inválido</h2>
             <p className="mut sm" style={{ marginBottom: 20 }}>
               Este link já foi utilizado ou expirou. Por segurança, cada link de
@@ -69,7 +69,7 @@ export default function ResetPassword() {
       <div className="auth">
         <AuthLeft />
         <div className="auth-right">
-          <div className="card" style={{ width: 460, padding: 44, textAlign: 'center' }}>
+          <div className="card auth-card" style={{ textAlign: 'center' }}>
             <p className="mut sm">A verificar o link…</p>
           </div>
         </div>
@@ -81,7 +81,7 @@ export default function ResetPassword() {
     <div className="auth">
       <AuthLeft />
       <div className="auth-right">
-        <div className="card" style={{ width: 460, padding: 44 }}>
+        <div className="card auth-card">
           {done ? (
             <div style={{ textAlign: 'center' }}>
               <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'var(--green-l)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, margin: '0 auto 20px' }}>✓</div>

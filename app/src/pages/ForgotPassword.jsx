@@ -31,7 +31,7 @@ export default function ForgotPassword() {
     <div className="auth">
       <AuthLeft />
       <div className="auth-right">
-        <form className="card" style={{ width: 460, padding: 44 }} onSubmit={submit}>
+        <form className="card auth-card" onSubmit={submit}>
           {!sent ? (
             <>
               <h2 style={{ fontSize: 24, fontWeight: 800 }}>Recuperar senha</h2>

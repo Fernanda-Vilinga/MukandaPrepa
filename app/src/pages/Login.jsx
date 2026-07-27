@@ -45,7 +45,7 @@ export default function Login() {
     <div className="auth">
       <AuthLeft />
       <div className="auth-right">
-        <form className="card" style={{ width: 460, padding: 44 }} onSubmit={submit}>
+        <form className="card auth-card" onSubmit={submit}>
           <h2 style={{ fontSize: 24, fontWeight: 800 }}>Entrar</h2>
           <p className="mut sm" style={{ margin: '6px 0 28px' }}>
             Acede à tua conta de estudante para veres as maratonas disponíveis.
