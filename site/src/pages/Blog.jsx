@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import './Blog.css';
+import { NOTICIAS_RECENTES } from '../config/noticias';
 
 const CATEGORIAS = [
   {
@@ -24,13 +25,7 @@ const CATEGORIAS = [
   },
 ];
 
-// Pré-visualizações provisórias — reflectem os mesmos exemplos usados nas
-// páginas de Notícias e Artigos, só para dar contexto nesta página hub.
-const NOTICIAS_RECENTES = [
-  { titulo: 'Lançamento oficial da plataforma mukandaprepa.ao', data: '08 Jul 2026' },
-  { titulo: 'MUKANDA PREPA lança a primeira Maratona Nacional', data: '22 Jun 2026' },
-  { titulo: 'Novo plano Premium já disponível', data: '15 Jun 2026' },
-];
+// As notícias recentes vêm da mesma fonte da página Notícias.
 
 const ARTIGOS_RECENTES = [
   { titulo: 'Como resolver equações do 2º grau sem erros', materia: 'Matemática' },

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import './Sobre.css';
 import { APP_REGISTO } from '../config/appLinks';
+import { FUNDADORES } from '../config/equipa.jsx';
 
 // Conteúdo provisório — esta página aguardava protótipo do designer (Briefing
 // v1.0, secção 2.1). Avançou-se sem protótipo por decisão da equipa; rever
@@ -87,9 +88,23 @@ export default function Sobre() {
             com uma equipa dedicada a construir a melhor preparação para o
             acesso à universidade em Angola.
           </p>
-          <p className="sobre-equipa__nota">
-            Perfis completos da equipa disponíveis brevemente nesta página.
-          </p>
+          {/* Fundadores em destaque; o resto da equipa vive na página
+              própria, com o mesmo tipo de link usado para a Visão 2030. */}
+          <div className="sobre-equipa__fundadores">
+            {FUNDADORES.map((f) => (
+              <div className="sobre-equipa__perfil" key={f.nome}>
+                <div className="sobre-equipa__avatar" aria-hidden="true">
+                  {f.nome.split(' ').slice(0, 2).map((p) => p[0]).join('')}
+                </div>
+                <h3>{f.nome}</h3>
+                <p>{f.cargo}</p>
+              </div>
+            ))}
+          </div>
+
+          <Link to="/equipa" className="sobre-historia__link">
+            Conhece toda a equipa →
+          </Link>
         </div>
       </section>
 

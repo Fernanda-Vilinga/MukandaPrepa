@@ -10,6 +10,10 @@ const PLANOS = [
 ];
 
 const FEATURES = [
+  // As tentativas por maratona são o critério que mais distingue os planos —
+  // ficam em primeiro lugar. Devem coincidir com os limites configurados no
+  // painel de administração da app (Gestão de planos).
+  { nome: 'Tentativas por maratona', basic: '2', plus: '5', premium: 'Ilimitadas' },
   { nome: 'Maratonas abertas', basic: true, plus: true, premium: true },
   { nome: 'Biblioteca de exames passados', basic: true, plus: true, premium: true },
   { nome: 'Comunidade de estudantes', basic: true, plus: true, premium: true },
@@ -17,7 +21,7 @@ const FEATURES = [
   { nome: 'Maratonas temáticas por área', basic: false, plus: true, premium: true },
   { nome: 'Aulas online', basic: false, plus: '2/semana', premium: '4/semana' },
   { nome: 'Aulas gravadas', basic: false, plus: false, premium: true },
-  { nome: 'Acompanhamento por tutor', basic: false, plus: true, premium: true },
+  { nome: 'Acompanhamento por tutor', basic: false, plus: false, premium: true },
   { nome: 'Maratonas por universidade', basic: false, plus: false, premium: true },
   { nome: 'Plano de estudo individualizado', basic: false, plus: false, premium: true },
 ];

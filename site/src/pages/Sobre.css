@@ -109,11 +109,35 @@
   line-height: 1.6;
 }
 
-.sobre-equipa__nota {
-  font-size: 13px;
-  font-style: italic;
-  margin-top: 12px;
-  opacity: 0.8;
+.sobre-equipa__fundadores {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  margin: 28px 0 20px;
+}
+
+.sobre-equipa__perfil h3 {
+  font-size: 16px;
+  margin-bottom: 2px;
+}
+
+.sobre-equipa__perfil p {
+  font-size: 13.5px;
+}
+
+.sobre-equipa__avatar {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 12px;
+  border-radius: 50%;
+  background: rgba(251, 109, 29, 0.14);
+  color: var(--color-orange);
+  font-family: var(--font-title);
+  font-weight: 800;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .sobre-cta-final {
@@ -125,15 +149,19 @@
   text-align: center;
 }
 
-.sobre-cta-final {
-  background: var(--color-orange);
-  padding: 48px 0;
-}
-
-.sobre-cta-final__inner {
-  text-align: center;
-}
-
+/* A pergunta e o botão estavam encostados um ao outro, sem respiração. */
 .sobre-cta-final h2 {
   color: #FFFFFF;
+  margin-bottom: 28px;
+}
+
+@media (max-width: 640px) {
+  .sobre-equipa__fundadores {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .sobre-cta-final h2 {
+    margin-bottom: 22px;
+  }
 }
