@@ -3,10 +3,11 @@ import { useState } from 'react';
 import { currentUser, updateProfile } from '../services/api.js';
 import { Topbar } from '../components/Ui.jsx';
 import { ChatFab } from '../components/Chat.jsx';
-import { openPlans } from '../components/PlanModal.jsx';
 import { AREAS, PLAN_LABEL, PLAN_ATTEMPTS } from '../data/mock.js';
+import { useNavigate } from 'react-router-dom';
 
 export default function Profile() {
+  const navigate = useNavigate();
   const [user, setUser] = useState(() => currentUser());
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ name: user?.name ?? '', area: user?.area ?? '', phone: user?.phone ?? '', password: '', confirm: '' });
@@ -115,7 +116,7 @@ export default function Profile() {
               {maxAtt === Infinity ? 'Tentativas ilimitadas por maratona' : `${maxAtt} tentativas por maratona`}
             </div>
           </div>
-          <button className="btn blue" onClick={openPlans}>Actualizar plano</button>
+          <button className="btn blue" onClick={() => navigate('/planos')}>Actualizar plano</button>
         </div>
       </div>
       <ChatFab />

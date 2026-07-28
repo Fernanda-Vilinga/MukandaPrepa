@@ -2,7 +2,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { currentUser, logout } from '../services/api.js';
-import PlanModal, { openPlans } from './PlanModal.jsx';
 import { PLAN_LABEL } from '../data/mock.js';
 
 // Logotipo oficial MUKANDA PREPA (ícone). Versão branca sobre fundos
@@ -138,13 +137,14 @@ export function Topbar() {
     <header className="topbar">
       <Brand />
       <TopbarNav items={items} activo={(to, actual) => actual === to} />
+      {/* Sem seta de menu: já não abre um dropdown, leva à página de planos. */}
       <button
         className="plan-chip"
         style={{ border: 'none', cursor: 'pointer' }}
         title="Ver planos e fazer upgrade"
-        onClick={openPlans}
+        onClick={() => navigate('/planos')}
       >
-        Plano {PLAN_LABEL[user?.plan] ?? '—'} ▾
+        Plano {PLAN_LABEL[user?.plan] ?? '—'}
       </button>
       <div ref={menuRef} style={{ position: 'relative' }}>
         <div
@@ -180,7 +180,6 @@ export function Topbar() {
           </div>
         )}
       </div>
-      <PlanModal />
     </header>
   );
 }

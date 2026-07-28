@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { getMarathons, getResults, currentUser } from '../services/api.js';
 import { Topbar, Badge, Stat, AttemptDots } from '../components/Ui.jsx';
 import { ChatFab } from '../components/Chat.jsx';
-import { openPlans } from '../components/PlanModal.jsx';
 import { PLAN_ATTEMPTS, PLAN_LABEL } from '../data/mock.js';
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const user = currentUser();
   const [marathons, setMarathons] = useState([]);
   const [results, setResults] = useState([]);
@@ -144,7 +144,7 @@ export default function Dashboard() {
                   </b>
                 </div>
                 {user?.plan !== 'premium' && (
-                  <button className="btn blue sm" style={{ marginTop: 16, width: '100%' }} onClick={openPlans}>Fazer upgrade de plano</button>
+                  <button className="btn blue sm" style={{ marginTop: 16, width: '100%' }} onClick={() => navigate('/planos')}>Fazer upgrade de plano</button>
                 )}
               </div>
             )}

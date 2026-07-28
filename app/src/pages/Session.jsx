@@ -60,18 +60,24 @@ export default function Session() {
 
   return (
     <>
-      <header className="topbar session" style={{ gap: 24 }}>
+      {/* Marca à esquerda; à direita um bloco com duas zonas — a larga com o
+          título e o progresso, a estreita com o cronómetro e a contagem. */}
+      <header className="topbar session">
         <Brand size={36} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div className="mont titulo-sessao" style={{ fontWeight: 700, fontSize: 15 }}>{m.title}</div>
-          <div className="prog" style={{ marginTop: 8, maxWidth: 520 }}>
-            <div style={{ width: `${((review ? qs.length : idx + 1) / qs.length) * 100}%` }} />
+        <div className="sessao-info">
+          <div className="sessao-info__principal">
+            <div className="mont titulo-sessao">{m.title}</div>
+            <div className="prog" style={{ marginTop: 8, maxWidth: 520 }}>
+              <div style={{ width: `${((review ? qs.length : idx + 1) / qs.length) * 100}%` }} />
+            </div>
+          </div>
+          <div className="sessao-info__lado">
+            <Timer seconds={left} />
+            <div className="mut contagem-sessao">
+              {review ? 'Revisão final' : `Questão ${idx + 1} de ${qs.length}`}
+            </div>
           </div>
         </div>
-        <div className="mut contagem-sessao" style={{ fontWeight: 600, fontSize: 14, whiteSpace: 'nowrap' }}>
-          {review ? 'Revisão final' : `Questão ${idx + 1} de ${qs.length}`}
-        </div>
-        <Timer seconds={left} />
       </header>
 
       {!review ? (
@@ -143,14 +149,18 @@ export default function Session() {
               </>
             )}
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 28 }}>
-              <button className="btn ghost" disabled={idx === 0} onClick={() => setIdx(idx - 1)}>← Anterior</button>
-              <div className="sm" style={{ color: 'var(--green)', fontWeight: 500 }}>
+            {/* Os botões ficam nos extremos e o aviso centrado por baixo. Antes
+                estava entre os dois e era esmagado a três linhas em telemóvel. */}
+            <div className="accoes-sessao">
+              <div className="accoes-sessao__botoes">
+                <button className="btn ghost" disabled={idx === 0} onClick={() => setIdx(idx - 1)}>← Anterior</button>
+                {idx < qs.length - 1
+                  ? <button className="btn" onClick={() => setIdx(idx + 1)}>Seguinte →</button>
+                  : <button className="btn green" onClick={() => setReview(true)}>Rever respostas ✓</button>}
+              </div>
+              <div className="sm accoes-sessao__aviso" style={{ color: 'var(--green)', fontWeight: 500 }}>
                 {savedAt ? '✓ Resposta guardada automaticamente' : 'As respostas são guardadas automaticamente'}
               </div>
-              {idx < qs.length - 1
-                ? <button className="btn" onClick={() => setIdx(idx + 1)}>Seguinte →</button>
-                : <button className="btn green" onClick={() => setReview(true)}>Rever respostas ✓</button>}
             </div>
           </div>
 
@@ -206,7 +216,7 @@ export default function Session() {
               </div>
             </div>
           )}
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <div className="accoes-sessao__botoes">
             <button className="btn ghost" onClick={() => setReview(false)}>← Voltar às questões</button>
             <button className="btn green" style={{ padding: '16px 40px' }} onClick={() => doSubmit(false)}>Submeter definitivamente ✓</button>
           </div>

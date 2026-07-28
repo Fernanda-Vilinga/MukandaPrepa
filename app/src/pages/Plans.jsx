@@ -1,19 +1,30 @@
-// Janela de planos (upgrade) — abre ao clicar no chip do plano na navbar
-// ou em qualquer botão "Fazer upgrade". Ao escolher um plano, cria o
-// pedido no backend (real) e abre o chat Suporte, onde a mensagem
-// automática e o acompanhamento da compra já ficam à espera do aluno.
+// Página de planos (upgrade).
+//
+// Era uma janela sobreposta. Passou a página própria porque a sobreposição
+// criava problemas de navegação: o botão Voltar do browser fechava a app em
+// vez de fechar a janela, o endereço não mudava (não se podia partilhar nem
+// recarregar), e em telemóvel ficavam duas barras de scroll aninhadas.
+//
+// Ao escolher um plano, cria o pedido no backend e abre o chat Suporte, onde
+// a mensagem automática e o acompanhamento da compra já ficam à espera.
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { currentUser, requestPlanUpgrade, getPlans } from '../services/api.js';
-
-export function openPlans() {
-  window.dispatchEvent(new CustomEvent('mkp:openPlans'));
-}
+import { Topbar } from '../components/Ui.jsx';
 
 // Cor de destaque por plano — puramente visual, não vem do backend.
 const ACCENT = { basic: '#64748B', plus: '#1742E7', premium: '#FB6D1D' };
 
-export default function PlanModal() {
-  const [open, setOpen] = useState(false);
+// O preço vem do backend como "10 000 Kz (pagamento único)". A parte entre
+// parênteses é uma nota, não um valor: separada, para não ir no tamanho grande
+// do preço e partir em duas linhas num ecrã estreito.
+function separarPreco(precoCompleto) {
+  const m = String(precoCompleto || '').match(/^(.*?)\s*\((.*)\)\s*$/);
+  return m ? { valor: m[1], nota: m[2] } : { valor: precoCompleto, nota: null };
+}
+
+export default function Plans() {
+  const navigate = useNavigate();
   const [busy, setBusy] = useState(null);
   const [promo, setPromo] = useState('');
   const [plans, setPlans] = useState(null);
@@ -21,18 +32,10 @@ export default function PlanModal() {
   const user = currentUser();
 
   useEffect(() => {
-    const h = () => { setOpen(true); setError(''); };
-    window.addEventListener('mkp:openPlans', h);
-    return () => window.removeEventListener('mkp:openPlans', h);
+    getPlans().then((data) => setPlans(data.plans)).catch(() => setPlans([]));
   }, []);
 
-  useEffect(() => {
-    if (open && !plans) {
-      getPlans().then((data) => setPlans(data.plans)).catch(() => setPlans([]));
-    }
-  }, [open, plans]);
-
-  if (!open) return null;
+  const voltar = () => navigate(-1);
 
   const choose = async (plan) => {
     setBusy(plan.id);
@@ -40,8 +43,8 @@ export default function PlanModal() {
     try {
       await requestPlanUpgrade(plan.id, promo.trim());
       setBusy(null);
-      setOpen(false);
-      // Abre o chat Suporte — a mensagem automática já foi criada pelo backend
+      navigate('/', { replace: true });
+      // Abre o chat Suporte — a mensagem automática já foi criada pelo backend.
       window.dispatchEvent(new CustomEvent('mkp:openChat', { detail: { channel: 'suporte' } }));
     } catch (err) {
       setBusy(null);
@@ -50,19 +53,23 @@ export default function PlanModal() {
   };
 
   return (
-    <div
-      style={{ position: 'fixed', inset: 0, background: 'rgba(20,20,31,.55)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
-      onClick={() => setOpen(false)}
-    >
-      <div className="card modal-card" style={{ maxWidth: 980, width: '100%', maxHeight: '90vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
+    <>
+      <Topbar />
+      <div className="wrap" style={{ maxWidth: 1080 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: 8 }}>
-          <div style={{ flex: 1 }}>
-            <h2 style={{ fontSize: 22, fontWeight: 800 }}>Planos MUKANDA PREPA</h2>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h1 style={{ fontSize: 24, fontWeight: 800 }}>Planos MUKANDA PREPA</h1>
             <p className="mut sm" style={{ marginTop: 4 }}>
               O teu plano actual está marcado. A compra é acompanhada pelos administradores no chat Suporte.
             </p>
           </div>
-          <button onClick={() => setOpen(false)} style={{ background: 'none', border: 'none', fontSize: 22, color: 'var(--mut)' }}>✕</button>
+          <button
+            onClick={voltar}
+            aria-label="Fechar e voltar"
+            style={{ background: 'none', border: '1.5px solid var(--brd)', borderRadius: 10, width: 40, height: 40, fontSize: 18, color: 'var(--mut)', flexShrink: 0 }}
+          >
+            ✕
+          </button>
         </div>
 
         {error && (
@@ -78,6 +85,7 @@ export default function PlanModal() {
             {plans.map((p) => {
               const accent = ACCENT[p.id] || 'var(--dark)';
               const isCurrent = user?.plan === p.id;
+              const { valor, nota } = separarPreco(p.price);
               return (
                 <div
                   key={p.id}
@@ -95,7 +103,9 @@ export default function PlanModal() {
                     <span className="badge" style={{ position: 'absolute', top: -12, left: 24, background: 'var(--blue-l)', color: 'var(--blue)' }}>Mais popular</span>
                   )}
                   <div className="mont" style={{ fontWeight: 800, fontSize: 19 }}>{p.name}</div>
-                  <div className="mont" style={{ fontWeight: 800, fontSize: 26, color: accent, margin: '6px 0 16px' }}>{p.price}</div>
+                  <div className="mont" style={{ fontWeight: 800, fontSize: 26, color: accent, marginTop: 6 }}>{valor}</div>
+                  {nota && <div className="xs mut" style={{ marginBottom: 16 }}>{nota}</div>}
+                  {!nota && <div style={{ marginBottom: 16 }} />}
                   <div className="sm" style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
                     {p.features.map((f) => <div key={f}>✓ {f}</div>)}
                     {p.missing.map((f) => <div key={f} className="mut">✗ {f}</div>)}
@@ -125,6 +135,7 @@ export default function PlanModal() {
           />
           <span className="xs mut">É incluído no teu pedido e o desconto é aplicado pela administração na confirmação.</span>
         </div>
+
         <div className="sm mut" style={{ marginTop: 16, background: 'var(--bg)', borderRadius: 12, padding: '14px 18px' }}>
           💳 <b style={{ color: 'var(--dark)' }}>Como funciona a compra:</b> ao escolheres um plano, abre-se uma conversa
           automática no chat <b style={{ color: 'var(--dark)' }}>Suporte</b> com os administradores, que acompanham o
@@ -133,6 +144,6 @@ export default function PlanModal() {
           o comprovativo, o teu plano é actualizado — basta actualizar a página.
         </div>
       </div>
-    </div>
+    </>
   );
 }

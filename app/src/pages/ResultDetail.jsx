@@ -3,7 +3,6 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { getResult, currentUser } from '../services/api.js';
 import { Topbar } from '../components/Ui.jsx';
 import { ChatFab } from '../components/Chat.jsx';
-import { openPlans } from '../components/PlanModal.jsx';
 import { PLAN_ATTEMPTS, PLAN_LABEL } from '../data/mock.js';
 
 export default function ResultDetail() {
@@ -89,7 +88,7 @@ export default function ResultDetail() {
           </div>
           {canRetry
             ? <Link to={`/maratonas/${r.marathonId}`} className="btn blue" style={{ textDecoration: 'none' }}>🔁 Repetir maratona</Link>
-            : <button className="btn blue" onClick={openPlans}>Fazer upgrade</button>}
+            : <button className="btn blue" onClick={() => navigate('/planos')}>Fazer upgrade</button>}
         </div>
       </div>
       <ChatFab />

@@ -13,6 +13,7 @@ import Results from './pages/Results.jsx';
 import ResultDetail from './pages/ResultDetail.jsx';
 import Terms from './pages/Terms.jsx';
 import Profile from './pages/Profile.jsx';
+import PlanosEstudante from './pages/Plans.jsx';
 import ForgotPassword from './pages/ForgotPassword.jsx';
 import ResetPassword from './pages/ResetPassword.jsx';
 import ChangePassword from './pages/ChangePassword.jsx';
@@ -92,6 +93,7 @@ export default function App() {
         <Route path="/maratonas/:id/sessao" element={<Private><Session /></Private>} />
         <Route path="/maratonas/:id/submetido" element={<Private><Submitted /></Private>} />
         <Route path="/perfil" element={<Private><Profile /></Private>} />
+        <Route path="/planos" element={<Private><PlanosEstudante /></Private>} />
         <Route path="/resultados" element={<Private><Results /></Private>} />
         <Route path="/resultados/:id" element={<Private><ResultDetail /></Private>} />
         <Route path="/prof" element={<PrivateProf><ProfDashboard /></PrivateProf>} />
