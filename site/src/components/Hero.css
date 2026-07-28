@@ -37,6 +37,12 @@
   max-width: 420px;
 }
 
+.hero__illustration svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
 @media (max-width: 1023px) {
   .hero__inner {
     flex-direction: column;

@@ -93,3 +93,21 @@ img {
     padding: 0 16px;
   }
 }
+
+/* ============================================================
+   Telemóveis estreitos (<=480px)
+   O site já se adaptava até 767px, mas várias grelhas paravam em duas
+   colunas. Em cartões com texto isso deixa umas dezenas de pixels úteis
+   por coluna — passam a uma só. As grelhas de fotografias e de links
+   curtos ficam em duas, onde duas ainda se lê bem.
+   ============================================================ */
+@media (max-width: 480px) {
+  .blog-categorias__grid,
+  .blog-previews__grid,
+  .artigos-grid,
+  .noticias-lista__grid,
+  .recursos-grid,
+  .missao-stats__grid {
+    grid-template-columns: 1fr;
+  }
+}

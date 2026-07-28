@@ -24,11 +24,21 @@
 }
 
 .footer__logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-family: var(--font-title);
   font-weight: 700;
   font-size: 16px;
   color: var(--color-dark);
   margin-bottom: 10px;
+}
+
+.footer__logo-img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  display: block;
 }
 
 .footer__tagline {

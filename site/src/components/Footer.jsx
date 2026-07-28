@@ -7,7 +7,12 @@ export default function Footer() {
     <footer className="footer">
       <div className="container footer__grid">
         <div className="footer__col">
-          <p className="footer__logo">MUKANDA PREPA</p>
+          {/* Mesma composição do componente Brand da app: o ícone oficial
+              ao lado do nome. O ficheiro é o mesmo dos dois lados. */}
+          <div className="footer__logo">
+            <img src="/logo-icon.png" alt="" className="footer__logo-img" />
+            <span>MUKANDA PREPA</span>
+          </div>
           <p className="footer__tagline">A melhor preparação para o acesso à universidade.</p>
         </div>
 
