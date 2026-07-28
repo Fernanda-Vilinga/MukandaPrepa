@@ -27,8 +27,12 @@ export default function Navbar() {
   return (
     <header className={`navbar ${scrolled ? 'navbar--scrolled' : ''}`}>
       <div className="container navbar__inner">
+        {/* Mesma composição do componente Brand da app: o ícone oficial ao
+            lado do nome em duas linhas. Antes era uma imagem única (01.png)
+            de 1920x720, que a 36px de altura deixava o nome quase ilegível. */}
         <Link to="/" className="navbar__logo">
-          <img src="/01.png" alt="MUKANDA PREPA" className="navbar__logo-img" />
+          <img src="/logo-icon.png" alt="" className="navbar__logo-img" />
+          <span className="navbar__logo-nome">MUKANDA<br />PREPA</span>
         </Link>
 
         {/* Em telemóvel o Login fica à vista na barra, ao lado do menu: é a

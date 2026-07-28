@@ -20,12 +20,25 @@
 .navbar__logo {
   display: flex;
   align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  flex-shrink: 0;
 }
 
 .navbar__logo-img {
-  height: 36px;
-  width: auto;
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
   display: block;
+}
+
+.navbar__logo-nome {
+  font-family: var(--font-title);
+  font-weight: 800;
+  font-size: 16px;
+  line-height: 1.1;
+  letter-spacing: .02em;
+  color: var(--color-dark);
 }
 
 .navbar__links {
@@ -101,17 +114,27 @@
 
 /* Login visível na barra em telemóvel — escondido no computador, onde já
    existe o botão normal à direita. */
+/* Mesmas cores do botão Login do computador (btn-outline): contorno e
+   texto na laranja da marca, para se ler como acção e não como texto. */
 .navbar__login-movel {
   display: none;
   align-items: center;
-  font-weight: 600;
+  font-family: var(--font-title);
+  font-weight: 700;
   font-size: 14px;
   text-decoration: none;
-  color: var(--color-dark, #14141F);
-  border: 1.5px solid var(--color-border, #E4E4E7);
-  border-radius: 10px;
-  padding: 9px 16px;
+  color: var(--color-orange);
+  background: transparent;
+  border: 1.5px solid var(--color-orange);
+  border-radius: 8px;
+  padding: 9px 18px;
   white-space: nowrap;
+}
+
+.navbar__login-movel:hover,
+.navbar__login-movel:active {
+  background: var(--color-orange);
+  color: #FBFBFB;
 }
 
 /* Botão de menu — só existe abaixo de 1023px, onde a barra de links não cabe. */
@@ -203,8 +226,10 @@
 
 @media (max-width: 640px) {
   .navbar { height: 64px; }
-  .navbar__login-movel { padding: 8px 12px; font-size: 13px; }
-  .navbar__logo-img { height: 30px; }
+  .navbar__login-movel { padding: 8px 14px; font-size: 13px; }
+  .navbar__logo-img { width: 34px; height: 34px; }
+  .navbar__logo { gap: 8px; }
+  .navbar__logo-nome { font-size: 13px; }
   .navbar__links, .navbar__actions { top: 64px; }
   .navbar__links { max-height: calc(100vh - 64px); }
 }
