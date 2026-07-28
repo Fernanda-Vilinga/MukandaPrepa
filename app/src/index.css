@@ -200,10 +200,11 @@ td { padding: 16px; border-bottom: 1px solid #EFEFF2; font-size: 14.5px; }
 .split > .side { width: 380px; flex-shrink: 0; }
 
 /* Cabeçalho da sessão — duas zonas à direita da marca. */
+.marca-sessao { display: flex; align-items: center; flex-shrink: 0; }
 .sessao-info { flex: 1; min-width: 0; display: flex; align-items: center; gap: 20px; }
 .sessao-info__principal { flex: 1; min-width: 0; }
-.sessao-info__lado { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
-.titulo-sessao { font-weight: 700; font-size: 15px; line-height: 1.25; }
+.sessao-info__lado { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.titulo-sessao { font-weight: 700; font-size: 15px; line-height: 1.25; overflow-wrap: anywhere; }
 .contagem-sessao { font-weight: 600; font-size: 13px; white-space: nowrap; }
 
 /* Barra de acções da sessão: botões nos extremos, aviso centrado por baixo. */
@@ -279,9 +280,13 @@ td { padding: 16px; border-bottom: 1px solid #EFEFF2; font-size: 14.5px; }
   /* Cabeçalho da sessão: marca à esquerda e um bloco à direita com duas
      zonas — a larga com o título e a barra de progresso, a estreita com o
      cronómetro em cima e a contagem de questões por baixo. */
+  /* Durante a prova, o cabeçalho fica só com o essencial: título e
+     progresso à esquerda, cronómetro e contagem à direita. A marca sai —
+     o espaço faz mais falta ao nome da maratona, que tem de caber inteiro. */
   .topbar.session { height: auto; min-height: 76px; padding: 10px 12px; gap: 10px; }
-  .sessao-info { gap: 10px; }
-  .sessao-info__lado { min-width: 92px; }
+  .topbar.session .marca-sessao { display: none; }
+  .sessao-info { gap: 12px; }
+  .sessao-info__lado { min-width: 88px; }
   .titulo-sessao { font-size: 13.5px; }
   .contagem-sessao { font-size: 12px; }
 

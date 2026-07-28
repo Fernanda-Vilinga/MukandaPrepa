@@ -63,7 +63,9 @@ export default function Session() {
       {/* Marca à esquerda; à direita um bloco com duas zonas — a larga com o
           título e o progresso, a estreita com o cronómetro e a contagem. */}
       <header className="topbar session">
-        <Brand size={36} />
+        {/* Em telemóvel a marca sai: durante a prova o espaço é todo preciso
+            para o título, o progresso e o cronómetro. */}
+        <span className="marca-sessao"><Brand size={36} /></span>
         <div className="sessao-info">
           <div className="sessao-info__principal">
             <div className="mont titulo-sessao">{m.title}</div>
