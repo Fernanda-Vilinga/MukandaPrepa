@@ -10,8 +10,8 @@ export default function Homepage() {
     <>
       <Hero />
       <Pilares />
-      <PlanosPreview />
       <MaratonaCountdown />
+      <PlanosPreview />
       <SobreResumo />
       <CtaFinal />
     </>

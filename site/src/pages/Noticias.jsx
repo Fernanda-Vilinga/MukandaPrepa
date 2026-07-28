@@ -13,7 +13,7 @@ const NOTICIAS = [
   {
     titulo: 'MUKANDA PREPA lança a primeira Maratona Nacional',
     data: '22 Jun 2026',
-    resumo: 'A primeira maratona aberta a todos os estudantes acontece a 22 de Julho, com inscrições já abertas.',
+    resumo: 'A primeira maratona aberta a todos os estudantes acontece a 17 de Agosto, com inscrições já abertas.',
     cor: '#1742E7',
   },
   {

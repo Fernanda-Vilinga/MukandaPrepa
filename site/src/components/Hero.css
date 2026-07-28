@@ -49,6 +49,16 @@
     text-align: center;
   }
 
+  /* Empilhado, `flex: 1` com base 0 deixava o contentor sem altura
+     própria. Passa a ocupar a largura disponível, com limite. */
+  .hero__illustration {
+    flex: none;
+    width: 100%;
+    max-width: 360px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
   .hero__subtitle {
     margin-left: auto;
     margin-right: auto;

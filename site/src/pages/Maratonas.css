@@ -31,6 +31,15 @@
   max-width: 380px;
 }
 
+/* Um <svg> sem width/height explícitos assume 100% da altura do contentor.
+   Empilhado numa coluna de altura automática, isso dá zero — a ilustração
+   desaparecia por completo em telemóvel. */
+.maratonas-hero__illustration svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
 .maratonas-explicacao {
   background: var(--color-bg);
   padding: 48px 0;
@@ -122,6 +131,16 @@
   .maratonas-hero__inner {
     flex-direction: column;
     text-align: center;
+  }
+
+  /* Empilhado, `flex: 1` com base 0 deixava o contentor sem altura
+     própria. Passa a ocupar a largura disponível, com limite. */
+  .maratonas-hero__illustration {
+    flex: none;
+    width: 100%;
+    max-width: 360px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .maratonas-hero__text p {

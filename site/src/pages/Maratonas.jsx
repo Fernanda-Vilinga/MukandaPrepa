@@ -1,6 +1,7 @@
 import MaratonaCountdown from '../components/MaratonaCountdown';
 import './Maratonas.css';
 import { APP_REGISTO } from '../config/appLinks';
+import { DATA_PROXIMA_MARATONA_LEGIVEL } from '../config/maratona';
 
 const PILARES = [
   {
@@ -17,15 +18,17 @@ const PILARES = [
   },
 ];
 
-// Calendário provisório — o Briefing não especificava as datas/áreas de cada
-// semana além da 1ª maratona (22 Jul 2026). Substituir por calendário real.
+// Só a 1ª maratona tem data confirmada. As restantes ficam por anunciar em
+// vez de mostrarem datas inventadas — o site dizia 22 de Julho enquanto o
+// contador dizia 17 de Agosto. Actualizar quando o documento institucional
+// fixar o calendário (a data confirmada vive em src/config/maratona.js).
 const CALENDARIO = [
-  { semana: 'Semana 1 · 22 Jul 2026', fase: 'Fase Aberta', area: 'Geral', estado: 'aberta' },
-  { semana: 'Semana 2 · 29 Jul 2026', fase: 'Fase Temática', area: 'Matemática', estado: 'brevemente' },
-  { semana: 'Semana 3 · 05 Ago 2026', fase: 'Fase Temática', area: 'Física', estado: 'brevemente' },
-  { semana: 'Semana 4 · 12 Ago 2026', fase: 'Fase Temática', area: 'Química', estado: 'brevemente' },
-  { semana: 'Semana 5 · 19 Ago 2026', fase: 'Fase Temática', area: 'Biologia', estado: 'brevemente' },
-  { semana: 'Semana 6 · 26 Ago 2026', fase: 'Fase Temática', area: 'Português', estado: 'brevemente' },
+  { semana: `Semana 1 · ${DATA_PROXIMA_MARATONA_LEGIVEL}`, fase: 'Fase Aberta', area: 'Geral', estado: 'aberta' },
+  { semana: 'Semana 2 · data a anunciar', fase: 'Fase Temática', area: 'Matemática', estado: 'brevemente' },
+  { semana: 'Semana 3 · data a anunciar', fase: 'Fase Temática', area: 'Física', estado: 'brevemente' },
+  { semana: 'Semana 4 · data a anunciar', fase: 'Fase Temática', area: 'Química', estado: 'brevemente' },
+  { semana: 'Semana 5 · data a anunciar', fase: 'Fase Temática', area: 'Biologia', estado: 'brevemente' },
+  { semana: 'Semana 6 · data a anunciar', fase: 'Fase Temática', area: 'Português', estado: 'brevemente' },
 ];
 
 export default function Maratonas() {

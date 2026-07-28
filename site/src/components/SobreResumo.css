@@ -14,6 +14,15 @@
   max-width: 380px;
 }
 
+/* Um <svg> sem width/height explícitos assume 100% da altura do contentor.
+   Empilhado numa coluna de altura automática, isso dá zero — a ilustração
+   desaparecia por completo em telemóvel. */
+.sobre-resumo__imagem svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
 .sobre-resumo__texto {
   flex: 1;
 }
@@ -51,6 +60,16 @@
   .sobre-resumo__inner {
     flex-direction: column;
     text-align: center;
+  }
+
+  /* Empilhado, `flex: 1` com base 0 deixava o contentor sem altura
+     própria. Passa a ocupar a largura disponível, com limite. */
+  .sobre-resumo__imagem {
+    flex: none;
+    width: 100%;
+    max-width: 360px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .sobre-resumo__lista li {

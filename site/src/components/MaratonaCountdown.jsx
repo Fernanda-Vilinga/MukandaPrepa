@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import './MaratonaCountdown.css';
 import { APP_REGISTO, propsLink } from '../config/appLinks';
+import { DATA_PROXIMA_MARATONA, DATA_PROXIMA_MARATONA_LEGIVEL } from '../config/maratona';
 
-// Data da 1ª Maratona: 22 de Julho de 2026, 14h00 (Briefing 1.3 / Spec 2.x)
-const MARATONA_DATE = new Date('2026-07-22T14:00:00');
+const MARATONA_DATE = DATA_PROXIMA_MARATONA;
 
 function getTimeLeft() {
   const diff = MARATONA_DATE.getTime() - Date.now();
@@ -20,7 +20,7 @@ function getTimeLeft() {
 // desta secção. O secundário é que fica para "saber mais" dentro do site.
 export default function MaratonaCountdown({
   ctaHref = APP_REGISTO,
-  ctaLabel = 'Inscrever-me na Maratona',
+  ctaLabel,
   secondaryHref = '/maratonas',
   secondaryLabel = 'Saber mais',
 }) {
@@ -34,7 +34,11 @@ export default function MaratonaCountdown({
   return (
     <section className="maratona">
       <div className="container maratona__inner">
-        <h2>Participa na próxima Maratona</h2>
+        <h2>{tempo.terminou ? 'As maratonas já começaram' : 'Participa na próxima Maratona'}</h2>
+
+        {!tempo.terminou && (
+          <p className="maratona__data">{DATA_PROXIMA_MARATONA_LEGIVEL}</p>
+        )}
 
         {!tempo.terminou ? (
           <div className="maratona__countdown">
@@ -52,11 +56,18 @@ export default function MaratonaCountdown({
             </div>
           </div>
         ) : (
-          <p className="maratona__encerrado">A maratona já começou!</p>
+          /* O objectivo do contador é criar urgência: quando a data passa, a
+             mensagem passa de contagem para chamada à acção. */
+          <p className="maratona__encerrado">
+            <b>Não percas mais tempo.</b> Entra agora e começa a treinar com as
+            maratonas que já estão a decorrer.
+          </p>
         )}
 
         <div className="maratona__actions">
-          <a href={ctaHref} className="btn btn-primary" {...propsLink(ctaHref)}>{ctaLabel}</a>
+          <a href={ctaHref} className="btn btn-primary" {...propsLink(ctaHref)}>
+            {ctaLabel ?? (tempo.terminou ? 'Entrar agora' : 'Inscrever-me na Maratona')}
+          </a>
           <a href={secondaryHref} className="btn btn-outline" {...propsLink(secondaryHref)}>{secondaryLabel}</a>
         </div>
       </div>

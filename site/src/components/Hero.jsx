@@ -8,7 +8,7 @@ export default function Hero() {
         <div className="hero__text">
           <h1>A melhor preparação para o acesso à universidade</h1>
           <p className="hero__subtitle">
-            Plataforma Criada 100% angolana: a MUKANDA PREPA junta
+            Plataforma 100% angolana: a MUKANDA PREPA junta
             exames passados, maratonas online e aulas ao vivo, para
             estudares ao teu ritmo e onde quiseres.
           </p>

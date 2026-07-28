@@ -45,6 +45,13 @@
   opacity: 0.9;
 }
 
+.maratona__data {
+  color: #FFFFFF;
+  opacity: .9;
+  font-size: 15px;
+  margin: -12px 0 22px;
+}
+
 .maratona__encerrado {
   color: #FFFFFF;
   font-size: 18px;

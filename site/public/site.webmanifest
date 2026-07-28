@@ -1,0 +1,11 @@
+{
+  "name": "MUKANDA PREPA",
+  "short_name": "MUKANDA",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ],
+  "theme_color": "#FB6D1D",
+  "background_color": "#FFFFFF",
+  "display": "standalone"
+}
