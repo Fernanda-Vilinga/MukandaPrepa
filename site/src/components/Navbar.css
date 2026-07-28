@@ -99,6 +99,21 @@
   font-size: 14px;
 }
 
+/* Login visível na barra em telemóvel — escondido no computador, onde já
+   existe o botão normal à direita. */
+.navbar__login-movel {
+  display: none;
+  align-items: center;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  color: var(--color-dark, #14141F);
+  border: 1.5px solid var(--color-border, #E4E4E7);
+  border-radius: 10px;
+  padding: 9px 16px;
+  white-space: nowrap;
+}
+
 /* Botão de menu — só existe abaixo de 1023px, onde a barra de links não cabe. */
 .navbar__toggle {
   display: none;
@@ -116,10 +131,22 @@
 }
 
 @media (max-width: 1023px) {
+  /* Espaço entre o Login e o botão de menu, que ficam encostados. */
+  .navbar__inner { gap: 10px; }
+
+  .navbar__login-movel {
+    display: inline-flex;
+    order: 1;
+    margin-left: auto;
+  }
+
   .navbar__toggle {
     display: inline-flex;
     order: 2;
   }
+
+  /* O Login já está na barra: não se repete dentro do painel. */
+  .navbar__acao-login { display: none; }
 
   /* Os links deixam de estar na barra e passam a painel por baixo dela.
      Antes eram apenas escondidos — o site ficava sem navegação. */
@@ -176,6 +203,7 @@
 
 @media (max-width: 640px) {
   .navbar { height: 64px; }
+  .navbar__login-movel { padding: 8px 12px; font-size: 13px; }
   .navbar__logo-img { height: 30px; }
   .navbar__links, .navbar__actions { top: 64px; }
   .navbar__links { max-height: calc(100vh - 64px); }

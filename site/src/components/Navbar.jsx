@@ -31,6 +31,13 @@ export default function Navbar() {
           <img src="/01.png" alt="MUKANDA PREPA" className="navbar__logo-img" />
         </Link>
 
+        {/* Em telemóvel o Login fica à vista na barra, ao lado do menu: é a
+            acção mais procurada por quem já tem conta e não deve obrigar a
+            abrir o menu para a encontrar. */}
+        <a href={APP_LOGIN} className="navbar__login-movel" target="_blank" rel="noreferrer">
+          Login
+        </a>
+
         {/* Abaixo de 1023px os links eram apenas escondidos e não havia nada
             no lugar — o site ficava sem navegação em telemóvel e tablet. */}
         <button
@@ -69,7 +76,7 @@ export default function Navbar() {
         </nav>
 
         <div className={`navbar__actions${menuAberto ? ' navbar__actions--aberto' : ''}`}>
-          <a href={APP_LOGIN} className="btn btn-outline" target="_blank" rel="noreferrer">Login</a>
+          <a href={APP_LOGIN} className="btn btn-outline navbar__acao-login" target="_blank" rel="noreferrer">Login</a>
           <a href={APP_REGISTO} className="btn btn-primary" target="_blank" rel="noreferrer">Inscrever-me</a>
         </div>
       </div>
