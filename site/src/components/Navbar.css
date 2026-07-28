@@ -112,6 +112,16 @@
   font-size: 14px;
 }
 
+/* O Inscrever-me vive dentro do painel do menu em telemóvel; no computador
+   usa-se o botão normal da direita. */
+.navbar__cta-movel {
+  display: none;
+  text-align: center;
+  margin-top: 8px;
+  padding: 12px 18px;
+  font-size: 14px;
+}
+
 /* Login visível na barra em telemóvel — escondido no computador, onde já
    existe o botão normal à direita. */
 /* Mesmas cores do botão Login do computador (btn-outline): contorno e
@@ -173,55 +183,45 @@
 
   /* Os links deixam de estar na barra e passam a painel por baixo dela.
      Antes eram apenas escondidos — o site ficava sem navegação. */
+  /* Painel encostado à direita, por baixo do botão que o abriu, em vez de
+     atravessar o ecrã de ponta a ponta com os itens colados à esquerda. */
   .navbar__links {
     display: none;
     position: absolute;
     top: 72px;
-    left: 0;
-    right: 0;
+    right: 12px;
+    left: auto;
+    width: min(260px, calc(100vw - 24px));
     flex-direction: column;
     align-items: stretch;
-    gap: 2px;
+    gap: 0;
     background: #fff;
-    border-bottom: 1px solid var(--color-border, #E4E4E7);
-    box-shadow: 0 12px 32px rgba(20, 20, 31, .10);
-    padding: 12px;
-    max-height: calc(100vh - 72px);
+    border: 1px solid var(--color-border, #E4E4E7);
+    border-radius: 14px;
+    box-shadow: 0 12px 32px rgba(20, 20, 31, .12);
+    padding: 8px;
+    max-height: calc(100vh - 88px);
     overflow-y: auto;
     z-index: 40;
   }
   .navbar__links--aberto { display: flex; }
   .navbar__links > a,
   .navbar__dropdown-trigger {
-    padding: 14px 16px;
-    border-radius: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
   }
 
-  /* O submenu do Blog deixa de flutuar e passa a lista recolhida. */
-  .navbar__megamenu {
-    position: static;
-    box-shadow: none;
-    border: none;
-    padding: 0 0 0 16px;
-    min-width: 0;
-  }
+  /* O submenu do Blog fica desligado em telemóvel: num painel estreito não
+     abria de forma utilizável. O item passa a ser um link simples para a
+     página do Blog, de onde se chega às subpáginas. */
+  .navbar__megamenu { display: none; }
+  .navbar__caret { display: none; }
 
   /* Login e Inscrever-me acompanham o painel, em vez de espremerem a barra. */
-  .navbar__actions {
-    display: none;
-    position: absolute;
-    top: 72px;
-    left: 0;
-    right: 0;
-    flex-direction: column;
-    gap: 8px;
-    background: #fff;
-    padding: 0 12px 16px;
-    box-shadow: 0 12px 32px rgba(20, 20, 31, .10);
-    z-index: 39;
-  }
-  .navbar__actions--aberto { display: flex; }
-  .navbar__actions .btn { width: 100%; }
+  /* Os botões da direita saem da barra: o Login está à vista ao lado do
+     menu e o Inscrever-me passou para dentro do painel. */
+  .navbar__actions { display: none; }
+  .navbar__cta-movel { display: block; }
 }
 
 @media (max-width: 640px) {
@@ -230,6 +230,6 @@
   .navbar__logo-img { width: 34px; height: 34px; }
   .navbar__logo { gap: 8px; }
   .navbar__logo-nome { font-size: 13px; }
-  .navbar__links, .navbar__actions { top: 64px; }
-  .navbar__links { max-height: calc(100vh - 64px); }
+  .navbar__links { top: 64px; right: 10px; }
+  .navbar__links { max-height: calc(100vh - 80px); }
 }

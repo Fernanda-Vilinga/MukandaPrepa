@@ -77,9 +77,20 @@ export default function Navbar() {
           </div>
 
           <Link to="/contactos">Contactos</Link>
+
+          {/* Dentro do próprio painel, para não ser preciso uma segunda caixa
+              flutuante posicionada por baixo desta. O Login já está na barra. */}
+          <a
+            href={APP_REGISTO}
+            className="btn btn-primary navbar__cta-movel"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Inscrever-me
+          </a>
         </nav>
 
-        <div className={`navbar__actions${menuAberto ? ' navbar__actions--aberto' : ''}`}>
+        <div className="navbar__actions">
           <a href={APP_LOGIN} className="btn btn-outline navbar__acao-login" target="_blank" rel="noreferrer">Login</a>
           <a href={APP_REGISTO} className="btn btn-primary" target="_blank" rel="noreferrer">Inscrever-me</a>
         </div>

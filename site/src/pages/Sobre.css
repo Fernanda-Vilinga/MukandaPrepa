@@ -155,7 +155,27 @@
   margin-bottom: 28px;
 }
 
+/* A grelha dos valores não tinha adaptação nenhuma: ficava em três colunas
+   fixas mesmo no telemóvel, e o terceiro cartão de cada linha saía da
+   margem do ecrã. */
+@media (max-width: 1023px) {
+  .sobre-valores__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 640px) {
+  /* Dois a dois, com o quinto sozinho alinhado à esquerda — as colunas
+     mantêm-se para que a última linha acompanhe as de cima. */
+  .sobre-valores__grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+
+  .valor-card {
+    padding: 18px 16px;
+  }
+
   .sobre-equipa__fundadores {
     grid-template-columns: 1fr;
     gap: 20px;
