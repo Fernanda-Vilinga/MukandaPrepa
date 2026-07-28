@@ -63,12 +63,12 @@ export default function Session() {
       <header className="topbar session" style={{ gap: 24 }}>
         <Brand size={36} />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div className="mont" style={{ fontWeight: 700, fontSize: 15, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.title}</div>
+          <div className="mont titulo-sessao" style={{ fontWeight: 700, fontSize: 15 }}>{m.title}</div>
           <div className="prog" style={{ marginTop: 8, maxWidth: 520 }}>
             <div style={{ width: `${((review ? qs.length : idx + 1) / qs.length) * 100}%` }} />
           </div>
         </div>
-        <div className="mut" style={{ fontWeight: 600, fontSize: 14, whiteSpace: 'nowrap' }}>
+        <div className="mut contagem-sessao" style={{ fontWeight: 600, fontSize: 14, whiteSpace: 'nowrap' }}>
           {review ? 'Revisão final' : `Questão ${idx + 1} de ${qs.length}`}
         </div>
         <Timer seconds={left} />
@@ -107,7 +107,7 @@ export default function Session() {
                 <label className="label">📝 Escreve a tua resposta</label>
                 <textarea
                   className="input"
-                  style={{ height: 160, resize: 'vertical' }}
+                  style={{ height: 'clamp(96px, 22vh, 160px)', resize: 'vertical' }}
                   maxLength={2000}
                   value={answers[q.id] ?? ''}
                   onChange={(e) => setAnswer(e.target.value)}

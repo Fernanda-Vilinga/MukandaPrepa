@@ -152,7 +152,7 @@ export default function Validate() {
               <label className="label">Feedback para o aluno <span className="mut" style={{ fontWeight: 400 }}>(recomendado)</span></label>
               <textarea
                 className="input"
-                style={{ height: 110, resize: 'vertical', marginBottom: 16 }}
+                style={{ height: 'clamp(88px, 18vh, 110px)', resize: 'vertical', marginBottom: 16 }}
                 value={feedback[a.n] ?? ''}
                 onChange={(e) => setFeedback((f) => ({ ...f, [a.n]: e.target.value }))}
                 placeholder="Ex.: Boa justificação, faltou apenas…"

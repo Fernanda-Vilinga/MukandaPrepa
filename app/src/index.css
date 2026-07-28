@@ -132,6 +132,12 @@ button { font-family: inherit; cursor: pointer; }
    espremer até ficarem ilegíveis, o contentor ganha scroll horizontal
    próprio — a página em si continua a caber no ecrã. */
 .table-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* Gráficos de barras. Com sete semanas num telemóvel, cada barra ficava com
+   ~34px e as etiquetas por baixo não cabiam. Ganha scroll próprio e uma
+   largura mínima que garante que as etiquetas se leem. */
+.grafico { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.grafico > * { min-width: 380px; }
 .table-wrap table { min-width: 560px; }
 
 table { width: 100%; border-collapse: collapse; }
@@ -207,11 +213,14 @@ td { padding: 16px; border-bottom: 1px solid #EFEFF2; font-size: 14.5px; }
 
 /* ============================================================
    Pontos de quebra
-   - até 900px: tablet e telemóvel (a navegação passa a menu)
-   - até 640px: telemóvel (empilhar e encolher o que resta)
+   - até 1024px: tablet e telemóvel (navegação em menu, colunas empilhadas)
+   - até 640px: telemóvel (encolher paddings, tipos e alturas)
    ============================================================ */
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
   .wrap { padding: 24px 16px; }
+  /* Empilhar até 1024px e não só até 900px: entre os dois valores as
+     colunas com proporções diferentes (flex: 1.6 e afins) espremiam a
+     coluna menor a ponto de a tornar ilegível em tablet. */
   .row { flex-direction: column; }
   .topbar { padding: 0 16px; gap: 12px; }
   .auth-left { display: none; }
@@ -233,6 +242,11 @@ td { padding: 16px; border-bottom: 1px solid #EFEFF2; font-size: 14.5px; }
   /* O painel de chat estava fixo em 440px e transbordava em telemóveis
      mais estreitos do que isso. */
   .chat-panel { width: 100%; }
+
+  /* Menu da conta (avatar). Tinha 230px mínimos e mostrava o email sem
+     quebra: um endereço longo empurrava a caixa para fora da margem
+     esquerda do ecrã. */
+  .menu-conta { max-width: calc(100vw - 24px); }
   .grid-slots { grid-template-columns: repeat(4, 1fr); }
 
   .split { flex-direction: column; height: auto; }
@@ -250,6 +264,11 @@ td { padding: 16px; border-bottom: 1px solid #EFEFF2; font-size: 14.5px; }
      cronómetro. Numa linha só de 64px isso não cabe: passa a duas. */
   .topbar.session { height: auto; flex-wrap: wrap; padding: 10px 12px; gap: 10px; }
   .topbar.session .prog { max-width: none; }
+
+  /* O título da maratona era cortado com elipse ao fim de três palavras.
+     Como o cabeçalho já passa a duas linhas, pode ocupar a sua. */
+  .titulo-sessao { white-space: normal; font-size: 14px; line-height: 1.3; }
+  .contagem-sessao { font-size: 13px; }
   .nav { top: 64px; max-height: calc(100vh - 64px); }
   .brand .name { font-size: 14px; }
   .plan-chip { font-size: 12px; padding: 5px 10px; }
@@ -262,5 +281,10 @@ td { padding: 16px; border-bottom: 1px solid #EFEFF2; font-size: 14.5px; }
   .auth-right { padding: 24px 12px; }
   .auth-card { padding: 28px 22px; }
   .modal-card { padding: 22px 18px; }
+
+  /* O modal tinha scroll próprio dentro de uma página que também rola —
+     duas barras aninhadas são confusas ao toque. Em telemóvel deixa de
+     ter altura máxima e rola só a página. */
+  .modal-card { max-height: none !important; }
   .field { margin-bottom: 14px; }
 }

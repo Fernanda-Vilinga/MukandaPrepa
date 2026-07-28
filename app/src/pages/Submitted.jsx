@@ -19,7 +19,7 @@ export default function Submitted() {
       <Topbar />
       <div style={{ minHeight: 'calc(100vh - 72px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
         <div className="card" style={{ maxWidth: 620, width: '100%', padding: 56, textAlign: 'center' }}>
-          <div style={{ width: 88, height: 88, borderRadius: '50%', background: 'var(--orange-l)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40, margin: '0 auto 24px' }}>⏳</div>
+          <div style={{ width: 'clamp(64px, 18vw, 88px)', height: 'clamp(64px, 18vw, 88px)', borderRadius: '50%', background: 'var(--orange-l)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'clamp(30px, 9vw, 40px)', margin: '0 auto 24px' }}>⏳</div>
           <h1 style={{ fontSize: 26, fontWeight: 800, marginBottom: 10 }}>
             {auto ? 'Tempo esgotado — respostas submetidas' : 'Respostas submetidas!'}
           </h1>

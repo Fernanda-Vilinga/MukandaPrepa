@@ -8,7 +8,7 @@ export function AuthLeft() {
     <div className="auth-left">
       <Brand light size={48} />
       <div>
-        <h1 style={{ fontSize: 40, fontWeight: 800, lineHeight: 1.15 }}>
+        <h1 style={{ fontSize: 'clamp(28px, 4vw, 40px)', fontWeight: 800, lineHeight: 1.15 }}>
           A tua preparação<br />começa aqui.
         </h1>
         <p style={{ marginTop: 16, fontSize: 16, opacity: .9, maxWidth: 380 }}>

@@ -28,7 +28,7 @@ export default function ResultDetail() {
         </div>
 
         <div className="card" style={{ background: 'var(--dark)', color: '#fff', display: 'flex', alignItems: 'center', gap: 32, padding: '32px 36px', marginBottom: 24, flexWrap: 'wrap' }}>
-          <div style={{ flex: 1, minWidth: 260 }}>
+          <div style={{ flex: 1, minWidth: 220 }}>
             <div className="xs" style={{ color: '#8A8B9A', letterSpacing: '.15em' }}>RESULTADO VALIDADO ✓</div>
             <h1 style={{ fontSize: 24, fontWeight: 800, marginTop: 6 }}>{r.marathonTitle}</h1>
             <div className="sm" style={{ color: '#B9BAC6', marginTop: 4 }}>
@@ -74,7 +74,7 @@ export default function ResultDetail() {
         ))}
 
         <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 20, marginTop: 10, flexWrap: 'wrap' }}>
-          <div style={{ flex: 1, minWidth: 260 }}>
+          <div style={{ flex: 1, minWidth: 220 }}>
             {canRetry ? (
               <>
                 <b>Ainda tens tentativas disponíveis ({r.attempt + 1}ª{maxAtt !== Infinity && ` de ${maxAtt}`} — plano {PLAN_LABEL[user?.plan]}).</b>

@@ -53,17 +53,21 @@ export default function GlobalStats() {
           <div className="col" style={{ flex: 1.5 }}>
             <div className="card" style={{ marginBottom: 24 }}>
               <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 18 }}>Maratonas por mês</h3>
-              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 14, height: 150 }}>
-                {s.byMonth.map((m) => (
-                  <div
-                    key={m.label}
-                    title={`${m.label}: ${m.v}`}
-                    style={{ flex: 1, height: m.v > 0 ? `${m.v}%` : 3, background: m.v > 0 ? 'var(--blue)' : 'var(--brd)', borderRadius: '8px 8px 0 0', opacity: .85 }}
-                  />
-                ))}
-              </div>
-              <div style={{ display: 'flex', gap: 14, marginTop: 8 }}>
-                {s.byMonth.map((m) => <span key={m.label} style={{ flex: 1, textAlign: 'center', fontSize: 11.5, color: 'var(--mut)' }}>{m.label}</span>)}
+              <div className="grafico">
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: 14, height: 150 }}>
+                    {s.byMonth.map((m) => (
+                      <div
+                        key={m.label}
+                        title={`${m.label}: ${m.v}`}
+                        style={{ flex: 1, height: m.v > 0 ? `${m.v}%` : 3, background: m.v > 0 ? 'var(--blue)' : 'var(--brd)', borderRadius: '8px 8px 0 0', opacity: .85 }}
+                      />
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', gap: 14, marginTop: 8 }}>
+                    {s.byMonth.map((m) => <span key={m.label} style={{ flex: 1, textAlign: 'center', fontSize: 11.5, color: 'var(--mut)' }}>{m.label}</span>)}
+                  </div>
+                </div>
               </div>
             </div>
             <div className="card">

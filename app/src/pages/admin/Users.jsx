@@ -114,7 +114,7 @@ export default function Users() {
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                         <div className="avatar" style={{ width: 36, height: 36, fontSize: 13, background: u.color }}>{u.initials}</div>
-                        <div><b>{u.name}</b><div className="xs mut">{u.email}</div></div>
+                        <div style={{ minWidth: 0 }}><b>{u.name}</b><div className="xs mut" style={{ wordBreak: 'break-word' }}>{u.email}</div></div>
                       </div>
                     </td>
                     <td><RolePill role={u.role} /></td>
@@ -127,7 +127,7 @@ export default function Users() {
                     <td style={{ position: 'relative' }}>
                       <button className="btn sm ghost" onClick={() => setActionsFor(actionsFor === u.id ? null : u.id)}>⋯ Acções</button>
                       {actionsFor === u.id && (
-                        <div ref={actionsRef} style={{ position: 'absolute', right: 16, top: 52, background: '#fff', borderRadius: 12, boxShadow: 'var(--sh)', border: '1px solid var(--brd)', minWidth: 210, padding: 6, zIndex: 30 }}>
+                        <div ref={actionsRef} className="menu-conta" style={{ position: 'absolute', right: 16, top: 52, background: '#fff', borderRadius: 12, boxShadow: 'var(--sh)', border: '1px solid var(--brd)', minWidth: 210, padding: 6, zIndex: 30 }}>
                           <button className="sm" style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: '9px 12px', borderRadius: 8 }} onClick={() => toggleActive(u)}>
                             {u.active ? '⏸ Suspender conta' : '✅ Activar conta'}
                           </button>

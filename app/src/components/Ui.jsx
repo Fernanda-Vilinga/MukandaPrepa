@@ -156,10 +156,10 @@ export function Topbar() {
           {(user?.name ?? 'U').split(' ').map((p) => p[0]).slice(0, 2).join('')}
         </div>
         {menu && (
-          <div style={{ position: 'absolute', top: 52, right: 0, background: '#fff', borderRadius: 14, boxShadow: 'var(--sh)', border: '1px solid var(--brd)', minWidth: 230, padding: 8, zIndex: 60 }}>
+          <div className="menu-conta" style={{ position: 'absolute', top: 52, right: 0, background: '#fff', borderRadius: 14, boxShadow: 'var(--sh)', border: '1px solid var(--brd)', minWidth: 230, padding: 8, zIndex: 60 }}>
             <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--brd)', marginBottom: 6 }}>
               <div style={{ fontWeight: 600, fontSize: 14 }}>{user?.name}</div>
-              <div className="xs mut">{user?.email}</div>
+              <div className="xs mut" style={{ wordBreak: 'break-word' }}>{user?.email}</div>
             </div>
             <button
               style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', background: 'none', border: 'none', padding: '10px 14px', borderRadius: 10, fontSize: 14, fontWeight: 500, textAlign: 'left' }}

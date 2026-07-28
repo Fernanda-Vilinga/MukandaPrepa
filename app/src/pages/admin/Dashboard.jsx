@@ -57,13 +57,17 @@ export default function AdminDashboard() {
           <div className="col" style={{ flex: 1.6 }}>
             <div className="card">
               <h3 style={{ fontSize: 16.5, fontWeight: 700, marginBottom: 20 }}>Actividade — sessões de maratona por semana</h3>
-              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 14, height: 180 }}>
-                {activity.map((w, i) => (
-                  <div key={i} style={{ flex: 1, height: `${w.v}%`, background: 'var(--orange)', borderRadius: '8px 8px 0 0', opacity: .85 }} title={`${w.v}`} />
-                ))}
-              </div>
-              <div style={{ display: 'flex', gap: 14, marginTop: 8 }}>
-                {activity.map((w, i) => <span key={i} style={{ flex: 1, textAlign: 'center', fontSize: 11.5, color: 'var(--mut)' }}>{w.label}</span>)}
+              <div className="grafico">
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: 14, height: 180 }}>
+                    {activity.map((w, i) => (
+                      <div key={i} style={{ flex: 1, height: `${w.v}%`, background: 'var(--orange)', borderRadius: '8px 8px 0 0', opacity: .85 }} title={`${w.v}`} />
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', gap: 14, marginTop: 8 }}>
+                    {activity.map((w, i) => <span key={i} style={{ flex: 1, textAlign: 'center', fontSize: 11.5, color: 'var(--mut)' }}>{w.label}</span>)}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
