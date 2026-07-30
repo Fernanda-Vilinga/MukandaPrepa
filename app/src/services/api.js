@@ -166,15 +166,6 @@ export async function resetPassword(token, newPassword) {
   return request('/auth/redefinir-senha', { method: 'POST', auth: false, body: { token, novaSenha: newPassword } });
 }
 
-// PUT /api/students/me — actualizar dados do perfil
-// (a senha, no backend real, é alterada num endpoint próprio com
-//  verificação da senha actual; aqui é mock)
-export async function updateProfile(data) {
-  await delay(350);
-  const user = { ...currentUser(), ...data };
-  sessionStorage.setItem('mkp_user', JSON.stringify(user));
-  return user;
-}
 
 // --- Maratonas (REAL) ------------------------------------------
 // GET /api/marathons — só publicadas; status e tentativas calculados no servidor
@@ -315,12 +306,46 @@ export async function getDuvidasThread(maratonaId) {
   };
 }
 
-// REAL — POST /api/chats/duvidas/:maratonaId { text }
+// REAL — POST /api/chats/duvidas/:maratonaId
 export async function sendDuvidas(maratonaId, text) {
-  const { message } = await request(`/chats/duvidas/${maratonaId}`, { method: 'POST', body: { text } });
-  return { from: 'me', text: message.text, time: message.time };
-}
 
+  const { message } = await request(
+    `/chats/duvidas/${maratonaId}`,
+    {
+      method: "POST",
+      body: { text }
+    }
+  );
+
+  return {
+    from: "me",
+    text: message.text,
+    time: message.time
+  };
+}
+// PUT /api/students/me — actualizar dados do perfil
+// (a senha, no backend real, é alterada num endpoint próprio com
+//  verificação da senha actual; aqui é mock)
+export async function updateProfile(data) {
+
+  const resposta = await request("/students/me", {
+    method:"PUT",
+    body:{
+      nome:data.name,
+      contacto:data.phone,
+      area:data.area
+    }
+  });
+
+  const user = mapUser(resposta.usuario);
+
+  sessionStorage.setItem(
+    "mkp_user",
+    JSON.stringify(user)
+  );
+
+  return user;
+}
 // REAL — GET /api/chats/suporte
 export async function getSuporte() {
   const data = await request('/chats/suporte');

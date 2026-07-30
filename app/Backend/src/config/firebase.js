@@ -40,10 +40,14 @@ function carregarCredenciais() {
         return conta;
     }
 
-    const pastaBackend = path.resolve(__dirname, "..", "..");
-    const ficheiro = fs
-        .readdirSync(pastaBackend)
-        .find((f) => f.endsWith(".json") && f.includes("firebase-adminsdk"));
+    const pastaBackend = path.resolve(__dirname, "../..");
+
+
+
+const ficheiro = fs
+    .readdirSync(pastaBackend)
+    .find((f) => f.endsWith(".json") && f.includes("firebase-adminsdk"));
+ 
 
     if (ficheiro) {
         return JSON.parse(fs.readFileSync(path.join(pastaBackend, ficheiro), "utf8"));

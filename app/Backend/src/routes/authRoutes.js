@@ -7,6 +7,7 @@ const {
     login,
     alterarSenha,
     meuPerfil,
+    atualizarPerfil,
     esqueciSenha,
     redefinirSenha,
     validarTokenRecuperacao,
@@ -19,7 +20,7 @@ router.post("/register", register);
 router.post("/login", login);
 
 router.get("/me", verificarToken, meuPerfil);
-
+router.put("/students/me", verificarToken, atualizarPerfil);
 router.post("/alterar-senha", verificarToken, alterarSenha);
 
 router.post("/esqueci-senha", esqueciSenha);

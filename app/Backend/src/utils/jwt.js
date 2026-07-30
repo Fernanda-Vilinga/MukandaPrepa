@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 // O payload inclui o role — os guards de rota do frontend dependem disso
 // (substitui o mock por prefixo de email: "prof..." / "admin...")
 function gerarToken(usuario) {
+    console.log("JWT_SECRET:", process.env.JWT_SECRET);
     return jwt.sign(
         {
             id: usuario.id,

@@ -320,3 +320,41 @@ exports.redefinirSenha = async (req, res) => {
         res.status(500).json({ mensagem: "Erro no servidor." });
     }
 };
+// PUT /api/students/me
+exports.atualizarPerfil = async (req, res) => {
+    try {
+        const { nome, contacto, area } = req.body;
+
+        if (!nome || !contacto || !area) {
+            return res.status(400).json({
+                mensagem: "Nome, contacto e área são obrigatórios."
+            });
+        }
+
+        const ref = db.collection("usuarios").doc(req.usuario.id);
+
+        await ref.update({
+            nome: String(nome).trim(),
+            contacto,
+            area
+        });
+
+        const doc = await ref.get();
+
+        const usuario = {
+            id: doc.id,
+            ...doc.data()
+        };
+
+        res.json({
+            mensagem: "Perfil actualizado com sucesso.",
+            usuario: usuarioPublico(usuario)
+        });
+
+    } catch(error){
+        console.error(error);
+        res.status(500).json({
+            mensagem:"Erro no servidor."
+        });
+    }
+};

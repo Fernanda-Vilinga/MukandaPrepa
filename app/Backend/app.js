@@ -2,7 +2,7 @@ require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
-
+const studentRoutes = require("./src/routes/studentRoutes");
 const authRoutes = require("./src/routes/authRoutes");
 const adminRoutes = require("./src/routes/adminRoutes");
 const { profRouter, studentRouter } = require("./src/routes/marathonRoutes");
@@ -80,7 +80,7 @@ api.use("/chats", chatStudent);
 api.use("/prof/chats", chatProf);
 api.use("/admin/chats", chatAdmin);
 api.use("/plans", planRoutes);
-
+app.use("/api/students", studentRoutes);
 // Fecho de sessões expiradas, chamado pelo agendador (Vercel Cron).
 // Substitui o setInterval, que não sobrevive num ambiente serverless.
 // Protegido por CRON_SECRET para não ficar exposto publicamente.
