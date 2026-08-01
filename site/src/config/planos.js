@@ -7,8 +7,17 @@
 //
 // Valores fixados pela liderança a 29 de Julho de 2026.
 //
-// IMPORTANTE: estes números têm de coincidir com a configuração da plataforma,
-// em Gestão de planos. O site é material de campanha; quem cobra é a app.
+// ┌──────────────────────────────────────────────────────────────────────┐
+// │  REGRA: estes valores têm de ser alterados EM CONJUNTO com o painel  │
+// │  da plataforma — Gestão de planos, na app.                           │
+// │                                                                      │
+// │  Foi decidido manter duas cópias, aqui e na configuração da app, para │
+// │  o site não depender do backend. O preço deste desacoplamento é este  │
+// │  cuidado manual: mudar num sítio e esquecer o outro faz o site        │
+// │  anunciar um preço e a app cobrar outro — foi o que já aconteceu.     │
+// │                                                                      │
+// │  Ao alterar aqui:  admin → Gestão de planos → Modificar → Guardar     │
+// └──────────────────────────────────────────────────────────────────────┘
 export const PLANOS = [
   {
     key: 'basic',

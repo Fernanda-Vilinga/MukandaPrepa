@@ -5,6 +5,16 @@
 // where()+add()+doc().update(), sem doc(id).set()).
 const { db } = require("../config/firebase");
 
+// ┌──────────────────────────────────────────────────────────────────────┐
+// │  REGRA: os preços e as tentativas aqui têm de ser alterados EM       │
+// │  CONJUNTO com o site — site/src/config/planos.js.                    │
+// │                                                                      │
+// │  Decidiu-se manter duas cópias para o site não depender do backend.  │
+// │  Estes valores por omissão só valem numa instalação nova: assim que  │
+// │  o admin gravar a configuração, é a gravada que manda. Ou seja,      │
+// │  alterar aqui NÃO altera uma instalação já a funcionar — isso        │
+// │  faz-se no painel, em Gestão de planos.                              │
+// └──────────────────────────────────────────────────────────────────────┘
 const DEFAULT_CONFIG = {
     plans: [
         {
