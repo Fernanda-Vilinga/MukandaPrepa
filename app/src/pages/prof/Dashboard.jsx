@@ -4,7 +4,6 @@ import { getProfOverview, getSubmissions, getProfChats, currentUser } from './pr
 import { openDraft, newDraft } from '../../services/profApi.js';
 import { ProfTopbar, Pill } from '../../components/ProfUi.jsx';
 import { Stat, Badge } from '../../components/Ui.jsx';
-
 export default function ProfDashboard() {
   const user = currentUser();
   const [ov, setOv] = useState(null);

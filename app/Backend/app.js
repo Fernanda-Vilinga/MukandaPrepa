@@ -12,8 +12,8 @@ const { studentRouter: chatStudent, profRouter: chatProf, adminRouter: chatAdmin
 const planRoutes = require("./src/routes/planRoutes");
 const { varrerExpiradas } = require("./src/controllers/sessionController");
 const seedAdmin = require("./src/utils/seedAdmin");
-
-
+const profRoutes = require("./src/routes/profRoutes");
+const profDashboardRoutes = require("./src/routes/profDashboardRoutes");
 const app = express();
 
 
@@ -71,6 +71,8 @@ const api = express.Router();
 api.use("/auth", authRoutes);
 api.use("/admin", adminRoutes);
 api.use("/prof/marathons", profRouter);
+api.use("/prof/dashboard", profDashboardRoutes);
+api.use("/prof", profRoutes);
 api.use("/marathons", studentRouter);
 api.use("/sessions", sessionRoutes);
 api.use("/prof/submissions", profSubs);
@@ -81,6 +83,7 @@ api.use("/prof/chats", chatProf);
 api.use("/admin/chats", chatAdmin);
 api.use("/plans", planRoutes);
 app.use("/api/students", studentRoutes);
+
 // Fecho de sessões expiradas, chamado pelo agendador (Vercel Cron).
 // Substitui o setInterval, que não sobrevive num ambiente serverless.
 // Protegido por CRON_SECRET para não ficar exposto publicamente.
