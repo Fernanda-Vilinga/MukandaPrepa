@@ -1,12 +1,24 @@
 import { request } from "../../services/api.js";
 
 
-// Dashboard geral do professor
+// Dashboard geral do professor.
+//
+// Compõe-se de dois endpoints que já existiam e estão testados:
+//   GET /prof/marathons              → as maratonas do professor
+//   GET /prof/marathons/overview/kpis → pendingValidations, connectedNow, unreadChats
+//
+// O endpoint /prof/dashboard que aqui estava consultava colecções que não
+// existem nesta base de dados ("submissions", "chats"; o projecto usa
+// "sessoes" e "conversas") e devolvia 500 — o que deixava o dashboard em
+// branco. Ver ANALISE-ALTERACOES-FERNANDA.md.
 export async function getProfOverview(){
 
-    const data = await request("/prof/dashboard");
+    const [{ marathons }, kpis] = await Promise.all([
+        request("/prof/marathons"),
+        request("/prof/marathons/overview/kpis"),
+    ]);
 
-    return data;
+    return { marathons, ...kpis };
 
 }
 

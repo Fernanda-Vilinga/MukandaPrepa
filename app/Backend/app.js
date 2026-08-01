@@ -2,7 +2,7 @@ require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
-const studentRoutes = require("./src/routes/studentRoutes");
+const studentRoutes = require("./src/routes/StudentRoutes");
 const authRoutes = require("./src/routes/authRoutes");
 const adminRoutes = require("./src/routes/adminRoutes");
 const { profRouter, studentRouter } = require("./src/routes/marathonRoutes");
@@ -12,8 +12,6 @@ const { studentRouter: chatStudent, profRouter: chatProf, adminRouter: chatAdmin
 const planRoutes = require("./src/routes/planRoutes");
 const { varrerExpiradas } = require("./src/controllers/sessionController");
 const seedAdmin = require("./src/utils/seedAdmin");
-const profRoutes = require("./src/routes/profRoutes");
-const profDashboardRoutes = require("./src/routes/profDashboardRoutes");
 const app = express();
 
 
@@ -71,8 +69,6 @@ const api = express.Router();
 api.use("/auth", authRoutes);
 api.use("/admin", adminRoutes);
 api.use("/prof/marathons", profRouter);
-api.use("/prof/dashboard", profDashboardRoutes);
-api.use("/prof", profRoutes);
 api.use("/marathons", studentRouter);
 api.use("/sessions", sessionRoutes);
 api.use("/prof/submissions", profSubs);

@@ -9,12 +9,34 @@ export default function ProfDashboard() {
   const [ov, setOv] = useState(null);
   const [subs, setSubs] = useState([]);
   const [chats, setChats] = useState([]);
+  const [erro, setErro] = useState("");
 
+  // Sem tratamento de erro, uma falha da API deixava `ov` a null para sempre
+  // e a página ficava em branco — sem nada que dissesse ao professor o que
+  // aconteceu. As submissões e os chats são acessórios: se falharem, o
+  // dashboard continua a abrir.
   useEffect(() => {
-    getProfOverview().then(setOv);
-    getSubmissions().then((s) => setSubs(s.filter((x) => x.status === 'pending').slice(0, 3)));
-    getProfChats().then((c) => setChats(c.filter((x) => x.unread > 0)));
+    getProfOverview()
+      .then(setOv)
+      .catch((e) => setErro(e.message || 'Não foi possível carregar o painel.'));
+    getSubmissions().then((s) => setSubs(s.filter((x) => x.status === 'pending').slice(0, 3))).catch(() => {});
+    getProfChats().then((c) => setChats(c.filter((x) => x.unread > 0))).catch(() => {});
   }, []);
+
+  if (erro) {
+    return (
+      <>
+        <ProfTopbar />
+        <div className="wrap" style={{ maxWidth: 620 }}>
+          <div className="card" style={{ borderLeft: "5px solid var(--red)" }}>
+            <h2 style={{ fontSize: 19, fontWeight: 800, marginBottom: 8 }}>Não foi possível carregar o painel</h2>
+            <p className="mut sm" style={{ marginBottom: 18 }}>{erro}</p>
+            <button className="btn" onClick={() => window.location.reload()}>Tentar de novo</button>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   if (!ov) return <ProfTopbar />;
   const firstName = (user?.name ?? 'Professor').split(' ')[0];
