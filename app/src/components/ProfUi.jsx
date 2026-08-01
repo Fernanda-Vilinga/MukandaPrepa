@@ -16,11 +16,15 @@ export function ProfTopbar() {
     return () => document.removeEventListener('mousedown', h);
   }, []);
 
+  // 'Monitorização' apontava também para /prof/maratonas — dois itens com o
+  // mesmo destino, o que dava chaves duplicadas no React e enchia a consola de
+  // avisos que escondiam erros verdadeiros. A monitorização é por maratona
+  // (/prof/monitorizacao/:id) e chega-se a ela pelo botão Monitorizar de cada
+  // maratona, no dashboard e na lista — não faz sentido como destino do menu.
   const items = [
     ['Dashboard', '/prof'],
     ['Maratonas', '/prof/maratonas'],
     ['Validação', '/prof/validacao'],
-    ['Monitorização', '/prof/maratonas'],
     ['Chats', '/prof/chats'],
   ];
 

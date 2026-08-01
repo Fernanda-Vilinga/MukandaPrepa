@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getProfOverview, getSubmissions, getProfChats, currentUser } from './profDeps.js';
-import { openDraft, newDraft } from '../../services/profApi.js';
+import { getProfOverview, getSubmissions, getProfChats, currentUser, openDraft, newDraft } from './profDeps.js';
 import { ProfTopbar, Pill } from '../../components/ProfUi.jsx';
 import { Stat, Badge } from '../../components/Ui.jsx';
 export default function ProfDashboard() {
