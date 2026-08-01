@@ -12,6 +12,16 @@ export const CURRENT_USER = {
   phone: '+244 923 000 000',
 };
 
+// APENAS PARA APRESENTAÇÃO, e apenas onde não há uma maratona em mão.
+//
+// Quem aplica o limite é o servidor, que o lê da Gestão de planos. As páginas
+// que mostram uma maratona usam o `attemptsMax` que vem com ela — este mapa
+// serve só ao Perfil e ao detalhe do resultado, que falam do plano em
+// abstracto.
+//
+// Se estes números forem alterados na Gestão de planos, actualizar aqui
+// também — senão o aluno vê um limite e o servidor aplica outro.
+// TODO: substituir por uma leitura de /api/plans, eliminando a última cópia.
 export const PLAN_ATTEMPTS = { basic: 2, plus: 5, premium: Infinity };
 export const PLAN_LABEL = { basic: 'Basic', plus: 'Plus', premium: 'Premium' };
 

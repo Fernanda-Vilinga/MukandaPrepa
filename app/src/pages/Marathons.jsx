@@ -71,7 +71,7 @@ export default function Marathons() {
                     ? `Nota: ${res.score}/${res.total} · ${res.percent}% · #${res.rank}`
                     : m.status === 'soon'
                       ? 'Recebes email na abertura'
-                      : `Tentativas: ${m.attemptsUsed} de ${maxAtt === Infinity ? '∞' : maxAtt} usadas`}
+                      : `Tentativas: ${m.attemptsUsed} de ${m.attemptsMax ?? '∞'} usadas`}
                 </div>
                 {m.status === 'active' && <Link to={`/maratonas/${m.id}`} className="btn sm" style={{ textDecoration: 'none' }}>Entrar</Link>}
                 {m.status === 'soon' && <Link to={`/maratonas/${m.id}`} className="btn sm ghost" style={{ textDecoration: 'none' }}>Detalhes</Link>}

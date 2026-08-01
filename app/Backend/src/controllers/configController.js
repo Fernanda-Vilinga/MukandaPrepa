@@ -13,12 +13,12 @@ const DEFAULT_CONFIG = {
             missing: ["Chat de dúvidas com professor", "Tentativas ilimitadas"],
         },
         {
-            id: "plus", name: "Plus", priceKz: 4900, attempts: 5, active: true, popular: true,
+            id: "plus", name: "Plus", priceKz: 5000, attempts: 5, active: true, popular: true,
             features: ["5 tentativas por maratona", "Feedback detalhado", "Chat de dúvidas com professor", "Suporte prioritário"],
             missing: ["Tentativas ilimitadas"],
         },
         {
-            id: "premium", name: "Premium", priceKz: 9900, attempts: null, active: true, popular: false,
+            id: "premium", name: "Premium", priceKz: 15000, attempts: null, active: true, popular: false,
             features: ["Tentativas ilimitadas", "Feedback detalhado", "Chat de dúvidas com professor", "Suporte prioritário", "Acesso antecipado"],
             missing: [],
         },

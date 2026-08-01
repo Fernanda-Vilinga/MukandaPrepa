@@ -136,11 +136,11 @@ export default function Dashboard() {
                 ) : (
                   <div className="sm mut" style={{ marginBottom: 12 }}>{featured.title}</div>
                 )}
-                <AttemptDots used={featured.attemptsUsed} max={maxAtt} />
+                <AttemptDots used={featured.attemptsUsed} max={featured.attemptsMax ?? Infinity} />
                 <div className="sm mut" style={{ marginTop: 12 }}>
                   {featured.attemptsUsed} usada{featured.attemptsUsed !== 1 && 's'} ·{' '}
                   <b style={{ color: 'var(--dark)' }}>
-                    {maxAtt === Infinity ? 'ilimitadas' : `${maxAtt - featured.attemptsUsed} disponíveis`}
+                    {featured.attemptsMax == null ? 'ilimitadas' : `${featured.attemptsMax - featured.attemptsUsed} disponíveis`}
                   </b>
                 </div>
                 {user?.plan !== 'premium' && (

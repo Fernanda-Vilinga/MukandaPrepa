@@ -74,11 +74,11 @@ export default function MarathonDetail() {
             <div className="card" style={{ marginTop: 24 }}>
               <h3 style={{ fontSize: 16.5, fontWeight: 700, marginBottom: 16 }}>As tuas tentativas — plano {PLAN_LABEL[user?.plan]}</h3>
               <div style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' }}>
-                <AttemptDots used={m.attemptsUsed} max={maxAtt} />
+                <AttemptDots used={m.attemptsUsed} max={m.attemptsMax ?? Infinity} />
                 <div className="sm mut">
                   {m.attemptsUsed} usada{m.attemptsUsed !== 1 && 's'} ·{' '}
                   <b style={{ color: 'var(--dark)' }}>
-                    esta será a {m.attemptsUsed + 1}ª{maxAtt !== Infinity && ` de ${maxAtt}`}
+                    esta será a {m.attemptsUsed + 1}ª{m.attemptsMax != null && ` de ${m.attemptsMax}`}
                   </b>
                 </div>
               </div>

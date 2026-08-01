@@ -3,7 +3,7 @@ const bcrypt = require("bcrypt");
 const { cifrar, decifrar } = require("../utils/crypto");
 
 // Limites de tentativas por plano — validados SEMPRE no servidor (spec §4.3)
-const LIMITE_PLANO = { basic: 2, plus: 5, premium: Infinity };
+const { limiteDeTentativas } = require("../utils/planos");
 
 const AREAS = { eng: "Engenharia e Tecnologia", soc: "Ciências Sociais" };
 
@@ -44,8 +44,12 @@ const paraProfessor = (m, connectedNow = 0) => ({
     questionsUploaded: questoesPreenchidas(m),
 });
 
-// → formato esperado pelo estudante (MARATHONS) — NUNCA inclui a senha
-const paraEstudante = (m, attemptsUsed = 0) => ({
+// → formato esperado pelo estudante (MARATHONS) — NUNCA inclui a senha.
+// `attemptsMax` vai junto de propósito: é o servidor que aplica o limite, por
+// isso é ele que o deve comunicar. Antes o frontend tinha a sua própria tabela
+// de limites (PLAN_ATTEMPTS), que era a quinta cópia do mesmo número e podia
+// mostrar ao aluno um limite diferente do que era realmente aplicado.
+const paraEstudante = (m, attemptsUsed = 0, attemptsMax = null) => ({
     id: m.id,
     title: m.titulo,
     area: m.area,
@@ -58,8 +62,17 @@ const paraEstudante = (m, attemptsUsed = 0) => ({
     professor: m.professorNome,
     description: m.descricao,
     attemptsUsed,
+    // null = ilimitadas
+    attemptsMax: attemptsMax === Infinity ? null : attemptsMax,
     icon: m.icon,
 });
+
+// Limite de tentativas do utilizador, a partir do plano guardado na conta.
+const limiteDoUtilizador = async (usuarioId) => {
+    const doc = await db.collection("usuarios").doc(usuarioId).get();
+    const plano = doc.exists ? doc.data().plano : "basic";
+    return limiteDeTentativas(plano);
+};
 
 const obterDoc = async (id) => {
     const doc = await db.collection("maratonas").doc(id).get();
@@ -302,9 +315,10 @@ exports.listar = async (req, res) => {
     try {
         const r = await db.collection("maratonas").where("status", "==", "published").get();
         const tentativas = await tentativasDe(req.usuario.id);
+        const limite = await limiteDoUtilizador(req.usuario.id);
         const lista = r.docs.map((d) => {
             const m = { id: d.id, ...d.data() };
-            return paraEstudante(m, tentativas[m.id] || 0);
+            return paraEstudante(m, tentativas[m.id] || 0, limite);
         });
         res.json({ marathons: lista });
     } catch (e) {
@@ -321,7 +335,7 @@ exports.obter = async (req, res) => {
             return res.status(404).json({ mensagem: "Maratona não encontrada." });
         }
         const tentativas = await tentativasDe(req.usuario.id);
-        res.json({ marathon: paraEstudante(m, tentativas[m.id] || 0) });
+        res.json({ marathon: paraEstudante(m, tentativas[m.id] || 0, await limiteDoUtilizador(req.usuario.id)) });
     } catch (e) {
         console.error(e);
         res.status(500).json({ mensagem: "Erro no servidor." });
@@ -348,7 +362,7 @@ exports.entrar = async (req, res) => {
         // limite de tentativas do plano — validado no servidor
         const userDoc = await db.collection("usuarios").doc(req.usuario.id).get();
         const plano = userDoc.exists ? String(userDoc.data().plano || "basic").toLowerCase() : "basic";
-        const limite = LIMITE_PLANO[plano] ?? LIMITE_PLANO.basic;
+        const limite = await limiteDeTentativas(plano);
         const tentativas = await tentativasDe(req.usuario.id);
         if ((tentativas[m.id] || 0) >= limite) {
             return res.status(403).json({ mensagem: "Atingiste o limite de tentativas do teu plano." });

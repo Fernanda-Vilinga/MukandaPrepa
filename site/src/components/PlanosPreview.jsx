@@ -1,22 +1,5 @@
 import './PlanosPreview.css';
-
-const PLANOS = [
-  {
-    nome: 'Basic',
-    preco: 'Grátis',
-    destaque: false,
-  },
-  {
-    nome: 'Plus',
-    preco: '10.000 Kzs',
-    destaque: true,
-  },
-  {
-    nome: 'Premium',
-    preco: '20.000 Kzs',
-    destaque: false,
-  },
-];
+import { PLANOS } from '../config/planos';
 
 export default function PlanosPreview() {
   return (

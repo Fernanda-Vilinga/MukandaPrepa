@@ -2,18 +2,18 @@ import { useState } from 'react';
 import './Planos.css';
 import { appRegisto, propsLink } from '../config/appLinks';
 import { whatsappCom } from '../config/contactos';
+import { PLANOS } from '../config/planos';
 
-const PLANOS = [
-  { key: 'basic', nome: 'Basic', preco: 'Grátis', destaque: false },
-  { key: 'plus', nome: 'Plus', preco: '10.000 Kzs', destaque: true },
-  { key: 'premium', nome: 'Premium', preco: '20.000 Kzs', destaque: false },
-];
 
 const FEATURES = [
   // As tentativas por maratona são o critério que mais distingue os planos —
   // ficam em primeiro lugar. Devem coincidir com os limites configurados no
   // painel de administração da app (Gestão de planos).
-  { nome: 'Tentativas por maratona', basic: '2', plus: '5', premium: 'Ilimitadas' },
+  // Lidas da fonte única, para não voltarem a divergir dos cartões acima.
+  { nome: 'Tentativas por maratona',
+    basic: PLANOS.find((p) => p.key === 'basic').tentativas,
+    plus: PLANOS.find((p) => p.key === 'plus').tentativas,
+    premium: PLANOS.find((p) => p.key === 'premium').tentativas },
   { nome: 'Maratonas abertas', basic: true, plus: true, premium: true },
   { nome: 'Biblioteca de exames passados', basic: true, plus: true, premium: true },
   { nome: 'Comunidade de estudantes', basic: true, plus: true, premium: true },

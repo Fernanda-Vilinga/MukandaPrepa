@@ -1,7 +1,7 @@
 const { db } = require("../config/firebase");
 
 const AREA_LABEL = { "Engenharia e Tecnologia": "⚙️ Engenharia", "Ciências Sociais": "⚖️ Ciências Sociais" };
-const LIMITE_PLANO = { basic: 2, plus: 5, premium: Infinity };
+const { limitesPorPlano } = require("../utils/planos");
 const LETRAS = ["A", "B", "C", "D"];
 const CORES = ["var(--orange)", "var(--blue)", "var(--green)", "var(--dark)", "#9333EA"];
 
@@ -106,12 +106,16 @@ async function calcularDados(m, usuarios, sessoesDaMaratona) {
     const completion = { done: 0, pending: 0, abandoned: 0 };
     terminadas.forEach((s) => { completion[classificar(s) === "validated" ? "done" : classificar(s)]++; });
 
+    // Os limites são lidos uma vez: consultar a configuração dentro do ciclo
+    // faria uma leitura por linha do relatório.
+    const limites = await limitesPorPlano();
+
     const rows = terminadas
         .sort((a, b) => (b.submetidaEm || "").localeCompare(a.submetidaEm || ""))
         .map((s) => {
             const u = usuarioPorId[s.usuarioId] || {};
             const plano = String(u.plano || "basic").toLowerCase();
-            const limite = LIMITE_PLANO[plano] ?? LIMITE_PLANO.basic;
+            const limite = limites[plano] ?? limites.basic ?? 2;
             const estado = classificar(s);
             const f = dataDe(s.submetidaEm), i = dataDe(s.iniciadaEm);
             const segundos = f && i ? Math.round((f.getTime() - i.getTime()) / 1000) : null;

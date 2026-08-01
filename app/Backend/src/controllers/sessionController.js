@@ -2,7 +2,7 @@ const { db } = require("../config/firebase");
 const { enviarEmail } = require("../utils/email");
 const tpl = require("../utils/emailTemplates");
 
-const LIMITE_PLANO = { basic: 2, plus: 5, premium: Infinity };
+const { limiteDeTentativas } = require("../utils/planos");
 
 // ---- helpers ----
 const agoraMs = () => Date.now();
@@ -88,7 +88,7 @@ exports.iniciar = async (req, res) => {
         // limite de tentativas do plano — no servidor
         const userDoc = await db.collection("usuarios").doc(req.usuario.id).get();
         const plano = userDoc.exists ? String(userDoc.data().plano || "basic").toLowerCase() : "basic";
-        const limite = LIMITE_PLANO[plano] ?? LIMITE_PLANO.basic;
+        const limite = await limiteDeTentativas(plano);
         const minhas = await db.collection("sessoes").where("usuarioId", "==", req.usuario.id).get();
         const usadas = minhas.docs.filter((d) => d.data().maratonaId === m.id).length;
         if (usadas >= limite) {
