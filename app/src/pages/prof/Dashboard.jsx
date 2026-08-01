@@ -85,7 +85,11 @@ export default function ProfDashboard() {
                     </>
                   ) : (
                     <>
-                      <Badge status="active" />
+                      {/* Estava fixo em 'active': qualquer maratona não-rascunho
+                          aparecia como activa, mesmo com a janela de acesso ainda
+                          fechada — enquanto o aluno via 'Em breve'. O estado vem do
+                          servidor (statusEfectivo), que compara a hora com a janela. */}
+                      <Badge status={m.status} />
                       <Link to={`/prof/monitorizacao/${m.id}`} className="btn sm blue" style={{ textDecoration: 'none' }}>Monitorizar</Link>
                       <Link to={`/prof/estatisticas/${m.id}`} className="btn sm ghost" style={{ textDecoration: 'none' }}>Estatísticas</Link>
                     </>

@@ -74,7 +74,8 @@ export default function ProfMarathons() {
               <div style={{ flex: 1, minWidth: 220 }}>
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
                   <span style={{ fontWeight: 600, fontSize: 16 }}>{m.title}</span>
-                  {m.status === 'draft' ? <Badge status="soon" /> : <Badge status="active" />}
+                  {/* Mesmo problema do dashboard: o estado real vem do servidor. */}
+                  <Badge status={m.status} />
                 </div>
                 <div className="mut sm" style={{ marginTop: 4 }}>
                   {m.status === 'draft'
