@@ -320,7 +320,15 @@ exports.redefinirSenha = async (req, res) => {
         res.status(500).json({ mensagem: "Erro no servidor." });
     }
 };
-// PUT /api/students/me
+// PUT /api/students/me  (autenticado) — o próprio utilizador edita o seu perfil.
+//
+// Passa pelas MESMAS regras do registo (utils/validacao.js). Sem isto, o perfil
+// era uma porta lateral por onde se contornava tudo o que o registo exige: dava
+// para ficar com o contacto de outra pessoa, com um contacto que não é um número
+// angolano, ou com o nome de outra conta.
+//
+// O email não é editável de propósito — é a chave de acesso e a via de
+// recuperação de senha. Mudá-lo é um pedido à administração.
 exports.atualizarPerfil = async (req, res) => {
     try {
         const { nome, contacto, area } = req.body;
@@ -331,12 +339,32 @@ exports.atualizarPerfil = async (req, res) => {
             });
         }
 
+        const nomeLimpo = String(nome).trim();
+        if (nomeLimpo.length < 3) {
+            return res.status(400).json({ mensagem: "O nome deve ter pelo menos 3 caracteres." });
+        }
+
+        if (!val.contactoValido(contacto)) {
+            return res.status(400).json({ mensagem: val.MENSAGEM_CONTACTO });
+        }
+
+        // excluirId = a própria conta: senão o utilizador chocava consigo mesmo
+        // ao guardar o perfil sem mudar nada.
+        const duplicado = await val.procurarDuplicados(
+            db,
+            { nome: nomeLimpo, contacto },
+            req.usuario.id
+        );
+        if (duplicado) {
+            return res.status(409).json({ mensagem: duplicado });
+        }
+
         const ref = db.collection("usuarios").doc(req.usuario.id);
 
         await ref.update({
-            nome: String(nome).trim(),
-            contacto,
-            area
+            nome: nomeLimpo,
+            contacto: val.formatarContacto(contacto),   // 9XX XXX XXX em toda a plataforma
+            area: String(area).trim(),
         });
 
         const doc = await ref.get();

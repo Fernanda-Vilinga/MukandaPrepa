@@ -1,54 +1,17 @@
+// Rotas do próprio estudante sobre a sua conta.
+//
+// O tratamento do pedido estava escrito aqui dentro, em duplicado com o
+// atualizarPerfil do authController. Eram duas versões da mesma coisa, e a que
+// respondia — esta — era a mais fraca: não validava nada e devolvia o documento
+// inteiro do Firestore ao browser, incluindo o hash da senha e os tokens de
+// recuperação. Ficou uma só, a do controller, que já usa o usuarioPublico.
 const express = require("express");
 const router = express.Router();
 
 const { verificarToken } = require("../middleware/authMiddleware");
-const { db } = require("../config/firebase");
+const { atualizarPerfil } = require("../controllers/authController");
 
-
-// actualizar perfil
-router.put("/me", verificarToken, async (req, res) => {
-
-    try {
-
-        const userId = req.usuario.id;
-
-        const { nome, contacto, area } = req.body;
-
-
-        await db.collection("usuarios")
-            .doc(userId)
-            .update({
-                nome,
-                contacto,
-                area
-            });
-
-
-        const userDoc = await db.collection("usuarios")
-            .doc(userId)
-            .get();
-
-
-        res.json({
-            mensagem: "Perfil actualizado com sucesso",
-            usuario:{
-                id:userDoc.id,
-                ...userDoc.data()
-            }
-        });
-
-
-    } catch(error){
-
-        console.error(error);
-
-        res.status(500).json({
-            mensagem:"Erro ao actualizar perfil"
-        });
-
-    }
-
-});
-
+// PUT /api/students/me — actualizar nome, contacto e área
+router.put("/me", verificarToken, atualizarPerfil);
 
 module.exports = router;

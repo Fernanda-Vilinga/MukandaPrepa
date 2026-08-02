@@ -20,7 +20,9 @@ export default function Profile() {
 
   const [error, setError] = useState("");
 
-  const [saved, setSaved] = useState(false);
+  // Guarda a mensagem de sucesso, não um sim/não: dizia sempre "Perfil
+  // actualizado" mesmo quando o que tinha mudado era a senha.
+  const [saved, setSaved] = useState("");
 
 
   const [form, setForm] = useState({
@@ -63,17 +65,23 @@ export default function Profile() {
 
 
     setError("");
-    setSaved(false);
+    setSaved("");
 
 
+    // Preencher só a confirmação, ou só a senha actual, era ignorado em
+    // silêncio: o utilizador carregava em Guardar, via "sucesso" e ficava
+    // convencido de que tinha mudado a senha. Não tinha.
+    const querMudarSenha =
+      !!(form.password || form.confirm || form.currentPassword);
 
-    if(form.password){
+
+    if(querMudarSenha){
 
 
-      if(form.password.length < 8){
+      if(!form.currentPassword){
 
         setError(
-          "A nova senha deve ter pelo menos 8 caracteres."
+          "Para mudar a senha, escreve primeiro a tua senha actual."
         );
 
         return;
@@ -82,10 +90,22 @@ export default function Profile() {
 
 
 
-      if(!form.currentPassword){
+      if(!form.password){
 
         setError(
-          "Informe a senha actual."
+          "Escreve a nova senha."
+        );
+
+        return;
+
+      }
+
+
+
+      if(form.password.length < 8){
+
+        setError(
+          "A nova senha deve ter pelo menos 8 caracteres."
         );
 
         return;
@@ -105,6 +125,18 @@ export default function Profile() {
       }
 
 
+
+      if(form.password === form.currentPassword){
+
+        setError(
+          "A nova senha tem de ser diferente da actual."
+        );
+
+        return;
+
+      }
+
+
     }
 
 
@@ -115,24 +147,16 @@ export default function Profile() {
       setBusy(true);
 
 
+      // A senha primeiro, de propósito.
+      //
+      // São dois pedidos ao servidor e não há como desfazer o primeiro se o
+      // segundo falhar. A senha é a que falha por um motivo que o utilizador
+      // pode corrigir — enganar-se na senha actual. Fazendo-a primeiro, se
+      // falhar não se mudou nada e basta tentar de novo. Ao contrário, o perfil
+      // ficava gravado e a mensagem de erro falava da senha: o utilizador não
+      // sabia o que tinha ficado guardado.
 
-      // actualiza nome, contacto e área
-
-      const updated = await updateProfile({
-
-        name:form.name,
-
-        phone:form.phone,
-
-        area:form.area
-
-      });
-
-
-
-      // altera senha se necessário
-
-      if(form.password){
+      if(querMudarSenha){
 
 
         await changePassword(
@@ -148,10 +172,27 @@ export default function Profile() {
 
 
 
+      // nome, contacto e área
+
+      const updated = await updateProfile({
+
+        name:form.name,
+
+        phone:form.phone,
+
+        area:form.area
+
+      });
+
+
 
       setUser(updated);
 
-      setSaved(true);
+      setSaved(
+        querMudarSenha
+        ? "Perfil e senha actualizados. A nova senha vale já no próximo início de sessão."
+        : "Perfil actualizado com sucesso."
+      );
 
       setEditing(false);
 
@@ -201,6 +242,8 @@ export default function Profile() {
     setEditing(false);
 
     setError("");
+
+    setSaved("");
 
     setForm({
 
@@ -438,18 +481,35 @@ borderRadius:12
 }}>
 
 
-<h3>
+<h3 style={{fontSize:16,fontWeight:700,marginBottom:4}}>
 🔑 Alterar senha
 </h3>
 
 
+<p className="xs mut" style={{marginBottom:14}}>
+Opcional — deixa em branco para manter a senha actual.
+</p>
+
+
+{/* Os campos tinham só placeholder, separados por <br/>: sem etiqueta
+    visível, quem apagasse o texto deixava de saber qual era qual, e os
+    gestores de senhas do browser não sabiam o que preencher. */}
+
+<div className="field">
+
+<label className="label" htmlFor="pw-actual">
+Senha actual
+</label>
+
 <input
+
+id="pw-actual"
 
 className="input"
 
 type="password"
 
-placeholder="Senha actual"
+autoComplete="current-password"
 
 value={form.currentPassword}
 
@@ -457,18 +517,29 @@ onChange={handleChange("currentPassword")}
 
 />
 
+</div>
 
 
-<br/>
+<div className="row" style={{gap:16}}>
 
+
+<div className="col field">
+
+<label className="label" htmlFor="pw-nova">
+Nova senha
+</label>
 
 <input
+
+id="pw-nova"
 
 className="input"
 
 type="password"
 
-placeholder="Nova senha"
+autoComplete="new-password"
+
+placeholder="Mínimo 8 caracteres"
 
 value={form.password}
 
@@ -476,24 +547,35 @@ onChange={handleChange("password")}
 
 />
 
+</div>
 
 
-<br/>
+<div className="col field" style={{marginBottom:0}}>
 
+<label className="label" htmlFor="pw-confirmar">
+Confirmar nova senha
+</label>
 
 <input
+
+id="pw-confirmar"
 
 className="input"
 
 type="password"
 
-placeholder="Confirmar nova senha"
+autoComplete="new-password"
 
 value={form.confirm}
 
 onChange={handleChange("confirm")}
 
 />
+
+</div>
+
+
+</div>
 
 
 </div>
@@ -509,7 +591,12 @@ onChange={handleChange("confirm")}
 {
 error &&
 
-<p style={{color:"red"}}>
+<p className="sm" style={{
+color:"var(--red)",
+background:"var(--red-l)",
+borderRadius:10,
+padding:"10px 14px"
+}}>
 
 {error}
 
@@ -522,9 +609,14 @@ error &&
 {
 saved &&
 
-<p style={{color:"green"}}>
+<p className="sm" style={{
+color:"var(--green)",
+background:"var(--green-l)",
+borderRadius:10,
+padding:"10px 14px"
+}}>
 
-✓ Perfil actualizado com sucesso.
+✓ {saved}
 
 </p>
 

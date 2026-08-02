@@ -78,7 +78,11 @@ api.use("/chats", chatStudent);
 api.use("/prof/chats", chatProf);
 api.use("/admin/chats", chatAdmin);
 api.use("/plans", planRoutes);
-app.use("/api/students", studentRoutes);
+// Registada no router `api`, como todas as outras. Estava directamente no `app`
+// com o caminho fixo "/api/students", o que a deixava de fora da montagem dupla
+// abaixo: se a reescrita da hospedagem entregar o pedido já sem o prefixo /api,
+// tudo continuava a funcionar excepto a actualização do perfil.
+api.use("/students", studentRoutes);
 
 // Fecho de sessões expiradas, chamado pelo agendador (Vercel Cron).
 // Substitui o setInterval, que não sobrevive num ambiente serverless.
