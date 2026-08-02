@@ -140,6 +140,12 @@ export async function saveQuestion(slot, data) {
   });
 }
 
+// REAL — DELETE /api/prof/marathons/:id
+// O servidor recusa (409) se algum aluno já tiver tentado a maratona.
+export async function deleteMarathon(id) {
+  return request(`/prof/marathons/${id}`, { method: 'DELETE' });
+}
+
 // REAL — POST /api/uploads/questions/:id/:slot
 // Envia a imagem da questão e devolve o endereço onde ficou guardada. Esse
 // endereço é depois gravado com a questão pelo saveQuestion acima — enviar a

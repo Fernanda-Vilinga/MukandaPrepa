@@ -1,7 +1,7 @@
 // Lista de maratonas do professor + botão para criar nova.
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getProfOverview, openDraft, newDraft, getMarathonPassword, broadcastMarathonPassword } from './profDeps.js';
+import { getProfOverview, openDraft, newDraft, getMarathonPassword, broadcastMarathonPassword, deleteMarathon } from './profDeps.js';
 import { ProfTopbar, Pill } from '../../components/ProfUi.jsx';
 import { Badge } from '../../components/Ui.jsx';
 
@@ -12,6 +12,8 @@ export default function ProfMarathons() {
   const [pwError, setPwError] = useState('');
   const [sendingFor, setSendingFor] = useState(null);
   const [sentFor, setSentFor] = useState(null);
+  const [confirmarApagar, setConfirmarApagar] = useState(null);
+  const [apagando, setApagando] = useState(null);
 
   const copyPassword = async (m) => {
     setPwError('');
@@ -36,6 +38,25 @@ export default function ProfMarathons() {
       setPwError(err.message);
     } finally {
       setSendingFor(null);
+    }
+  };
+
+  // Apagar é irreversível, por isso pede confirmação no próprio cartão em vez
+  // de uma janela do browser — assim continua a ver-se qual é a maratona.
+  const apagar = async (m) => {
+    setPwError('');
+    setApagando(m.id);
+    try {
+      await deleteMarathon(m.id);
+      setMarathons((todas) => todas.filter((x) => x.id !== m.id));
+      setConfirmarApagar(null);
+    } catch (err) {
+      // O servidor recusa se algum aluno já tiver tentado. A razão vem de lá,
+      // com a contagem — é mais útil do que um "não foi possível".
+      setPwError(err.message);
+      setConfirmarApagar(null);
+    } finally {
+      setApagando(null);
     }
   };
 
@@ -117,6 +138,30 @@ export default function ProfMarathons() {
                   <Link to={`/prof/monitorizacao/${m.id}`} className="btn sm blue" style={{ textDecoration: 'none' }}>Monitorizar</Link>
                   <Link to={`/prof/estatisticas/${m.id}`} className="btn sm ghost" style={{ textDecoration: 'none' }}>Estatísticas</Link>
                 </>
+              )}
+
+              {/* Apagar fica sempre à direita e discreto: não é uma acção do
+                  dia-a-dia. O servidor recusa se algum aluno já tiver tentado,
+                  para não levar com ela submissões e notas. */}
+              {confirmarApagar === m.id ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', width: '100%' }}>
+                  <span className="sm" style={{ color: 'var(--red)', fontWeight: 600 }}>
+                    Apagar “{m.title}” de vez? Não há como recuperar.
+                  </span>
+                  <button className="btn sm" style={{ background: 'var(--red)' }} disabled={apagando === m.id} onClick={() => apagar(m)}>
+                    {apagando === m.id ? 'A apagar…' : 'Sim, apagar'}
+                  </button>
+                  <button className="btn sm ghost" onClick={() => setConfirmarApagar(null)}>Cancelar</button>
+                </div>
+              ) : (
+                <button
+                  className="btn sm ghost"
+                  style={{ color: 'var(--red)', borderColor: 'var(--red-l)' }}
+                  onClick={() => setConfirmarApagar(m.id)}
+                  title="Só é possível se nenhum aluno tiver tentado esta maratona"
+                >
+                  🗑 Apagar
+                </button>
               )}
             </div>
           ))}

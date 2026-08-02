@@ -17,6 +17,7 @@ profRouter.post("/", c.criar);
 profRouter.put("/:id", c.actualizar);
 profRouter.put("/:id/questions/:slot", c.guardarQuestao);
 profRouter.post("/:id/publish", c.publicar);
+profRouter.delete("/:id", c.apagar);
 profRouter.get("/:id/stats", stats.estatisticasMaratona);
 profRouter.get("/:id/export.csv", stats.exportarCSV);
 profRouter.get("/:id/live", live.obterAoVivo);

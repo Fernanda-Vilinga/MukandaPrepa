@@ -5,6 +5,7 @@ const { cifrar, decifrar } = require("../utils/crypto");
 // Limites de tentativas por plano — validados SEMPRE no servidor (spec §4.3)
 const { limiteDeTentativas } = require("../utils/planos");
 const { enderecoDeImagem, temEnunciado, semEnunciado } = require("../utils/questoes");
+const { apagarImagem, caminhoDoUrl } = require("../utils/armazenamento");
 
 const AREAS = { eng: "Engenharia e Tecnologia", soc: "Ciências Sociais" };
 
@@ -267,6 +268,52 @@ exports.obterDoProfessor = async (req, res) => {
         });
     } catch (e) {
         console.error(e);
+        res.status(500).json({ mensagem: "Erro no servidor." });
+    }
+};
+
+// DELETE /api/prof/marathons/:id  (professor, dono)
+//
+// Existe porque passou a haver maratonas impossíveis de recuperar: as que foram
+// criadas antes do upload real de imagens ficaram com 15 questões sem enunciado
+// e nenhum aluno consegue entrar nelas. Sem esta rota, ficavam para sempre na
+// lista do professor a dar um aviso vermelho que ele não podia resolver.
+//
+// A regra que protege o essencial: uma maratona em que algum aluno já tentou
+// NÃO pode ser apagada. Apagá-la levaria com ela as submissões, as notas e o
+// histórico desse aluno — e a tentativa que ele gastou não voltaria atrás.
+exports.apagar = async (req, res) => {
+    try {
+        const m = await obterDoc(req.params.id);
+        if (!m) return res.status(404).json({ mensagem: "Maratona não encontrada." });
+        if (m.professorId !== req.usuario.id) {
+            return res.status(403).json({ mensagem: "Esta maratona não é tua." });
+        }
+
+        const sessoes = await db.collection("sessoes").where("maratonaId", "==", m.id).get();
+        if (!sessoes.empty) {
+            return res.status(409).json({
+                mensagem: `Esta maratona já tem ${sessoes.size} ${sessoes.size === 1 ? "tentativa" : "tentativas"} de alunos. `
+                    + "Apagá-la eliminaria as submissões e as notas — se as questões estão sem enunciado, carrega as imagens em falta.",
+            });
+        }
+
+        // As imagens das questões ocupam espaço na base de dados e mais ninguém
+        // lhes vai chegar. Apagadas primeiro: se algo falhar aqui, a maratona
+        // continua a existir e a operação pode ser repetida sem perder nada.
+        for (const q of m.questoes || []) {
+            if (q && q.image) await apagarImagem(caminhoDoUrl(q.image));
+        }
+
+        // Conversas de Dúvidas desta maratona: sem maratona não têm assunto.
+        const conversas = await db.collection("conversas").where("maratonaId", "==", m.id).get();
+        await Promise.all(conversas.docs.map((d) => db.collection("conversas").doc(d.id).delete()));
+
+        await db.collection("maratonas").doc(m.id).delete();
+
+        res.json({ ok: true, id: m.id });
+    } catch (e) {
+        console.error("apagar maratona:", e);
         res.status(500).json({ mensagem: "Erro no servidor." });
     }
 };
