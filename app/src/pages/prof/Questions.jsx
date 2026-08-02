@@ -1,7 +1,7 @@
 // Banco de questões — passo 2/4: grid de 15 slots + editor por questão.
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { saveQuestion, getDraft } from './profDeps.js';
+import { saveQuestion, getDraft, uploadQuestionImage } from './profDeps.js';
 import { ProfTopbar, Steps, Pill } from '../../components/ProfUi.jsx';
 
 const TYPES = [
@@ -34,13 +34,37 @@ export default function Questions() {
   }, []);
   const [savedMsg, setSavedMsg] = useState(false);
   const [error, setError] = useState('');
+  const [uploading, setUploading] = useState(false);
   const q = slots[cur];
   const filled = slots.filter((s) => s.filled).length;
 
   const update = (patch) => setSlots((all) => all.map((s, i) => (i === cur ? { ...s, ...patch } : s)));
 
+  // Antes guardava-se o NOME do ficheiro escolhido. O nome não é a imagem: no
+  // dia da maratona os alunos veriam um espaço em branco onde devia estar a
+  // questão. Agora a imagem é enviada para o servidor e guarda-se o endereço.
+  //
+  // O envio acontece ao escolher o ficheiro, não ao carregar em Guardar: assim
+  // o professor vê logo se resultou, em vez de descobrir 15 questões depois.
+  const escolherImagem = async (ficheiro) => {
+    if (!ficheiro) return;
+    setError('');
+    setUploading(true);
+    try {
+      const url = await uploadQuestionImage(q.slot, ficheiro);
+      update({ image: url });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const save = async () => {
     setError('');
+    if (!q.image) {
+      return setError('Carrega a imagem da questão — é ela que o aluno vai ler.');
+    }
     if (q.type === 'mcq' && q.correct == null) {
       return setError('Marca a opção correcta antes de guardar a questão.');
     }
@@ -107,21 +131,32 @@ export default function Questions() {
             <div className="card" style={{ borderTop: '4px solid var(--orange)' }}>
               <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Questão {q.slot}</h3>
 
-              {/* TODO: upload real da imagem (Cloudinary/S3 na spec) */}
-              {q.image ? (
+              {uploading ? (
                 <div className="ph" style={{ height: 150, marginBottom: 8 }}>
-                  <div style={{ fontSize: 28 }}>🖼</div>
-                  <div className="xs">{q.image}</div>
+                  <div style={{ fontSize: 28 }}>⏳</div>
+                  <div className="xs">A enviar a imagem…</div>
                 </div>
+              ) : q.image ? (
+                <img
+                  src={q.image}
+                  alt={`Questão ${q.slot}`}
+                  style={{ width: '100%', maxHeight: 260, objectFit: 'contain', borderRadius: 12, marginBottom: 8, background: 'var(--bg)' }}
+                />
               ) : (
                 <label className="ph" style={{ height: 150, marginBottom: 8, cursor: 'pointer', borderColor: 'var(--orange)' }}>
                   <div style={{ fontSize: 28 }}>＋</div>
                   <div className="xs">Carregar imagem da questão</div>
-                  <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => e.target.files[0] && update({ image: e.target.files[0].name })} />
+                  <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => escolherImagem(e.target.files[0])} />
                 </label>
               )}
-              {q.image && (
-                <button className="btn sm ghost" style={{ marginBottom: 16 }} onClick={() => update({ image: null })}>Substituir imagem</button>
+              {q.image && !uploading && (
+                // Substituir abre logo o selector. Antes limpava a imagem e
+                // deixava o slot vazio: quem desistisse a meio ficava sem a
+                // que já lá estava.
+                <label className="btn sm ghost" style={{ marginBottom: 16, cursor: 'pointer', display: 'inline-block' }}>
+                  Substituir imagem
+                  <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => escolherImagem(e.target.files[0])} />
+                </label>
               )}
 
               <label className="label">Tipo de questão</label>

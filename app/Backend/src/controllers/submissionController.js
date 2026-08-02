@@ -108,7 +108,10 @@ exports.obter = async (req, res) => {
                 const texto = typeof resposta === "string" ? resposta : "";
                 return { ...base, textAnswer: texto, chars: texto.length };
             }
-            return { ...base, photoName: typeof resposta === "string" ? resposta : null };
+            // photoUrl é o endereço da fotografia enviada pelo aluno. O campo
+            // chamava-se photoName e guardava o nome do ficheiro no telemóvel
+            // dele — o professor via "IMG_2043.jpg" e não tinha como corrigir.
+            return { ...base, photoUrl: typeof resposta === "string" ? resposta : null };
         });
 
         const tipos = { mcq: 0, text: 0, photo: 0 };

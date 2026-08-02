@@ -63,6 +63,10 @@ const ficheiro = fs
 // Em serverless o módulo pode ser reavaliado entre invocações: initializeApp
 // duas vezes rebenta, por isso reutiliza-se a instância já existente.
 // (getApps() vem da API modular; o antigo admin.apps deixou de existir no v13+.)
+//
+// Nota: não se configura storageBucket. O Firebase Storage exige o plano Blaze
+// (com cartão) em projectos criados depois de 2024, e este está no gratuito —
+// as imagens ficam no Firestore. Ver src/utils/armazenamento.js.
 if (getApps().length === 0) {
     initializeApp({ credential: cert(carregarCredenciais()) });
 }

@@ -7,6 +7,7 @@ import {
   PROF_MARATHONS, SUBMISSIONS, LIVE_SESSIONS, MARATHON_STATS,
 } from '../data/profMock.js';
 import { request, API_BASE } from './api.js';
+import { uploadImagemQuestao } from './imagens.js';
 
 const delay = (ms = 250) => new Promise((r) => setTimeout(r, ms));
 
@@ -137,6 +138,16 @@ export async function saveQuestion(slot, data) {
     method: 'PUT',
     body: { type: data.type, options: data.options, correct: data.correct, image: data.image },
   });
+}
+
+// REAL — POST /api/uploads/questions/:id/:slot
+// Envia a imagem da questão e devolve o endereço onde ficou guardada. Esse
+// endereço é depois gravado com a questão pelo saveQuestion acima — enviar a
+// imagem não guarda a questão, são dois passos.
+export async function uploadQuestionImage(slot, ficheiro) {
+  const draftId = sessionStorage.getItem('mkp_draft_id');
+  if (!draftId) throw new Error('Guarda primeiro os dados da maratona (passo 1).');
+  return uploadImagemQuestao(draftId, slot, ficheiro);
 }
 
 // REAL — GET /api/prof/chats (inbox de Dúvidas do professor)

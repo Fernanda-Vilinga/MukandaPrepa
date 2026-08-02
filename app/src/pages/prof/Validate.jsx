@@ -112,11 +112,25 @@ export default function Validate() {
                   </div>
                 )}
                 {a.type === 'photo' && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 14, background: 'var(--bg)', borderRadius: 12, padding: '12px 16px' }}>
-                    <div style={{ width: 48, height: 48, borderRadius: 10, background: '#D8D8DE', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🖼</div>
-                    <div className="sm" style={{ fontWeight: 600 }}>{a.photoName}</div>
-                    <button className="btn sm ghost" style={{ marginLeft: 'auto' }}>Ampliar</button>
-                  </div>
+                  a.photoUrl ? (
+                    <div style={{ background: 'var(--bg)', borderRadius: 12, padding: 12 }}>
+                      {/* "Ampliar" era um botão sem função. Abrir num separador
+                          novo dá o zoom do próprio browser, que é o que o
+                          professor precisa para ler contas escritas à mão. */}
+                      <a href={a.photoUrl} target="_blank" rel="noopener noreferrer" title="Abrir em tamanho real">
+                        <img
+                          src={a.photoUrl}
+                          alt="Resolução do aluno"
+                          style={{ width: '100%', maxHeight: 460, objectFit: 'contain', borderRadius: 10, background: '#fff', display: 'block' }}
+                        />
+                      </a>
+                      <div className="xs mut" style={{ marginTop: 8 }}>Clica na imagem para a ver em tamanho real.</div>
+                    </div>
+                  ) : (
+                    <div className="sm mut" style={{ background: 'var(--amber-l)', color: '#B45309', borderRadius: 10, padding: '10px 14px' }}>
+                      ⚠ O aluno não enviou fotografia nesta questão.
+                    </div>
+                  )
                 )}
               </div>
             </div>

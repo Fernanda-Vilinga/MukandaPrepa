@@ -26,7 +26,12 @@ const statusEfectivo = (m) => {
     return "active";
 };
 
-const questoesPreenchidas = (m) => (m.questoes || []).filter((q) => q && q.filled).length;
+// Uma questão só conta se tiver imagem: nesta plataforma o enunciado É a
+// imagem. Antes bastava estar "preenchida", pelo que era possível publicar uma
+// maratona com 15 questões sem enunciado nenhum — o aluno abriria a prova e
+// veria 15 rectângulos vazios, já dentro do tempo a contar.
+const temEnunciado = (q) => !!(q && q.filled && q.image);
+const questoesPreenchidas = (m) => (m.questoes || []).filter(temEnunciado).length;
 
 // → formato esperado pela lista do professor (PROF_MARATHONS)
 const paraProfessor = (m, connectedNow = 0) => ({
@@ -167,6 +172,14 @@ exports.guardarQuestao = async (req, res) => {
         const { type, options, correct, image } = req.body;
         const tipo = ["mcq", "text", "photo"].includes(type) ? type : "mcq";
 
+        // A imagem é o enunciado — sem ela não há questão. Aceita-se apenas um
+        // endereço do nosso armazenamento: antes do upload real, aqui chegava
+        // o nome do ficheiro escolhido no computador do professor ("ex1.png"),
+        // que é texto sem qualquer utilidade para quem vai fazer a prova.
+        if (!image || !/^https:\/\//.test(String(image))) {
+            return res.status(400).json({ mensagem: "Carrega a imagem da questão antes de guardar." });
+        }
+
         // MCQ exige uma opção correcta explícita (0–3) — o professor tem de escolher
         // (atenção: Number(null) === 0, por isso null/undefined/"" → NaN explícito)
         const idxCorrecta = correct === null || correct === undefined || correct === "" ? NaN : Number(correct);
@@ -180,7 +193,7 @@ exports.guardarQuestao = async (req, res) => {
             type: tipo,
             options: Array.isArray(options) ? options.slice(0, 4) : [],
             correct: tipo === "mcq" ? idxCorrecta : null,
-            image: image || null,   // referência/placeholder até haver upload real
+            image,   // endereço no armazenamento (ver utils/armazenamento.js)
             filled: true,
         };
 

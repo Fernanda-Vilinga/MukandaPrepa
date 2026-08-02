@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getMarathon, activeSession, savedAnswers, saveAnswers, submitSession } from '../services/api.js';
+import { uploadFotoResposta } from '../services/imagens.js';
 import { Brand, Timer, ImagePh } from '../components/Ui.jsx';
 
 const LETTERS = ['A', 'B', 'C', 'D'];
@@ -21,6 +22,8 @@ export default function Session() {
     return Math.max(0, session.durationSeconds - elapsed);
   });
   const [savedAt, setSavedAt] = useState(null);
+  const [enviandoFoto, setEnviandoFoto] = useState(false);
+  const [erroFoto, setErroFoto] = useState('');
   const submitting = useRef(false);
 
   useEffect(() => { getMarathon(id).then(setM); }, [id]);
@@ -52,6 +55,23 @@ export default function Session() {
     saveAnswers(next); // auto-save
     setSavedAt(Date.now());
   };
+  // A fotografia sobe primeiro e só depois é que fica registada como resposta.
+  // Guardava-se o nome do ficheiro do telemóvel do aluno — texto que nem o
+  // professor conseguia corrigir, porque a imagem nunca saía do aparelho dele.
+  const enviarFoto = async (ficheiro) => {
+    if (!ficheiro) return;
+    setErroFoto('');
+    setEnviandoFoto(true);
+    try {
+      const url = await uploadFotoResposta(session.id, idx, ficheiro);
+      setAnswer(url);
+    } catch (err) {
+      setErroFoto(err.message);
+    } finally {
+      setEnviandoFoto(false);
+    }
+  };
+
   const answered = (question) => {
     const a = answers[question.id];
     return a != null && a !== '';
@@ -131,21 +151,44 @@ export default function Session() {
             {q.type === 'photo' && (
               <>
                 <label className="label">📷 Faz upload da resolução em papel</label>
-                {!answers[q.id] ? (
+                {enviandoFoto ? (
+                  <div style={{ display: 'block', border: '2px dashed var(--brd)', borderRadius: 14, padding: 36, textAlign: 'center' }}>
+                    <div style={{ fontSize: 36, marginBottom: 8 }}>⏳</div>
+                    <div style={{ fontWeight: 600 }}>A enviar a fotografia…</div>
+                    <div className="xs mut" style={{ marginTop: 10 }}>O cronómetro não pára — mas a imagem é reduzida antes de subir, demora segundos.</div>
+                  </div>
+                ) : !answers[q.id] ? (
                   <label style={{ display: 'block', border: '2px dashed var(--orange)', background: 'var(--orange-l)', borderRadius: 14, padding: 36, textAlign: 'center', cursor: 'pointer' }}>
                     <div style={{ fontSize: 36, marginBottom: 8 }}>📸</div>
-                    <div style={{ fontWeight: 600 }}>Arrasta a fotografia para aqui ou clica para escolher</div>
-                    <div className="xs mut" style={{ marginTop: 10 }}>JPG ou PNG · máx. 10 MB · podes substituir antes de submeter</div>
-                    <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => e.target.files[0] && setAnswer(e.target.files[0].name)} />
+                    <div style={{ fontWeight: 600 }}>Tira uma fotografia ou escolhe do telemóvel</div>
+                    <div className="xs mut" style={{ marginTop: 10 }}>JPG ou PNG · podes substituir antes de submeter</div>
+                    {/* capture="environment" abre a câmara traseira directamente
+                        no telemóvel, que é como a resolução em papel é
+                        fotografada. Nos computadores é ignorado. */}
+                    <input type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={(e) => enviarFoto(e.target.files[0])} />
                   </label>
                 ) : (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 14, background: 'var(--bg)', borderRadius: 12, padding: '12px 16px' }}>
-                    <div style={{ width: 48, height: 48, borderRadius: 10, background: '#D8D8DE', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🖼</div>
-                    <div style={{ flex: 1 }}>
-                      <div className="sm" style={{ fontWeight: 600 }}>{answers[q.id]}</div>
-                      <div className="xs mut">carregada agora</div>
+                  <div style={{ background: 'var(--bg)', borderRadius: 12, padding: 12 }}>
+                    {/* Mostra-se a fotografia, não o nome do ficheiro: é a única
+                        forma de o aluno confirmar que saiu legível antes de
+                        submeter — e ilegível é nota zero. */}
+                    <img
+                      src={answers[q.id]}
+                      alt="A tua resolução"
+                      style={{ width: '100%', maxHeight: 320, objectFit: 'contain', borderRadius: 10, background: '#fff' }}
+                    />
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 10 }}>
+                      <span className="xs mut">Confere se está legível antes de submeteres.</span>
+                      <label className="btn sm ghost" style={{ cursor: 'pointer', flexShrink: 0 }}>
+                        Substituir
+                        <input type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={(e) => enviarFoto(e.target.files[0])} />
+                      </label>
                     </div>
-                    <button className="btn sm ghost" onClick={() => setAnswer('')}>Substituir</button>
+                  </div>
+                )}
+                {erroFoto && (
+                  <div className="sm" style={{ background: 'var(--red-l)', color: 'var(--red)', borderRadius: 10, padding: '10px 14px', marginTop: 10 }}>
+                    {erroFoto}
                   </div>
                 )}
               </>

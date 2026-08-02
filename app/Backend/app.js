@@ -10,6 +10,7 @@ const sessionRoutes = require("./src/routes/sessionRoutes");
 const { profSubs, results, resultDetail } = require("./src/routes/submissionRoutes");
 const { studentRouter: chatStudent, profRouter: chatProf, adminRouter: chatAdmin } = require("./src/routes/chatRoutes");
 const planRoutes = require("./src/routes/planRoutes");
+const { uploads: uploadRoutes, imagens: imagensRoutes } = require("./src/routes/uploadRoutes");
 const { varrerExpiradas } = require("./src/controllers/sessionController");
 const seedAdmin = require("./src/utils/seedAdmin");
 const app = express();
@@ -83,6 +84,8 @@ api.use("/plans", planRoutes);
 // abaixo: se a reescrita da hospedagem entregar o pedido já sem o prefixo /api,
 // tudo continuava a funcionar excepto a actualização do perfil.
 api.use("/students", studentRoutes);
+api.use("/uploads", uploadRoutes);
+api.use("/imagens", imagensRoutes);   // leitura aberta — ver uploadRoutes.js
 
 // Fecho de sessões expiradas, chamado pelo agendador (Vercel Cron).
 // Substitui o setInterval, que não sobrevive num ambiente serverless.
