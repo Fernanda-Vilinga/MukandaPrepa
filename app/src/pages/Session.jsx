@@ -66,7 +66,10 @@ export default function Session() {
           ? `O tempo terminou mas não foi possível confirmar a submissão: ${err.message} `
             + 'As respostas guardadas automaticamente durante a prova já estão no servidor. '
             + 'Tenta de novo para confirmar.'
-          : `Não foi possível submeter: ${err.message} Verifica a ligação e tenta de novo — nada se perdeu.`
+          // A mensagem do erro já costuma dizer o que fazer ("verifica a tua
+          // internet"), por isso aqui só se acrescenta o que ela não diz: que
+          // nada se perdeu.
+          : `Não foi possível submeter: ${err.message} As tuas respostas continuam guardadas — nada se perdeu.`
       );
     }
   }, [id, navigate]);

@@ -5,6 +5,13 @@ const gerarToken = require("../utils/jwt");
 const { enviarEmail } = require("../utils/email");
 const tpl = require("../utils/emailTemplates");
 const val = require("../utils/validacao");
+const { registar, limpar, ipDe } = require("../middleware/limitador");
+
+// Limite de tentativas de login falhadas por endereço.
+// Definido aqui e usado também em authRoutes.js — os dois têm de concordar,
+// por isso vive num sítio só.
+const LIMITE_LOGIN = { nome: "login", maximo: 10, janelaMs: 15 * 60 * 1000 };
+exports.LIMITE_LOGIN = LIMITE_LOGIN;
 
 // Planos válidos — sempre em minúsculas (alinhado com o frontend da app)
 const PLANOS = ["basic", "plus", "premium"];
@@ -111,9 +118,15 @@ exports.login = async (req, res) => {
             .where("email", "==", String(email).trim().toLowerCase())
             .get();
 
+        // Só as tentativas FALHADAS são contadas para o limite de frequência.
+        // Contar também as bem sucedidas bloquearia salas de informática, onde
+        // dezenas de alunos legítimos partilham o mesmo endereço.
+        const falhou = () => registar(LIMITE_LOGIN.nome, ipDe(req), LIMITE_LOGIN);
+
         // Segurança: mesma resposta (mensagem E status) quer o email não
         // exista quer a senha esteja errada — não revelar que contas existem.
         if (resultado.empty) {
+            falhou();
             return res.status(401).json({ mensagem: "Usuário não encontrado." });
         }
 
@@ -123,12 +136,17 @@ exports.login = async (req, res) => {
         const senhaValida = await bcrypt.compare(senha, usuario.senha);
 
         if (!senhaValida) {
+            falhou();
             return res.status(401).json({ mensagem: "Usuário não encontrado." });
         }
 
         if (usuario.estado === "suspenso") {
             return res.status(403).json({ mensagem: "Esta conta está suspensa. Contacta a administração." });
         }
+
+        // Entrou bem: a contagem de falhas deste endereço é perdoada, para uma
+        // sessão de trabalho normal não acumular bloqueios ao longo do dia.
+        limpar(LIMITE_LOGIN.nome, ipDe(req));
 
         const token = gerarToken(usuario);
 
