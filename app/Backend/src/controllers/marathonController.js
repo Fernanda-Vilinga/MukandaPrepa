@@ -5,7 +5,8 @@ const { cifrar, decifrar } = require("../utils/crypto");
 // Limites de tentativas por plano — validados SEMPRE no servidor (spec §4.3)
 const { limiteDeTentativas } = require("../utils/planos");
 const { enderecoDeImagem, temEnunciado, semEnunciado } = require("../utils/questoes");
-const { apagarImagem, caminhoDoUrl } = require("../utils/armazenamento");
+const { apagarImagem, caminhoDoUrl, baseUrlDoPedido } = require("../utils/armazenamento");
+const { assinarUrl, extrairId } = require("../utils/imagensAssinadas");
 
 const AREAS = { eng: "Engenharia e Tecnologia", soc: "Ciências Sociais" };
 
@@ -305,8 +306,16 @@ exports.guardarQuestao = async (req, res) => {
             return res.status(403).json({ mensagem: "Esta maratona não é tua." });
         }
 
-        const { type, options, correct, image } = req.body;
+        const { type, options, correct } = req.body;
         const tipo = ["mcq", "text", "photo"].includes(type) ? type : "mcq";
+
+        // O frontend devolve o endereço ASSINADO que recebeu ao enviar a
+        // imagem. Guarda-se sem a assinatura: ela tem validade, e um endereço
+        // expirado gravado na base de dados seria uma armadilha para quem o
+        // lesse mais tarde. O que fica é o identificador, e é assinado de novo
+        // sempre que for entregue a alguém.
+        const idImagem = extrairId(req.body.image);
+        const image = idImagem ? `${baseUrlDoPedido(req)}/imagens/${idImagem}` : req.body.image;
 
         // A imagem é o enunciado — sem ela não há questão. Aceita-se apenas um
         // endereço do nosso armazenamento: antes do upload real, aqui chegava
@@ -409,7 +418,11 @@ exports.obterDoProfessor = async (req, res) => {
                 end: m.acessoFim || "",
                 hasPassword: !!m.senhaHash,   // a senha em si nunca é devolvida
                 status: m.status,
-                questions: m.questoes || [],
+                // As imagens são assinadas na entrega — sem isto o professor
+                // reabria o rascunho e via as questões em branco.
+                questions: (m.questoes || []).map((q) => (q && q.image
+                    ? { ...q, image: assinarUrl(q.image, baseUrlDoPedido(req), { tipo: "professor" }) }
+                    : q)),
             },
         });
     } catch (e) {

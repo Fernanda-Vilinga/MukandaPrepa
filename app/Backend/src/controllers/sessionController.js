@@ -4,28 +4,45 @@ const tpl = require("../utils/emailTemplates");
 
 const { limiteDeTentativas } = require("../utils/planos");
 const { temEnunciado } = require("../utils/questoes");
+const { assinarUrl } = require("../utils/imagensAssinadas");
+const { baseUrlDoPedido } = require("../utils/armazenamento");
 
 // ---- helpers ----
 const agoraMs = () => Date.now();
 const fimDe = (s) => new Date(s.iniciadaEm).getTime() + s.duracaoSegundos * 1000;
 const expirada = (s) => agoraMs() > fimDe(s) + 30 * 1000; // 30s de tolerância de rede
 
-// Questão SEM a resposta correcta — o estudante nunca a recebe
-const questaoParaEstudante = (q) => ({
+// Questão SEM a resposta correcta — o estudante nunca a recebe.
+//
+// O endereço da imagem é assinado para ESTA sessão, no momento da entrega.
+// Deixa de funcionar quando a prova fechar, o que impede que os endereços
+// sejam copiados e passados a quem faz a maratona noutro dia da janela.
+const questaoParaEstudante = (q, baseUrl, sessaoId) => ({
     id: q.id,
     slot: q.slot,
     type: q.type,
-    imageUrl: q.image || null,
+    imageUrl: assinarUrl(q.image, baseUrl, { tipo: "sessao", sessaoId }),
     options: q.type === "mcq" ? q.options : null,
 });
 
-const sessaoParaEstudante = (s) => ({
+// As fotografias que o próprio aluno enviou também são assinadas — senão via
+// um espaço em branco onde devia estar a sua resposta.
+const respostasParaEstudante = (s, baseUrl) => {
+    const saida = {};
+    for (const [id, valor] of Object.entries(s.respostas || {})) {
+        const assinado = typeof valor === "string" ? assinarUrl(valor, baseUrl, { tipo: "sessao", sessaoId: s.id }) : null;
+        saida[id] = assinado || valor;   // respostas de texto e MCQ passam intactas
+    }
+    return saida;
+};
+
+const sessaoParaEstudante = (s, baseUrl) => ({
     id: s.id,
     marathonId: s.maratonaId,
     startedAt: new Date(s.iniciadaEm).getTime(),
     durationSeconds: s.duracaoSegundos,
-    questions: (s.questoes || []).map(questaoParaEstudante),
-    answers: s.respostas || {},
+    questions: (s.questoes || []).map((q) => questaoParaEstudante(q, baseUrl, s.id)),
+    answers: respostasParaEstudante(s, baseUrl),
 });
 
 // Fecha uma sessão expirada com as respostas auto-guardadas (server-side,
@@ -81,7 +98,7 @@ exports.iniciar = async (req, res) => {
         const activa = await sessaoActivaDoUtilizador(req.usuario.id);
         if (activa) {
             if (activa.maratonaId === m.id) {
-                return res.json({ session: sessaoParaEstudante(activa), resumed: true });
+                return res.json({ session: sessaoParaEstudante(activa, baseUrlDoPedido(req)), resumed: true });
             }
             return res.status(400).json({ mensagem: "Tens uma sessão activa noutra maratona. Termina-a primeiro." });
         }
@@ -135,7 +152,7 @@ exports.iniciar = async (req, res) => {
         const ref = await db.collection("sessoes").add(nova);
         await db.collection("maratonas").doc(m.id).update({ participantes: (m.participantes || 0) + 1 });
 
-        res.status(201).json({ session: sessaoParaEstudante({ id: ref.id, ...nova }) });
+        res.status(201).json({ session: sessaoParaEstudante({ id: ref.id, ...nova }, baseUrlDoPedido(req)) });
     } catch (e) {
         console.error(e);
         res.status(500).json({ mensagem: "Erro no servidor." });
@@ -146,7 +163,7 @@ exports.iniciar = async (req, res) => {
 exports.activa = async (req, res) => {
     try {
         const s = await sessaoActivaDoUtilizador(req.usuario.id);
-        res.json({ session: s ? sessaoParaEstudante(s) : null });
+        res.json({ session: s ? sessaoParaEstudante(s, baseUrlDoPedido(req)) : null });
     } catch (e) {
         console.error(e);
         res.status(500).json({ mensagem: "Erro no servidor." });

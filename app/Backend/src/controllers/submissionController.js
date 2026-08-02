@@ -1,6 +1,8 @@
 const { db } = require("../config/firebase");
 const { enviarEmail } = require("../utils/email");
 const tpl = require("../utils/emailTemplates");
+const { assinarUrl } = require("../utils/imagensAssinadas");
+const { baseUrlDoPedido } = require("../utils/armazenamento");
 
 // ---- helpers de apresentação ----
 const CORES = ["var(--orange)", "var(--blue)", "var(--green)", "var(--dark)", "#9333EA"];
@@ -91,13 +93,17 @@ exports.obter = async (req, res) => {
         const s = await obterSessaoDoProf(req);
         if (!s) return res.status(404).json({ mensagem: "Submissão não encontrada." });
         const aluno = await nomeDoUtilizador(s.usuarioId);
+        const base_ = baseUrlDoPedido(req);
 
         const answers = (s.questoes || []).map((q, i) => {
             const resposta = (s.respostas || {})[q.id];
             // imageUrl é o ENUNCIADO — a imagem que o professor carregou. Sem
             // ela, quem valida vê a resposta do aluno sem saber a que pergunta
             // responde, e não tem como julgar se está certa.
-            const base = { n: i + 1, type: q.type, imageUrl: q.image || null };
+            // Assinado no momento da entrega, para o professor que está a
+            // corrigir. Ver utils/imagensAssinadas.js: o endereço gravado é só
+            // o identificador, o que se entrega tem validade.
+            const base = { n: i + 1, type: q.type, imageUrl: assinarUrl(q.image, base_, { tipo: "professor" }) };
             if (q.type === "mcq") {
                 return {
                     ...base,
@@ -114,7 +120,7 @@ exports.obter = async (req, res) => {
             // photoUrl é o endereço da fotografia enviada pelo aluno. O campo
             // chamava-se photoName e guardava o nome do ficheiro no telemóvel
             // dele — o professor via "IMG_2043.jpg" e não tinha como corrigir.
-            return { ...base, photoUrl: typeof resposta === "string" ? resposta : null };
+            return { ...base, photoUrl: assinarUrl(resposta, base_, { tipo: "professor" }) };
         });
 
         const tipos = { mcq: 0, text: 0, photo: 0 };

@@ -12,6 +12,31 @@ const { db } = require("../config/firebase");
 const {
     guardarImagem, lerImagem, apagarImagem, caminhoDoUrl, baseUrlDoPedido,
 } = require("../utils/armazenamento");
+const { assinarUrl, verificarUrl } = require("../utils/imagensAssinadas");
+
+// Estado da sessão, com cache curta.
+//
+// Cada questão aberta pede a sua imagem, e sem cache seriam 15 leituras por
+// aluno só para confirmar o que não muda de segundo a segundo. Trinta segundos
+// é o atraso máximo entre submeter e as imagens deixarem de responder — sem
+// consequência nenhuma, porque quem submeteu já não está a olhar para elas.
+const CACHE_SESSAO_MS = 30000;
+const sessoesConhecidas = new Map();
+
+async function sessaoActiva(id) {
+    const agora = Date.now();
+    const guardada = sessoesConhecidas.get(id);
+    if (guardada && agora < guardada.expiraEm) return guardada.activa;
+
+    const doc = await db.collection("sessoes").doc(id).get();
+    const activa = doc.exists && doc.data().estado === "active";
+
+    sessoesConhecidas.set(id, { activa, expiraEm: agora + CACHE_SESSAO_MS });
+    if (sessoesConhecidas.size > 500) {
+        for (const [k, v] of sessoesConhecidas) if (agora >= v.expiraEm) sessoesConhecidas.delete(k);
+    }
+    return activa;
+}
 
 // Um erro marcado com .utilizador é culpa do ficheiro enviado, não do
 // servidor: mostra-se a mensagem e devolve-se 400, sem registar como falha.
@@ -67,7 +92,9 @@ exports.imagemDaQuestao = async (req, res) => {
 
         await db.collection("maratonas").doc(m.id).update({ [`imagensPendentes.${slot}`]: url });
 
-        res.json({ ok: true, url });
+        // Guarda-se o endereço simples; devolve-se o assinado, para o professor
+        // poder ver a imagem que acabou de enviar. Ver utils/imagensAssinadas.js.
+        res.json({ ok: true, url: assinarUrl(url, baseUrlDoPedido(req), { tipo: "professor" }) });
     } catch (e) {
         responderErro(res, e, "upload da imagem da questão:");
     }
@@ -124,28 +151,52 @@ exports.fotografiaDaResposta = async (req, res) => {
 
         await db.collection("sessoes").doc(s.id).update({ [`imagensPendentes.${indice}`]: url });
 
-        res.json({ ok: true, url });
+        // Assinado para esta sessão: o aluno vê a fotografia que enviou, e o
+        // endereço morre quando a prova fechar.
+        res.json({ ok: true, url: assinarUrl(url, baseUrlDoPedido(req), { tipo: "sessao", sessaoId: s.id }) });
     } catch (e) {
         responderErro(res, e, "upload da fotografia da resposta:");
     }
 };
 
-// GET /api/imagens/:id   (ABERTO, sem token)
+// GET /api/imagens/:id?e=…&c=…&t=…   (sem token, mas assinado)
 //
 // Uma etiqueta <img> não consegue enviar o cabeçalho de autenticação, por isso
-// este endereço tem de ser acessível sem sessão. A protecção é o identificador
-// ser aleatório e ter 48 caracteres — não se adivinha nem se enumera. É o
-// mesmo modelo dos endereços de partilha do Firebase e do Google Drive.
+// este endereço tem de ser acessível sem sessão. A protecção deixou de ser
+// apenas o identificador não se adivinhar: agora exige-se uma assinatura com
+// validade, e — quando foi emitida para um aluno — que a sessão dele ainda
+// esteja a decorrer.
+//
+// O que isto muda na prática: copiar o endereço de uma questão e passá-lo a um
+// colega só serve enquanto a prova de quem o copiou estiver a decorrer. Antes
+// servia durante os vários dias da janela de acesso. Ver utils/imagensAssinadas.js.
 exports.servirImagem = async (req, res) => {
     try {
+        const permissao = verificarUrl(req.params.id, req.query);
+        if (!permissao.ok) {
+            return res.status(403).json({
+                mensagem: permissao.motivo === "expirado"
+                    ? "Esta imagem expirou. Actualiza a página."
+                    : "Endereço de imagem inválido.",
+            });
+        }
+
+        // Assinatura de aluno: vale enquanto a sessão estiver aberta. Depois de
+        // submeter — ou de o tempo esgotar — deixa de valer, mesmo dentro do
+        // prazo da assinatura.
+        if (permissao.sessaoId && !(await sessaoActiva(permissao.sessaoId))) {
+            return res.status(403).json({ mensagem: "Esta imagem já não está disponível." });
+        }
+
         const imagem = await lerImagem(req.params.id);
         if (!imagem) return res.status(404).json({ mensagem: "Imagem não encontrada." });
 
-        // O identificador nunca é reutilizado (substituir cria outro), por isso
-        // a imagem pode ser guardada para sempre pelo browser. Sem isto, cada
-        // aluno voltaria a pedir as 15 imagens a cada questão que abrisse — e
-        // cada pedido é uma leitura à base de dados.
-        res.set("Cache-Control", "public, max-age=31536000, immutable");
+        // Guardar no browser é o que evita que cada questão aberta seja uma
+        // leitura nova à base de dados. Mas deixou de poder ser "para sempre e
+        // para toda a gente": `private` impede que um intermediário guarde a
+        // imagem e a sirva a outra pessoa, e uma hora chega para a prova sem
+        // manter viva uma imagem cujo acesso foi entretanto revogado.
+        res.set("Cache-Control", "private, max-age=3600");
         res.set("Content-Type", imagem.tipo);
         res.set("Content-Length", imagem.buffer.length);
         res.send(imagem.buffer);

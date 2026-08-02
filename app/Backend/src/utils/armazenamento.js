@@ -165,7 +165,10 @@ function caminhoDoUrl(url) {
 function baseUrlDoPedido(req) {
     if (process.env.API_PUBLIC_URL) return process.env.API_PUBLIC_URL.replace(/\/$/, "");
 
-    const host = req.get("host");
+    // req.get existe sempre no Express, mas ler o cabeçalho directamente é
+    // equivalente e evita que um pedido construído de outra forma — um teste,
+    // um handler interno — derrube o servidor a servir uma imagem.
+    const host = (req.get ? req.get("host") : null) || req.headers?.host || "localhost";
     const protocolo = /^localhost|^127\.|^\[::1\]/.test(host) ? "http" : "https";
     // req.baseUrl é "/api" ou "" — a API está montada nos dois (ver app.js).
     return `${protocolo}://${host}/api`;
