@@ -19,15 +19,27 @@ const crypto = require("crypto");
 // Chaves candidatas, por ordem. A primeira é a que cifra; ao decifrar tentam-se
 // todas, o que permite trocar de segredo sem perder o que já está guardado:
 // basta manter o anterior na lista durante a transição.
+//
+// De cada segredo geram-se DUAS chaves: com e sem espaços em volta. Um valor
+// colado no painel da hospedagem traz muitas vezes um espaço ou uma quebra de
+// linha ao fim, invisível a olho nu — e um único carácter a mais dá uma chave
+// completamente diferente. Sem isto, o segredo certo parecia errado, e a única
+// pista era "não foi possível ler a password".
 function segredos() {
-    const lista = [
+    const brutos = [
         process.env.CRYPTO_SECRET,
         process.env.CRYPTO_SECRET_ANTERIOR,
         process.env.JWT_SECRET,
-    ].filter((s) => s && String(s).trim());
+    ].filter(Boolean);
 
-    return [...new Set(lista)].map((s) =>
-        crypto.createHash("sha256").update(String(s)).digest());
+    const variantes = [];
+    for (const s of brutos) {
+        const texto = String(s);
+        if (texto.trim()) variantes.push(texto.trim(), texto);
+    }
+
+    return [...new Set(variantes)].map((s) =>
+        crypto.createHash("sha256").update(s).digest());
 }
 
 function cifrar(texto) {

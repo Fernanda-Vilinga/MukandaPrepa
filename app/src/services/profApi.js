@@ -140,6 +140,15 @@ export async function saveQuestion(slot, data) {
   });
 }
 
+// REAL — PUT /api/prof/marathons/:id  { password }
+// Define uma password nova numa maratona já publicada. Existe porque só havia
+// forma de definir a password ao criar o rascunho: se ela se perdesse — por
+// esquecimento ou por troca do segredo de cifra — a maratona ficava inutilizada
+// sem qualquer saída pela interface.
+export async function resetMarathonPassword(id, password) {
+  return request(`/prof/marathons/${id}`, { method: 'PUT', body: { password } });
+}
+
 // REAL — DELETE /api/prof/marathons/:id
 // O servidor recusa (409) se algum aluno já tiver tentado a maratona.
 export async function deleteMarathon(id) {

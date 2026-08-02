@@ -1,7 +1,7 @@
 // Lista de maratonas do professor + botão para criar nova.
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getProfOverview, openDraft, newDraft, getMarathonPassword, broadcastMarathonPassword, deleteMarathon } from './profDeps.js';
+import { getProfOverview, openDraft, newDraft, getMarathonPassword, broadcastMarathonPassword, deleteMarathon, resetMarathonPassword } from './profDeps.js';
 import { ProfTopbar, Pill } from '../../components/ProfUi.jsx';
 import { Badge } from '../../components/Ui.jsx';
 
@@ -14,6 +14,9 @@ export default function ProfMarathons() {
   const [sentFor, setSentFor] = useState(null);
   const [confirmarApagar, setConfirmarApagar] = useState(null);
   const [apagando, setApagando] = useState(null);
+  const [redefinirFor, setRedefinirFor] = useState(null);
+  const [novaPassword, setNovaPassword] = useState('');
+  const [redefinindo, setRedefinindo] = useState(null);
 
   const copyPassword = async (m) => {
     setPwError('');
@@ -38,6 +41,33 @@ export default function ProfMarathons() {
       setPwError(err.message);
     } finally {
       setSendingFor(null);
+    }
+  };
+
+  // Definir uma password nova numa maratona já publicada.
+  //
+  // Antes só era possível ao criar o rascunho. Bastava a password perder-se
+  // para a maratona ficar inutilizada sem saída nenhuma pela interface — foi o
+  // que aconteceu quando o segredo que a cifrava foi substituído.
+  const redefinirPassword = async (m) => {
+    setPwError('');
+    const nova = String(novaPassword || '').trim().toUpperCase();
+    if (nova.length < 4) {
+      return setPwError('A password da maratona deve ter pelo menos 4 caracteres.');
+    }
+    setRedefinindo(m.id);
+    try {
+      await resetMarathonPassword(m.id, nova);
+      setNovaPassword('');
+      setRedefinirFor(null);
+      setSentFor(null);
+      setCopiedFor(m.id);   // reaproveita o "✓ Copiada!" como confirmação visual
+      await navigator.clipboard.writeText(nova).catch(() => {});
+      setTimeout(() => setCopiedFor(null), 2500);
+    } catch (err) {
+      setPwError(err.message);
+    } finally {
+      setRedefinindo(null);
     }
   };
 
@@ -137,6 +167,32 @@ export default function ProfMarathons() {
                   </button>
                   <Link to={`/prof/monitorizacao/${m.id}`} className="btn sm blue" style={{ textDecoration: 'none' }}>Monitorizar</Link>
                   <Link to={`/prof/estatisticas/${m.id}`} className="btn sm ghost" style={{ textDecoration: 'none' }}>Estatísticas</Link>
+
+                  {redefinirFor === m.id ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', width: '100%' }}>
+                      <input
+                        className="input"
+                        style={{ flex: '1 1 160px', maxWidth: 220, padding: '10px 14px', textTransform: 'uppercase', fontWeight: 700, letterSpacing: 1 }}
+                        placeholder="Nova password"
+                        value={novaPassword}
+                        autoFocus
+                        onChange={(e) => setNovaPassword(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && redefinirPassword(m)}
+                      />
+                      <button className="btn sm" disabled={redefinindo === m.id} onClick={() => redefinirPassword(m)}>
+                        {redefinindo === m.id ? 'A guardar…' : 'Guardar password'}
+                      </button>
+                      <button className="btn sm ghost" onClick={() => { setRedefinirFor(null); setNovaPassword(''); }}>Cancelar</button>
+                    </div>
+                  ) : (
+                    <button
+                      className="btn sm ghost"
+                      onClick={() => { setRedefinirFor(m.id); setNovaPassword(''); setPwError(''); }}
+                      title="Definir uma password nova para esta maratona"
+                    >
+                      ♻ Nova password
+                    </button>
+                  )}
                 </>
               )}
 
