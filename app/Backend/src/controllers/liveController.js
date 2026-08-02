@@ -1,4 +1,5 @@
 const { db } = require("../config/firebase");
+const { sessoesDaMaratona, utilizadoresPorId } = require("../utils/consultas");
 
 const TIPO_LABEL = { mcq: "MCQ", text: "Texto", photo: "Foto" };
 const CORES = ["var(--orange)", "var(--blue)", "var(--green)", "var(--dark)", "#9333EA"];
@@ -26,13 +27,10 @@ exports.obterAoVivo = async (req, res) => {
             return res.status(403).json({ mensagem: "Esta maratona não é tua." });
         }
 
-        const todas = (await db.collection("sessoes").get()).docs
-            .map((d) => ({ id: d.id, ...d.data() }))
-            .filter((s) => s.maratonaId === m.id);
-
-        const usuarios = (await db.collection("usuarios").get()).docs.map((d) => ({ id: d.id, ...d.data() }));
-        const usuarioPorId = {};
-        usuarios.forEach((u) => { usuarioPorId[u.id] = u; });
+        // Esta rota é consultada de 6 em 6 segundos enquanto a maratona
+        // decorre. Lia TODAS as sessões e TODOS os utilizadores da plataforma
+        // para depois filtrar em memória — ver utils/consultas.js.
+        const todas = await sessoesDaMaratona(m.id);
 
         const agora = Date.now();
         const ativas = todas.filter((s) => {
@@ -40,6 +38,10 @@ exports.obterAoVivo = async (req, res) => {
             const fimMs = new Date(s.iniciadaEm).getTime() + s.duracaoSegundos * 1000;
             return agora <= fimMs + 30 * 1000; // ainda dentro da tolerância — considerada "ao vivo"
         });
+
+        // Só os nomes de quem está mesmo a fazer a prova. O custo passa a
+        // crescer com os alunos ligados, e não com o total de contas.
+        const usuarioPorId = await utilizadoresPorId(ativas.map((s) => s.usuarioId));
 
         const sessions = ativas.map((s) => {
             const u = usuarioPorId[s.usuarioId] || {};

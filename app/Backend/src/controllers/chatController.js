@@ -1,4 +1,5 @@
 const { db } = require("../config/firebase");
+const { sessoesDaMaratona, utilizadoresPorId } = require("../utils/consultas");
 const { decifrar } = require("../utils/crypto");
 
 const CORES = ["var(--orange)", "var(--blue)", "var(--green)", "var(--dark)", "#9333EA"];
@@ -304,14 +305,17 @@ exports.broadcastPassword = async (req, res) => {
         const texto = `🔑 Password de acesso à maratona "${m.titulo}": ${password}`;
         const agora = new Date().toISOString();
 
-        const conversasExistentes = (await db.collection("conversas").get()).docs
-            .map((d) => ({ id: d.id, ...d.data() }))
-            .filter((c) => c.tipo === "duvidas" && c.maratonaId === maratonaId && c.professorId === req.usuario.id);
+        // Três filtros de igualdade — o Firestore serve isto sem índice
+        // composto. Antes lia-se a colecção inteira para o mesmo resultado.
+        const conversasExistentes = (await db.collection("conversas")
+            .where("tipo", "==", "duvidas")
+            .where("maratonaId", "==", maratonaId)
+            .where("professorId", "==", req.usuario.id)
+            .get()).docs.map((d) => ({ id: d.id, ...d.data() }));
         const idsComConversa = new Set(conversasExistentes.map((c) => c.estudanteId));
 
         const idsComSessao = new Set(
-            (await db.collection("sessoes").get()).docs.map((d) => d.data())
-                .filter((s) => s.maratonaId === maratonaId).map((s) => s.usuarioId)
+            (await sessoesDaMaratona(maratonaId)).map((s) => s.usuarioId),
         );
         const idsSemConversa = [...idsComSessao].filter((id) => !idsComConversa.has(id));
 
@@ -349,8 +353,12 @@ exports.broadcastPassword = async (req, res) => {
 // GET /api/admin/chats
 exports.adminListar = async (req, res) => {
     try {
-        const conversas = (await db.collection("conversas").get()).docs
-            .map((d) => ({ id: d.id, ...d.data() })).filter((c) => c.tipo === "suporte");
+        // Filtrado na consulta, não em memória: esta rota é recarregada de 6 em
+        // 6 segundos enquanto o painel de Suporte estiver aberto, e lia TODAS
+        // as conversas da plataforma — incluindo as de Dúvidas, que aqui nem
+        // são usadas.
+        const conversas = (await db.collection("conversas").where("tipo", "==", "suporte").get())
+            .docs.map((d) => ({ id: d.id, ...d.data() }));
 
         // Pedidos de upgrade pendentes, por estudante — ligam o botão de
         // acção do chat Suporte ao pedido real (ver purchaseController).
@@ -359,9 +367,14 @@ exports.adminListar = async (req, res) => {
         const compraPorEstudante = {};
         comprasPendentes.forEach((c) => { compraPorEstudante[c.estudanteId] = c; });
 
+        // Os alunos de uma vez, em vez de uma leitura por conversa dentro do
+        // ciclo — com 40 conversas abertas eram 40 idas à base de dados a cada
+        // seis segundos.
+        const alunoPorId = await utilizadoresPorId(conversas.map((c) => c.estudanteId));
+
         const lista = [];
         for (const c of conversas) {
-            const aluno = await obterUsuario(c.estudanteId);
+            const aluno = alunoPorId[c.estudanteId] || null;
             const pendente = compraPorEstudante[c.estudanteId];
             lista.push({
                 id: c.id,

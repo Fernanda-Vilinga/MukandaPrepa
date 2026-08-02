@@ -7,6 +7,7 @@ const { limiteDeTentativas } = require("../utils/planos");
 const { enderecoDeImagem, temEnunciado, semEnunciado } = require("../utils/questoes");
 const { apagarImagem, caminhoDoUrl, baseUrlDoPedido } = require("../utils/armazenamento");
 const { assinarUrl, extrairId } = require("../utils/imagensAssinadas");
+const { sessoesDasMaratonas } = require("../utils/consultas");
 
 const AREAS = { eng: "Engenharia e Tecnologia", soc: "Ciências Sociais" };
 
@@ -522,7 +523,10 @@ exports.listarDoProfessor = async (req, res) => {
 
         // Conectados agora, por maratona: sessões activas dentro da tolerância
         // (mesma regra do liveController/visaoGeralProfessor).
-        const todasSessoes = (await db.collection("sessoes").get()).docs.map((d) => d.data());
+        //
+        // Só as sessões DESTAS maratonas. Lia-se a colecção inteira e filtrava-se
+        // em memória — ver utils/consultas.js.
+        const todasSessoes = await sessoesDasMaratonas(maratonas.map((m) => m.id));
         const agora = Date.now();
         const conectadosPorMaratona = {};
         // Já temos todas as sessões em mãos: saber quais maratonas foram

@@ -1,4 +1,5 @@
 const { db } = require("../config/firebase");
+const { sessoesDaMaratona, sessoesDasMaratonas, utilizadoresPorId } = require("../utils/consultas");
 
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 const LETRAS = ["A", "B", "C", "D"];
@@ -12,6 +13,17 @@ const dataDe = (v) => {
     return isNaN(d.getTime()) ? null : d;
 };
 
+// Leituras completas — usadas SÓ nos relatórios globais do administrador
+// (/api/admin/stats e /api/admin/overview).
+//
+// Aqui a leitura completa não é um descuido: são números sobre a plataforma
+// inteira, e não há como os calcular sem os dados todos. O que torna isto
+// aceitável é a frequência — são páginas que o administrador abre de vez em
+// quando, não algo consultado de 6 em 6 segundos.
+//
+// Tudo o que corre durante uma maratona passou a usar utils/consultas.js.
+// Se um destes ajudantes aparecer num caminho do professor ou do aluno, é
+// sinal de que algo regrediu.
 const todasSessoes = async () => (await db.collection("sessoes").get()).docs.map((d) => ({ id: d.id, ...d.data() }));
 const todasMaratonas = async () => (await db.collection("maratonas").get()).docs.map((d) => ({ id: d.id, ...d.data() }));
 const todosUsuarios = async () => (await db.collection("usuarios").get()).docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -34,7 +46,8 @@ exports.estatisticasMaratona = async (req, res) => {
             return res.status(403).json({ mensagem: "Esta maratona não é tua." });
         }
 
-        const sessoes = (await todasSessoes()).filter((s) => s.maratonaId === m.id);
+        // Era a colecção inteira, filtrada em memória — ver utils/consultas.js.
+        const sessoes = await sessoesDaMaratona(m.id);
         const participantes = new Set(sessoes.map((s) => s.usuarioId)).size;
         const concluidas = sessoes.filter((s) => s.estado === "submitted" || s.estado === "validated");
         const validadas = sessoes.filter((s) => s.estado === "validated");
@@ -221,9 +234,10 @@ exports.visaoGeralProfessor = async (req, res) => {
         const profId = req.usuario.id;
         const minhas = (await db.collection("maratonas").where("professorId", "==", profId).get())
             .docs.map((d) => d.id);
-        const idsSet = new Set(minhas);
 
-        const sessoes = (await todasSessoes()).filter((s) => idsSet.has(s.maratonaId));
+        // Só as sessões das maratonas deste professor. Esta rota alimenta o
+        // painel dele, que fica aberto durante a prova.
+        const sessoes = await sessoesDasMaratonas(minhas);
 
         const agora = Date.now();
         const connectedNow = sessoes.filter((s) => {
@@ -316,13 +330,12 @@ exports.exportarCSV = async (req, res) => {
             return res.status(403).json({ mensagem: "Esta maratona não é tua." });
         }
 
-        const usuarios = await todosUsuarios();
-        const usuarioPorId = {};
-        usuarios.forEach((u) => { usuarioPorId[u.id] = u; });
-
-        const sessoes = (await todasSessoes())
-            .filter((s) => s.maratonaId === m.id && (s.estado === "submitted" || s.estado === "validated"))
+        const sessoes = (await sessoesDaMaratona(m.id))
+            .filter((s) => s.estado === "submitted" || s.estado === "validated")
             .sort((a, b) => (a.submetidaEm || "").localeCompare(b.submetidaEm || ""));
+
+        // Só os alunos que aparecem no ficheiro, em vez de toda a base de contas.
+        const usuarioPorId = await utilizadoresPorId(sessoes.map((s) => s.usuarioId));
 
         const cabecalho = [
             "Aluno", "Email", "Plano", "Tentativa", "Estado",
