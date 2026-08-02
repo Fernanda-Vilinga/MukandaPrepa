@@ -55,6 +55,10 @@ exports.criarProfessor = async (req, res) => {
             estado: "activo",
             criadoEm: new Date(),
             criadoPor: req.usuario.id,  // admin que criou a conta
+            // Ver utils/validacao.js: sem estes campos, a conta seria invisível
+            // à procura de duplicados e alguém podia registar-se com o mesmo
+            // nome ou contacto de um professor.
+            ...val.camposNormalizados({ nome, email: emailNormalizado, contacto: contactoFormatado }),
         };
 
         const docRef = await db.collection("usuarios").add(novoProfessor);
@@ -118,6 +122,30 @@ exports.listarUtilizadores = async (req, res) => {
 };
 
 // PATCH /api/admin/users/:id  (protegido: só admin)
+// POST /api/admin/manutencao/normalizar  (só admin)
+//
+// Preenche os campos normalizados nas contas criadas antes de eles existirem.
+//
+// Porque não corre sozinho: percorre a colecção inteira, e pô-lo no arranque
+// significaria fazê-lo a cada instância nova do servidor — exactamente o custo
+// que se está a tentar eliminar. É uma operação de uma vez, feita a pedido.
+//
+// Enquanto não for corrida, as contas antigas ficam invisíveis à procura de
+// duplicados: alguém podia registar-se com um nome ou contacto já em uso.
+exports.normalizarUtilizadores = async (req, res) => {
+    try {
+        const r = await val.preencherNormalizados(db);
+        res.json({
+            ok: true,
+            ...r,
+            mensagem: `${r.actualizados} de ${r.total} contas actualizadas.`,
+        });
+    } catch (e) {
+        console.error("normalizar utilizadores:", e);
+        res.status(500).json({ mensagem: "Erro no servidor." });
+    }
+};
+
 // Acções: { active: bool } · { plan: "basic"|"plus"|"premium" } · { resetPassword: true }
 const PLANOS_VALIDOS = ["basic", "plus", "premium"];
 

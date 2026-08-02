@@ -1,5 +1,6 @@
 const { db } = require("../config/firebase");
 const bcrypt = require("bcrypt");
+const { camposNormalizados } = require("./validacao");
 
 // Cria a conta de administrador no arranque, se ainda não existir.
 // Credenciais vêm do .env: ADMIN_NOME, ADMIN_EMAIL, ADMIN_SENHA.
@@ -32,6 +33,7 @@ async function seedAdmin() {
         trocarSenha: true,   // a senha do .env é temporária: troca obrigatória no 1º login
         estado: "activo",
         criadoEm: new Date(),
+        ...camposNormalizados({ nome, email }),
     });
     console.log(`✔ Conta de administrador criada: ${email}`);
 }

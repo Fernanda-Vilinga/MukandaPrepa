@@ -34,39 +34,82 @@ const normalizarNome = (v) =>
 const normalizarEmail = (v) => String(v || "").trim().toLowerCase();
 
 /**
- * Procura contas já existentes com o mesmo nome, email ou contacto.
+ * Campos normalizados a gravar JUNTO com a conta.
  *
- * Percorre a colecção em memória em vez de usar where(): o Firestore não
- * faz comparações sem distinguir maiúsculas nem OR entre campos, e a base
- * de utilizadores desta plataforma é pequena. Se um dia crescer muito,
- * passar a guardar campos normalizados (nomeNormalizado, contactoDigitos)
- * e indexá-los.
+ * ┌──────────────────────────────────────────────────────────────────────┐
+ * │  Porque existem                                                      │
+ * │                                                                      │
+ * │  A procura de duplicados percorria TODOS os utilizadores e comparava │
+ * │  em memória — porque o Firestore não compara ignorando maiúsculas    │
+ * │  nem acentos. Com a base pequena era irrelevante.                    │
+ * │                                                                      │
+ * │  No dia do lançamento deixa de o ser: cada registo lê a base inteira,│
+ * │  e a base cresce a cada registo. Quinhentos alunos a inscreverem-se  │
+ * │  dão cerca de 125 000 leituras só nisto — mais do dobro da quota     │
+ * │  diária do plano gratuito.                                           │
+ * │                                                                      │
+ * │  Guardando a forma normalizada, a comparação passa a ser uma         │
+ * │  igualdade exacta, que o Firestore resolve com um índice: três       │
+ * │  consultas que devolvem zero ou um documento, em vez de N.           │
+ * └──────────────────────────────────────────────────────────────────────┘
+ *
+ * Devolve os campos a juntar ao documento do utilizador.
+ */
+const camposNormalizados = ({ nome, email, contacto }) => {
+    const campos = {};
+    if (nome !== undefined) campos.nomeNormalizado = normalizarNome(nome);
+    if (email !== undefined) campos.emailNormalizado = normalizarEmail(email);
+    if (contacto !== undefined) campos.contactoDigitos = normalizarContacto(contacto);
+    return campos;
+};
+
+/**
+ * Procura contas já existentes com o mesmo nome, email ou contacto.
  *
  * @param {string} [excluirId] conta a ignorar (ao editar a própria conta)
  * @returns {string|null} mensagem de erro, ou null se estiver livre
  */
 async function procurarDuplicados(db, { nome, email, contacto }, excluirId = null) {
-    const nomeAlvo = normalizarNome(nome);
-    const emailAlvo = normalizarEmail(email);
-    const contactoAlvo = normalizarContacto(contacto);
+    const alvos = [
+        ["emailNormalizado", normalizarEmail(email), "Este email já está registado."],
+        ["contactoDigitos", normalizarContacto(contacto), "Este contacto já está registado noutra conta."],
+        ["nomeNormalizado", normalizarNome(nome), "Já existe uma conta com este nome."],
+    ].filter(([, valor]) => valor);
 
-    const todos = await db.collection("usuarios").get();
-
-    for (const doc of todos.docs) {
-        if (excluirId && doc.id === excluirId) continue;
-        const u = doc.data();
-
-        if (emailAlvo && normalizarEmail(u.email) === emailAlvo) {
-            return "Este email já está registado.";
-        }
-        if (contactoAlvo && normalizarContacto(u.contacto) === contactoAlvo) {
-            return "Este contacto já está registado noutra conta.";
-        }
-        if (nomeAlvo && normalizarNome(u.nome) === nomeAlvo) {
-            return "Já existe uma conta com este nome.";
-        }
+    for (const [campo, valor, mensagem] of alvos) {
+        const r = await db.collection("usuarios").where(campo, "==", valor).limit(2).get();
+        const colide = r.docs.some((d) => d.id !== excluirId);
+        if (colide) return mensagem;
     }
     return null;
+}
+
+/**
+ * Preenche os campos normalizados nas contas que ainda não os têm.
+ *
+ * Sem isto, as contas criadas antes desta mudança seriam invisíveis à procura
+ * de duplicados — alguém podia registar-se com um nome ou contacto já em uso e
+ * passar despercebido. Corre uma vez, a pedido do administrador.
+ *
+ * @returns {Promise<{total: number, actualizados: number}>}
+ */
+async function preencherNormalizados(db) {
+    const todos = await db.collection("usuarios").get();
+    let actualizados = 0;
+
+    for (const doc of todos.docs) {
+        const u = doc.data();
+        const esperado = camposNormalizados({ nome: u.nome, email: u.email, contacto: u.contacto });
+
+        const emFalta = Object.entries(esperado)
+            .filter(([campo, valor]) => u[campo] !== valor);
+
+        if (emFalta.length) {
+            await db.collection("usuarios").doc(doc.id).update(Object.fromEntries(emFalta));
+            actualizados += 1;
+        }
+    }
+    return { total: todos.docs.length, actualizados };
 }
 
 module.exports = {
@@ -75,6 +118,8 @@ module.exports = {
     formatarContacto,
     normalizarNome,
     normalizarEmail,
+    camposNormalizados,
     procurarDuplicados,
+    preencherNormalizados,
     MENSAGEM_CONTACTO: "O contacto deve ter o formato 9XX XXX XXX (nove dígitos começados por 9).",
 };

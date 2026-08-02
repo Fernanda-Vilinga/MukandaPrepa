@@ -79,6 +79,10 @@ exports.register = async (req, res) => {
             plano: "basic",           // toda a conta nova entra no Basic (grátis)
             estado: "activo",
             criadoEm: new Date(),
+            // Formas normalizadas, para a procura de duplicados ser uma
+            // consulta indexada em vez de uma leitura da base inteira.
+            // Ver utils/validacao.js.
+            ...val.camposNormalizados({ nome, email: emailNormalizado, contacto: contactoFormatado }),
         };
 
         const docRef = await db.collection("usuarios").add(novoUsuario);
@@ -379,10 +383,15 @@ exports.atualizarPerfil = async (req, res) => {
 
         const ref = db.collection("usuarios").doc(req.usuario.id);
 
+        const contactoFmt = val.formatarContacto(contacto);   // 9XX XXX XXX em toda a plataforma
         await ref.update({
             nome: nomeLimpo,
-            contacto: val.formatarContacto(contacto),   // 9XX XXX XXX em toda a plataforma
+            contacto: contactoFmt,
             area: String(area).trim(),
+            // Mudar o nome ou o contacto tem de mudar também a forma pela qual
+            // são procurados — senão a conta ficava a colidir com o que era
+            // antes e invisível com o que passou a ser.
+            ...val.camposNormalizados({ nome: nomeLimpo, contacto: contactoFmt }),
         });
 
         const doc = await ref.get();
