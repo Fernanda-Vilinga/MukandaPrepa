@@ -24,6 +24,8 @@ export default function Session() {
   const [savedAt, setSavedAt] = useState(null);
   const [enviandoFoto, setEnviandoFoto] = useState(false);
   const [erroFoto, setErroFoto] = useState('');
+  const [erroSubmissao, setErroSubmissao] = useState('');
+  const [aSubmeter, setASubmeter] = useState(false);
   const submitting = useRef(false);
 
   useEffect(() => { getMarathon(id).then(setM); }, [id]);
@@ -35,15 +37,57 @@ export default function Session() {
     return () => clearInterval(t);
   }, []);
 
+  // Submeter é o momento em que falhar custa mais — e era o único sem
+  // tratamento de erro.
+  //
+  // O que acontecia sem o try/catch: o pedido rebentava (rede a cair, servidor
+  // lento — provável numa ligação móvel a meio de uma prova), o navigate nunca
+  // corria, e `submitting.current` ficava em true PARA SEMPRE. Todos os cliques
+  // seguintes em "Submeter" saíam em silêncio pela primeira linha. O aluno
+  // ficava a carregar no botão, sem mensagem nenhuma, com o tempo a correr.
+  //
+  // Nota: o submitSession() só limpa a sessão do browser DEPOIS de o servidor
+  // responder. Se falhar, fica tudo onde estava e voltar a tentar funciona. E
+  // do lado do servidor a operação é idempotente: submeter duas vezes devolve
+  // a mesma resposta em vez de erro.
   const doSubmit = useCallback(async (auto = false) => {
     if (submitting.current) return;
     submitting.current = true;
-    await submitSession();
-    navigate(`/maratonas/${id}/submetido${auto ? '?auto=1' : ''}`, { replace: true });
+    setErroSubmissao('');
+    setASubmeter(true);
+    try {
+      await submitSession();
+      navigate(`/maratonas/${id}/submetido${auto ? '?auto=1' : ''}`, { replace: true });
+    } catch (err) {
+      submitting.current = false;   // liberta o travão — é isto que destranca o botão
+      setASubmeter(false);
+      setErroSubmissao(
+        auto
+          ? `O tempo terminou mas não foi possível confirmar a submissão: ${err.message} `
+            + 'As respostas guardadas automaticamente durante a prova já estão no servidor. '
+            + 'Tenta de novo para confirmar.'
+          : `Não foi possível submeter: ${err.message} Verifica a ligação e tenta de novo — nada se perdeu.`
+      );
+    }
   }, [id, navigate]);
 
-  // submissão automática quando o tempo esgota
-  useEffect(() => { if (left <= 0 && session) doSubmit(true); }, [left, session, doSubmit]);
+  // Submissão automática quando o tempo esgota.
+  //
+  // O `left` desce de segundo a segundo, portanto este efeito volta a correr a
+  // cada segundo depois do fim. Enquanto o doSubmit ficava travado para sempre
+  // ao falhar, isso não se notava. Agora que liberta o travão, sem esta guarda
+  // passaria a repetir o pedido uma vez por segundo — precisamente contra um
+  // servidor que já está a responder mal.
+  //
+  // Tenta uma vez. Se falhar, o aluno vê o aviso e decide. A prova não se
+  // perde: o servidor fecha sozinho as sessões cujo tempo esgotou, com as
+  // respostas que recebeu do auto-save.
+  const autoSubmetido = useRef(false);
+  useEffect(() => {
+    if (left > 0 || !session || autoSubmetido.current) return;
+    autoSubmetido.current = true;
+    doSubmit(true);
+  }, [left, session, doSubmit]);
 
   if (!session || !m) return null;
 
@@ -194,6 +238,23 @@ export default function Session() {
               </>
             )}
 
+            {/* Quando o tempo esgota, o aluno está AQUI e não no ecrã de
+                revisão — por isso o aviso de falha na submissão tem de
+                aparecer também nesta vista, com o botão para tentar de novo. */}
+            {erroSubmissao && (
+              <div className="sm" style={{ background: 'var(--red-l)', color: 'var(--red)', borderRadius: 12, padding: '14px 18px', margin: '16px 0', fontWeight: 500 }}>
+                {erroSubmissao}
+                <button
+                  className="btn sm"
+                  style={{ marginTop: 12, background: 'var(--red)' }}
+                  disabled={aSubmeter}
+                  onClick={() => doSubmit(true)}
+                >
+                  {aSubmeter ? 'A tentar…' : 'Tentar submeter de novo'}
+                </button>
+              </div>
+            )}
+
             {/* Os botões ficam nos extremos e o aviso centrado por baixo. Antes
                 estava entre os dois e era esmagado a três linhas em telemóvel. */}
             <div className="accoes-sessao">
@@ -261,9 +322,16 @@ export default function Session() {
               </div>
             </div>
           )}
+          {erroSubmissao && (
+            <div className="sm" style={{ background: 'var(--red-l)', color: 'var(--red)', borderRadius: 12, padding: '14px 18px', marginBottom: 20, fontWeight: 500 }}>
+              {erroSubmissao}
+            </div>
+          )}
           <div className="accoes-sessao__botoes">
-            <button className="btn ghost" onClick={() => setReview(false)}>← Voltar às questões</button>
-            <button className="btn green" style={{ padding: '16px 40px' }} onClick={() => doSubmit(false)}>Submeter definitivamente ✓</button>
+            <button className="btn ghost" disabled={aSubmeter} onClick={() => setReview(false)}>← Voltar às questões</button>
+            <button className="btn green" style={{ padding: '16px 40px' }} disabled={aSubmeter} onClick={() => doSubmit(false)}>
+              {aSubmeter ? 'A submeter…' : erroSubmissao ? 'Tentar submeter de novo ✓' : 'Submeter definitivamente ✓'}
+            </button>
           </div>
         </div>
       )}
