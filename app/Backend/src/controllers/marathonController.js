@@ -330,7 +330,17 @@ exports.obterPassword = async (req, res) => {
         if (!m.senhaCifrada) {
             return res.status(404).json({ mensagem: "Esta maratona ainda não tem password definida." });
         }
-        res.json({ password: decifrar(m.senhaCifrada) });
+        const password = decifrar(m.senhaCifrada);
+        if (password === null) {
+            // Acontece se o segredo de cifra tiver sido trocado sem manter o
+            // anterior em CRYPTO_SECRET_ANTERIOR. A password guardada deixa de
+            // ser legível; a entrada dos alunos continua a funcionar (usa
+            // bcrypt, à parte), mas o professor tem de definir uma nova.
+            return res.status(409).json({
+                mensagem: "Não foi possível ler a password guardada desta maratona. Edita a maratona e define uma password nova.",
+            });
+        }
+        res.json({ password });
     } catch (e) {
         console.error(e);
         res.status(500).json({ mensagem: "Erro no servidor." });

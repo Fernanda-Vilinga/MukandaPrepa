@@ -294,6 +294,13 @@ exports.broadcastPassword = async (req, res) => {
         }
 
         const password = decifrar(m.senhaCifrada);
+        if (password === null) {
+            // Sem isto, enviava-se "Password de acesso: null" a todos os alunos
+            // da maratona — e não há como desfazer uma mensagem já entregue.
+            return res.status(409).json({
+                mensagem: "Não foi possível ler a password guardada desta maratona. Edita a maratona e define uma password nova antes de a enviar.",
+            });
+        }
         const texto = `🔑 Password de acesso à maratona "${m.titulo}": ${password}`;
         const agora = new Date().toISOString();
 
