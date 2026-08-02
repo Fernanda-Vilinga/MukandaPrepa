@@ -24,30 +24,56 @@ const LADO_MAXIMO = 1200;
 const QUALIDADE = 0.78;
 const ALVO = 800 * 1024;   // se ainda ficar acima disto, tenta-se de novo mais pequeno
 
+// Máximo que o servidor aceita — tem de ser igual ao TAMANHO_MAXIMO em
+// Backend/src/utils/armazenamento.js. Verificado aqui também para o utilizador
+// saber logo o que se passa, em vez de receber um erro do servidor.
+const MAXIMO_SERVIDOR = 900 * 1024;
+
 /**
- * Reduz e recomprime uma imagem escolhida pelo utilizador.
- * Devolve um Blob JPEG. Se algo correr mal a converter, devolve o ficheiro
- * original — mais vale tentar enviar o grande do que falhar já aqui.
+ * Reduz e recomprime uma imagem escolhida pelo utilizador. Devolve um Blob JPEG.
+ *
+ * Lança um erro com uma mensagem explicativa se não conseguir. Antes devolvia
+ * em silêncio o ficheiro original quando falhava a converter — e o que o
+ * utilizador via era "Não foi possível enviar a imagem", sem saber porquê nem
+ * o que fazer a seguir. Era o caso das fotografias de iPhone (formato HEIC),
+ * que nenhum browser além do Safari consegue ler.
  */
 export async function comprimirImagem(ficheiro) {
+  let bitmap;
   try {
-    const bitmap = await criarBitmap(ficheiro);
-
-    // Uma fotografia de um caderno com pouca luz, cheia de grão, pode ficar
-    // grande mesmo reduzida — o grão não comprime. Tenta-se progressivamente
-    // mais pequeno até caber, em vez de deixar o envio falhar.
-    let blob = null;
-    for (const [lado, qualidade] of [[LADO_MAXIMO, QUALIDADE], [1000, 0.7], [800, 0.65]]) {
-      blob = await desenhar(bitmap, lado, qualidade);
-      if (blob && blob.size <= ALVO) break;
-    }
-    if (bitmap.close) bitmap.close();
-
-    // Se a "compressão" piorou (imagens já muito optimizadas), fica a original.
-    return blob && blob.size < ficheiro.size ? blob : ficheiro;
+    bitmap = await criarBitmap(ficheiro);
   } catch {
-    return ficheiro;
+    const nome = (ficheiro.name || '').toLowerCase();
+    if (/\.(heic|heif)$/.test(nome) || /hei[cf]/.test(ficheiro.type || '')) {
+      throw new Error(
+        'Este browser não consegue ler fotografias no formato HEIC do iPhone. ' +
+        'Envia a partir do próprio iPhone, ou muda em Definições → Câmara → ' +
+        'Formatos para "Mais compatível".'
+      );
+    }
+    throw new Error('Não foi possível ler este ficheiro como imagem. Tenta uma fotografia em JPG ou PNG.');
   }
+
+  // Uma fotografia de um caderno com pouca luz, cheia de grão, pode ficar
+  // grande mesmo reduzida — o grão não comprime. Tenta-se progressivamente
+  // mais pequeno até caber, em vez de deixar o envio falhar.
+  let blob = null;
+  for (const [lado, qualidade] of [[LADO_MAXIMO, QUALIDADE], [1000, 0.7], [800, 0.6], [640, 0.55]]) {
+    blob = await desenhar(bitmap, lado, qualidade);
+    if (blob && blob.size <= ALVO) break;
+  }
+  if (bitmap.close) bitmap.close();
+
+  if (!blob) {
+    throw new Error('Não foi possível preparar a imagem para envio. Tenta outra fotografia.');
+  }
+  if (blob.size > MAXIMO_SERVIDOR) {
+    throw new Error(
+      `Mesmo reduzida, esta imagem tem ${Math.round(blob.size / 1024)} kB e o máximo são 900 kB. ` +
+      'Tenta fotografar com mais luz e mais perto da folha.'
+    );
+  }
+  return blob;
 }
 
 function desenhar(bitmap, ladoMaximo, qualidade) {
@@ -94,17 +120,35 @@ function criarBitmapPorImg(ficheiro) {
 async function enviar(caminho, blob) {
   const token = sessionStorage.getItem('mkp_token');
 
-  const res = await fetch(`${API_BASE}${caminho}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': blob.type || 'image/jpeg',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: blob,
-  });
+  let res;
+  try {
+    res = await fetch(`${API_BASE}${caminho}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': blob.type || 'image/jpeg',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: blob,
+    });
+  } catch {
+    throw new Error('Sem ligação ao servidor. Verifica a internet e tenta de novo.');
+  }
 
-  const dados = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(dados.mensagem || 'Não foi possível enviar a imagem.');
+  // Nem todas as respostas de erro são nossas: a hospedagem pode recusar o
+  // pedido antes de chegar ao código e devolve HTML. Antes isso caía num
+  // "Não foi possível enviar a imagem" que não dizia nada a ninguém — o
+  // código de estado é a única pista que sobra, por isso vai na mensagem.
+  const texto = await res.text().catch(() => '');
+  let dados = {};
+  try { dados = JSON.parse(texto); } catch { /* resposta não é JSON */ }
+
+  if (!res.ok) {
+    if (dados.mensagem) throw new Error(dados.mensagem);
+    if (res.status === 413) {
+      throw new Error('A imagem é demasiado grande para o servidor. Tenta fotografar com menos resolução.');
+    }
+    throw new Error(`Não foi possível enviar a imagem (erro ${res.status}).`);
+  }
   return dados.url;
 }
 

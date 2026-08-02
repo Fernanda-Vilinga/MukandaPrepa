@@ -81,7 +81,20 @@ export default function Validate() {
                   ? <Pill kind="mcq">☑ pré-corrigida automática</Pill>
                   : <Pill kind={a.type === 'text' ? 'txt' : 'foto'}>{a.type === 'text' ? '📝' : '📷'} avaliação manual</Pill>}
               </div>
-              <ImagePh height={200} />
+              {/* O enunciado. Estava um marcador de posição fixo: o professor
+                  via "Imagem da questão carregada pelo professor" em vez da
+                  questão, e tinha de avaliar a resposta sem ver a pergunta. */}
+              {a.imageUrl
+                ? (
+                  <a href={a.imageUrl} target="_blank" rel="noopener noreferrer" title="Abrir em tamanho real">
+                    <img
+                      src={a.imageUrl}
+                      alt={`Enunciado da questão ${a.n}`}
+                      style={{ width: '100%', maxHeight: 320, objectFit: 'contain', borderRadius: 12, background: 'var(--bg)', display: 'block' }}
+                    />
+                  </a>
+                )
+                : <ImagePh height={200} />}
               <div style={{ marginTop: 18 }}>
                 <label className="label">Resposta do aluno</label>
                 {a.type === 'mcq' && (

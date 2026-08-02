@@ -94,7 +94,10 @@ exports.obter = async (req, res) => {
 
         const answers = (s.questoes || []).map((q, i) => {
             const resposta = (s.respostas || {})[q.id];
-            const base = { n: i + 1, type: q.type };
+            // imageUrl é o ENUNCIADO — a imagem que o professor carregou. Sem
+            // ela, quem valida vê a resposta do aluno sem saber a que pergunta
+            // responde, e não tem como julgar se está certa.
+            const base = { n: i + 1, type: q.type, imageUrl: q.image || null };
             if (q.type === "mcq") {
                 return {
                     ...base,
