@@ -61,6 +61,9 @@ const paraProfessor = (m, connectedNow = 0, hasAttempts = false) => ({
     edit: {
         title: m.titulo || "",
         discipline: m.disciplina || "",
+        // Guardada por extenso ("Engenharia e Tecnologia"); o formulário
+        // trabalha com o código ("eng"), que é o que o servidor aceita.
+        area: Object.keys(AREAS).find((k) => AREAS[k] === m.area) || "",
         description: m.descricao || "",
         duration: m.duracaoMinutos || 60,
         perSession: m.questoesPorSessao || 5,
@@ -209,10 +212,26 @@ exports.actualizar = async (req, res) => {
 
         // Rascunho continua totalmente editável, tenha ou não sessões (não pode ter).
         const rascunho = m.status === "draft";
+
+        // Um campo que está VAZIO pode ser preenchido mesmo havendo tentativas.
+        //
+        // A regra existe para proteger um valor com que os alunos já contaram —
+        // e não há nada a proteger onde não há valor. Uma maratona sem data de
+        // início nem área está partida: ninguém consegue entrar nela, e impedir
+        // a reparação só a mantém partida.
+        //
+        // Deixou de ser hipotético: houve uma versão do endpoint que apagava
+        // estes campos ao gravar só a password, e as maratonas afectadas
+        // ficaram sem forma de serem consertadas.
+        const estaVazio = (chave) => {
+            const v = m[CAMPOS[chave].campo];
+            return v === null || v === undefined || v === "";
+        };
+
         const permitidos = new Set(
             rascunho || !temTentativas
                 ? [...SEMPRE, ...SO_SEM_TENTATIVAS, "end"]
-                : [...SEMPRE, "end"],   // com tentativas, "end" só se estender (abaixo)
+                : [...SEMPRE, "end", ...SO_SEM_TENTATIVAS.filter(estaVazio)],
         );
 
         const recusados = enviados.filter((k) => !permitidos.has(k));
@@ -231,9 +250,10 @@ exports.actualizar = async (req, res) => {
             return res.status(400).json({ mensagem: "O título da maratona não pode ficar vazio." });
         }
 
-        // Com tentativas, a data de fim só pode andar para a frente.
-        if (temTentativas && !rascunho && "acessoFim" in patch) {
-            const antes = m.acessoFim ? new Date(m.acessoFim).getTime() : 0;
+        // Com tentativas, a data de fim só pode andar para a frente — a menos
+        // que não exista nenhuma, caso em que definir uma é reparar, não mudar.
+        if (temTentativas && !rascunho && "acessoFim" in patch && m.acessoFim) {
+            const antes = new Date(m.acessoFim).getTime();
             const depois = patch.acessoFim ? new Date(patch.acessoFim).getTime() : 0;
             if (!depois || depois < antes) {
                 return res.status(409).json({

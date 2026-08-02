@@ -51,31 +51,31 @@ export default function ProfMarathons() {
   const abrirEdicao = (m) => {
     setPwError('');
     setEditarFor(m.id);
-    setForm({
-      title: m.edit?.title ?? '',
-      discipline: m.edit?.discipline ?? '',
-      description: m.edit?.description ?? '',
-      duration: m.edit?.duration ?? 60,
-      perSession: m.edit?.perSession ?? 5,
-      start: paraCampoData(m.edit?.start),
-      end: paraCampoData(m.edit?.end),
-      password: '',
-    });
+    setForm({ ...valoresDe(m), password: '' });
   };
+
+  const valoresDe = (m) => ({
+    title: m.edit?.title ?? '',
+    discipline: m.edit?.discipline ?? '',
+    area: m.edit?.area ?? '',
+    description: m.edit?.description ?? '',
+    duration: m.edit?.duration ?? 60,
+    perSession: m.edit?.perSession ?? 5,
+    start: paraCampoData(m.edit?.start),
+    end: paraCampoData(m.edit?.end),
+  });
+
+  // Um campo bloqueado por haver tentativas volta a ficar editável se estiver
+  // VAZIO — preencher o que falta é reparar a maratona, não alterá-la. É o
+  // servidor que aplica esta regra; aqui só se espelha para não desactivar um
+  // campo que ele aceitaria.
+  const bloqueado = (m, campo) => m.hasAttempts && !!valoresDe(m)[campo];
 
   // Envia SÓ o que mudou. É o que permite editar um campo isolado sem tocar no
   // resto — e evita bater nas regras do servidor por campos que nem se mexeu.
   const guardarEdicao = async (m) => {
     setPwError('');
-    const original = {
-      title: m.edit?.title ?? '',
-      discipline: m.edit?.discipline ?? '',
-      description: m.edit?.description ?? '',
-      duration: m.edit?.duration ?? 60,
-      perSession: m.edit?.perSession ?? 5,
-      start: paraCampoData(m.edit?.start),
-      end: paraCampoData(m.edit?.end),
-    };
+    const original = valoresDe(m);
 
     const mudou = {};
     for (const k of Object.keys(original)) {
@@ -220,6 +220,7 @@ export default function ProfMarathons() {
                       ℹ️ Esta maratona já tem tentativas de alunos. Só podes mudar o que não afecta os
                       resultados — e a data de fim, apenas para a <b>adiar</b>. Alterar a duração ou as
                       questões agora tornaria os resultados incomparáveis entre si.
+                      <br />Campos que estejam <b>vazios</b> podem ser preenchidos: preencher o que falta é reparar, não alterar.
                     </div>
                   )}
 
@@ -234,15 +235,33 @@ export default function ProfMarathons() {
                       <input className="input" value={form.discipline} onChange={(e) => setForm({ ...form, discipline: e.target.value })} />
                     </div>
                     <div className="col field">
-                      <label className="label">Nova password <span className="mut" style={{ fontWeight: 400 }}>(deixa vazio para manter)</span></label>
-                      <input
+                      {/* A área decide onde a maratona aparece ao aluno e é o
+                          que o dashboard dele mostra por baixo do título. */}
+                      <label className="label">
+                        Área {bloqueado(m, 'area') && <span className="mut" style={{ fontWeight: 400 }}>(bloqueado)</span>}
+                      </label>
+                      <select
                         className="input"
-                        style={{ textTransform: 'uppercase', fontWeight: 700, letterSpacing: 1 }}
-                        placeholder="••••••"
-                        value={form.password}
-                        onChange={(e) => setForm({ ...form, password: e.target.value })}
-                      />
+                        disabled={bloqueado(m, 'area')}
+                        value={form.area}
+                        onChange={(e) => setForm({ ...form, area: e.target.value })}
+                      >
+                        <option value="">Escolhe a área</option>
+                        <option value="eng">Engenharia e Tecnologia</option>
+                        <option value="soc">Ciências Sociais</option>
+                      </select>
                     </div>
+                  </div>
+
+                  <div className="field">
+                    <label className="label">Nova password <span className="mut" style={{ fontWeight: 400 }}>(deixa vazio para manter)</span></label>
+                    <input
+                      className="input"
+                      style={{ textTransform: 'uppercase', fontWeight: 700, letterSpacing: 1, maxWidth: 260 }}
+                      placeholder="••••••"
+                      value={form.password}
+                      onChange={(e) => setForm({ ...form, password: e.target.value })}
+                    />
                   </div>
 
                   <div className="field">
@@ -253,30 +272,30 @@ export default function ProfMarathons() {
                   <div className="row" style={{ gap: 16 }}>
                     <div className="col field">
                       <label className="label">
-                        Início {m.hasAttempts && <span className="mut" style={{ fontWeight: 400 }}>(bloqueado)</span>}
+                        Início {bloqueado(m, 'start') && <span className="mut" style={{ fontWeight: 400 }}>(bloqueado)</span>}
                       </label>
-                      <input type="datetime-local" className="input" disabled={m.hasAttempts} value={form.start} onChange={(e) => setForm({ ...form, start: e.target.value })} />
+                      <input type="datetime-local" className="input" disabled={bloqueado(m, 'start')} value={form.start} onChange={(e) => setForm({ ...form, start: e.target.value })} />
                     </div>
                     <div className="col field">
                       <label className="label">
-                        Fim {m.hasAttempts && <span className="mut" style={{ fontWeight: 400 }}>(só para adiar)</span>}
+                        Fim {bloqueado(m, 'end') && <span className="mut" style={{ fontWeight: 400 }}>(só para adiar)</span>}
                       </label>
-                      <input type="datetime-local" className="input" min={m.hasAttempts ? form.end : undefined} value={form.end} onChange={(e) => setForm({ ...form, end: e.target.value })} />
+                      <input type="datetime-local" className="input" min={bloqueado(m, 'end') ? valoresDe(m).end : undefined} value={form.end} onChange={(e) => setForm({ ...form, end: e.target.value })} />
                     </div>
                   </div>
 
                   <div className="row" style={{ gap: 16 }}>
                     <div className="col field">
                       <label className="label">
-                        Duração (min) {m.hasAttempts && <span className="mut" style={{ fontWeight: 400 }}>(bloqueado)</span>}
+                        Duração (min) {bloqueado(m, 'duration') && <span className="mut" style={{ fontWeight: 400 }}>(bloqueado)</span>}
                       </label>
-                      <input type="number" min="5" className="input" disabled={m.hasAttempts} value={form.duration} onChange={(e) => setForm({ ...form, duration: e.target.value })} />
+                      <input type="number" min="5" className="input" disabled={bloqueado(m, 'duration')} value={form.duration} onChange={(e) => setForm({ ...form, duration: e.target.value })} />
                     </div>
                     <div className="col field">
                       <label className="label">
-                        Questões por sessão {m.hasAttempts && <span className="mut" style={{ fontWeight: 400 }}>(bloqueado)</span>}
+                        Questões por sessão {bloqueado(m, 'perSession') && <span className="mut" style={{ fontWeight: 400 }}>(bloqueado)</span>}
                       </label>
-                      <input type="number" min="4" max="5" className="input" disabled={m.hasAttempts} value={form.perSession} onChange={(e) => setForm({ ...form, perSession: e.target.value })} />
+                      <input type="number" min="4" max="5" className="input" disabled={bloqueado(m, 'perSession')} value={form.perSession} onChange={(e) => setForm({ ...form, perSession: e.target.value })} />
                     </div>
                   </div>
 
