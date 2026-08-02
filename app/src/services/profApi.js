@@ -140,13 +140,16 @@ export async function saveQuestion(slot, data) {
   });
 }
 
-// REAL — PUT /api/prof/marathons/:id  { password }
-// Define uma password nova numa maratona já publicada. Existe porque só havia
-// forma de definir a password ao criar o rascunho: se ela se perdesse — por
-// esquecimento ou por troca do segredo de cifra — a maratona ficava inutilizada
-// sem qualquer saída pela interface.
-export async function resetMarathonPassword(id, password) {
-  return request(`/prof/marathons/${id}`, { method: 'PUT', body: { password } });
+// REAL — PUT /api/prof/marathons/:id — actualização PARCIAL
+//
+// Envia SÓ os campos que mudaram. O servidor aplica as regras de quem pode
+// mudar o quê (ver marathonController.actualizar) e recusa com explicação.
+//
+// Enviar campos a mais não é inofensivo: antes desta versão o endpoint
+// reconstruía a maratona inteira, e mandar só a password apagava o título e as
+// datas. Ficou parcial dos dois lados de propósito.
+export async function updateMarathon(id, campos) {
+  return request(`/prof/marathons/${id}`, { method: 'PUT', body: campos });
 }
 
 // REAL — DELETE /api/prof/marathons/:id

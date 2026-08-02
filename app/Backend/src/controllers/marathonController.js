@@ -39,7 +39,7 @@ const questoesPreenchidas = (m) => (m.questoes || []).filter(temEnunciado).lengt
 const questoesSemImagem = (m) => (m.questoes || []).filter(semEnunciado).length;
 
 // → formato esperado pela lista do professor (PROF_MARATHONS)
-const paraProfessor = (m, connectedNow = 0) => ({
+const paraProfessor = (m, connectedNow = 0, hasAttempts = false) => ({
     id: m.id,
     title: m.titulo,
     icon: m.icon,
@@ -53,6 +53,20 @@ const paraProfessor = (m, connectedNow = 0) => ({
     connectedNow,
     questionsUploaded: questoesPreenchidas(m),
     questionsMissingImage: questoesSemImagem(m),
+    // Decide o que a interface deixa editar. Vem do servidor porque é o
+    // servidor que aplica a regra — a interface só a espelha, e as duas não
+    // podem discordar.
+    hasAttempts,
+    // Campos crus, para o formulário de edição os poder preencher.
+    edit: {
+        title: m.titulo || "",
+        discipline: m.disciplina || "",
+        description: m.descricao || "",
+        duration: m.duracaoMinutos || 60,
+        perSession: m.questoesPorSessao || 5,
+        start: m.acessoInicio || "",
+        end: m.acessoFim || "",
+    },
 });
 
 // → formato esperado pelo estudante (MARATHONS) — NUNCA inclui a senha.
@@ -90,6 +104,7 @@ const obterDoc = async (id) => {
     return doc.exists ? { id, ...doc.data() } : null;
 };
 
+// Usado só na CRIAÇÃO, onde faz sentido preencher tudo com valores por omissão.
 const dadosDoBody = (b) => ({
     titulo: b.title || "",
     disciplina: b.discipline || "",
@@ -100,6 +115,48 @@ const dadosDoBody = (b) => ({
     acessoInicio: b.start ? new Date(b.start).toISOString() : null,
     acessoFim: b.end ? new Date(b.end).toISOString() : null,
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Edição de uma maratona existente
+//
+// A actualização usava o dadosDoBody acima, que reconstrói o objecto inteiro
+// com valores por omissão. Consequência: enviar só { password } apagava o
+// título, punha as datas a null e repunha a duração em 60 minutos. Uma
+// actualização parcial tem de tocar APENAS nos campos que recebe.
+//
+// Sobre o que é editável e quando — as regras vêm da justiça da prova, não da
+// dificuldade técnica:
+//
+//   sempre .................. título, descrição, disciplina, password
+//                             (não afectam nem a prova nem os resultados)
+//   sem tentativas .......... tudo o resto: datas, duração, questões por
+//                             sessão, área. Na prática ainda é um rascunho.
+//   com tentativas .......... só a data de fim, e só para a ESTENDER.
+//
+// Porquê estas fronteiras: se o primeiro aluno teve 60 minutos e o segundo 45,
+// os resultados deixam de ser comparáveis e não há como explicar isso a quem
+// reclamar. Encurtar o prazo corta alunos a meio da prova. Estender é o que se
+// vai mesmo precisar no dia, se houver problemas de rede.
+// ─────────────────────────────────────────────────────────────────────────────
+const CAMPOS = {
+    title:       { campo: "titulo",            ler: (v) => String(v).trim() },
+    discipline:  { campo: "disciplina",        ler: (v) => String(v).trim() },
+    description: { campo: "descricao",         ler: (v) => String(v).trim() },
+    area:        { campo: "area",              ler: (v) => AREAS[v] || v || "" },
+    duration:    { campo: "duracaoMinutos",    ler: (v) => Number(v) || 60 },
+    perSession:  { campo: "questoesPorSessao", ler: (v) => Math.min(5, Math.max(4, Number(v) || 5)) },
+    start:       { campo: "acessoInicio",      ler: (v) => (v ? new Date(v).toISOString() : null) },
+    end:         { campo: "acessoFim",         ler: (v) => (v ? new Date(v).toISOString() : null) },
+};
+
+const SEMPRE = ["title", "discipline", "description"];
+const SO_SEM_TENTATIVAS = ["area", "duration", "perSession", "start"];
+
+const ROTULOS = {
+    title: "título", discipline: "disciplina", description: "descrição",
+    area: "área", duration: "duração", perSession: "questões por sessão",
+    start: "data de início", end: "data de fim",
+};
 
 // POST /api/prof/marathons  (professor) — cria rascunho
 exports.criar = async (req, res) => {
@@ -135,7 +192,7 @@ exports.criar = async (req, res) => {
     }
 };
 
-// PUT /api/prof/marathons/:id  (professor) — actualiza rascunho
+// PUT /api/prof/marathons/:id  (professor dono) — actualização PARCIAL
 exports.actualizar = async (req, res) => {
     try {
         const m = await obterDoc(req.params.id);
@@ -144,13 +201,66 @@ exports.actualizar = async (req, res) => {
             return res.status(403).json({ mensagem: "Esta maratona não é tua." });
         }
 
-        const patch = dadosDoBody(req.body);
-        if (req.body.password) {
-            const senhaNorm = String(req.body.password).trim().toUpperCase();
+        const b = req.body || {};
+        const enviados = Object.keys(CAMPOS).filter((k) => b[k] !== undefined);
+
+        const sessoes = await db.collection("sessoes").where("maratonaId", "==", m.id).get();
+        const temTentativas = !sessoes.empty;
+
+        // Rascunho continua totalmente editável, tenha ou não sessões (não pode ter).
+        const rascunho = m.status === "draft";
+        const permitidos = new Set(
+            rascunho || !temTentativas
+                ? [...SEMPRE, ...SO_SEM_TENTATIVAS, "end"]
+                : [...SEMPRE, "end"],   // com tentativas, "end" só se estender (abaixo)
+        );
+
+        const recusados = enviados.filter((k) => !permitidos.has(k));
+        if (recusados.length) {
+            return res.status(409).json({
+                mensagem: `Esta maratona já tem tentativas de alunos: não é possível alterar ${recusados.map((k) => ROTULOS[k]).join(", ")}. `
+                    + "Mudar isso agora tornaria os resultados dos alunos incomparáveis entre si.",
+            });
+        }
+
+        const patch = {};
+        for (const k of enviados) patch[CAMPOS[k].campo] = CAMPOS[k].ler(b[k]);
+
+        // O título é obrigatório — não pode ser esvaziado por engano.
+        if ("titulo" in patch && !patch.titulo) {
+            return res.status(400).json({ mensagem: "O título da maratona não pode ficar vazio." });
+        }
+
+        // Com tentativas, a data de fim só pode andar para a frente.
+        if (temTentativas && !rascunho && "acessoFim" in patch) {
+            const antes = m.acessoFim ? new Date(m.acessoFim).getTime() : 0;
+            const depois = patch.acessoFim ? new Date(patch.acessoFim).getTime() : 0;
+            if (!depois || depois < antes) {
+                return res.status(409).json({
+                    mensagem: "Com alunos já inscritos, a data de fim só pode ser adiada — encurtá-la interromperia provas a decorrer.",
+                });
+            }
+        }
+
+        // A janela tem de continuar coerente depois da alteração.
+        const inicioFinal = "acessoInicio" in patch ? patch.acessoInicio : m.acessoInicio;
+        const fimFinal = "acessoFim" in patch ? patch.acessoFim : m.acessoFim;
+        if (inicioFinal && fimFinal && new Date(fimFinal) <= new Date(inicioFinal)) {
+            return res.status(400).json({ mensagem: "O fim da janela tem de ser depois do início." });
+        }
+
+        if (b.password) {
+            const senhaNorm = String(b.password).trim().toUpperCase();
             patch.senhaHash = await bcrypt.hash(senhaNorm, 10);
             patch.senhaCifrada = cifrar(senhaNorm);
         }
-        patch.icon = iconPara(req.body.discipline);
+
+        // O ícone é derivado da disciplina — só muda quando ela muda.
+        if (b.discipline !== undefined) patch.icon = iconPara(b.discipline);
+
+        if (!Object.keys(patch).length) {
+            return res.status(400).json({ mensagem: "Nada para actualizar." });
+        }
 
         await db.collection("maratonas").doc(m.id).update(patch);
         res.json({ ok: true, id: m.id, status: m.status });
@@ -358,6 +468,9 @@ exports.listarDoProfessor = async (req, res) => {
         const todasSessoes = (await db.collection("sessoes").get()).docs.map((d) => d.data());
         const agora = Date.now();
         const conectadosPorMaratona = {};
+        // Já temos todas as sessões em mãos: saber quais maratonas foram
+        // tentadas sai de graça, e é o que decide o que pode ser editado.
+        const comTentativas = new Set(todasSessoes.map((s) => s.maratonaId));
         todasSessoes.forEach((s) => {
             if (s.estado !== "active") return;
             const fimMs = new Date(s.iniciadaEm).getTime() + s.duracaoSegundos * 1000;
@@ -366,7 +479,8 @@ exports.listarDoProfessor = async (req, res) => {
             }
         });
 
-        const lista = maratonas.map((m) => paraProfessor(m, conectadosPorMaratona[m.id] || 0));
+        const lista = maratonas.map((m) =>
+            paraProfessor(m, conectadosPorMaratona[m.id] || 0, comTentativas.has(m.id)));
         res.json({ marathons: lista });
     } catch (e) {
         console.error(e);

@@ -1,7 +1,7 @@
 // Lista de maratonas do professor + botão para criar nova.
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getProfOverview, openDraft, newDraft, getMarathonPassword, broadcastMarathonPassword, deleteMarathon, resetMarathonPassword } from './profDeps.js';
+import { getProfOverview, openDraft, newDraft, getMarathonPassword, broadcastMarathonPassword, deleteMarathon, updateMarathon } from './profDeps.js';
 import { ProfTopbar, Pill } from '../../components/ProfUi.jsx';
 import { Badge } from '../../components/Ui.jsx';
 
@@ -14,9 +14,9 @@ export default function ProfMarathons() {
   const [sentFor, setSentFor] = useState(null);
   const [confirmarApagar, setConfirmarApagar] = useState(null);
   const [apagando, setApagando] = useState(null);
-  const [redefinirFor, setRedefinirFor] = useState(null);
-  const [novaPassword, setNovaPassword] = useState('');
-  const [redefinindo, setRedefinindo] = useState(null);
+  const [editarFor, setEditarFor] = useState(null);
+  const [form, setForm] = useState({});
+  const [guardando, setGuardando] = useState(null);
 
   const copyPassword = async (m) => {
     setPwError('');
@@ -44,30 +44,65 @@ export default function ProfMarathons() {
     }
   };
 
-  // Definir uma password nova numa maratona já publicada.
-  //
-  // Antes só era possível ao criar o rascunho. Bastava a password perder-se
-  // para a maratona ficar inutilizada sem saída nenhuma pela interface — foi o
-  // que aconteceu quando o segredo que a cifrava foi substituído.
-  const redefinirPassword = async (m) => {
+  // Abre o painel de edição já preenchido com os valores actuais. As datas
+  // vêm em ISO e o campo datetime-local só aceita "AAAA-MM-DDTHH:MM".
+  const paraCampoData = (iso) => (iso ? new Date(iso).toISOString().slice(0, 16) : '');
+
+  const abrirEdicao = (m) => {
     setPwError('');
-    const nova = String(novaPassword || '').trim().toUpperCase();
-    if (nova.length < 4) {
-      return setPwError('A password da maratona deve ter pelo menos 4 caracteres.');
+    setEditarFor(m.id);
+    setForm({
+      title: m.edit?.title ?? '',
+      discipline: m.edit?.discipline ?? '',
+      description: m.edit?.description ?? '',
+      duration: m.edit?.duration ?? 60,
+      perSession: m.edit?.perSession ?? 5,
+      start: paraCampoData(m.edit?.start),
+      end: paraCampoData(m.edit?.end),
+      password: '',
+    });
+  };
+
+  // Envia SÓ o que mudou. É o que permite editar um campo isolado sem tocar no
+  // resto — e evita bater nas regras do servidor por campos que nem se mexeu.
+  const guardarEdicao = async (m) => {
+    setPwError('');
+    const original = {
+      title: m.edit?.title ?? '',
+      discipline: m.edit?.discipline ?? '',
+      description: m.edit?.description ?? '',
+      duration: m.edit?.duration ?? 60,
+      perSession: m.edit?.perSession ?? 5,
+      start: paraCampoData(m.edit?.start),
+      end: paraCampoData(m.edit?.end),
+    };
+
+    const mudou = {};
+    for (const k of Object.keys(original)) {
+      if (String(form[k] ?? '') !== String(original[k] ?? '')) mudou[k] = form[k];
     }
-    setRedefinindo(m.id);
+    if (form.password?.trim()) mudou.password = form.password.trim().toUpperCase();
+
+    if (!Object.keys(mudou).length) {
+      setEditarFor(null);
+      return;
+    }
+
+    setGuardando(m.id);
     try {
-      await resetMarathonPassword(m.id, nova);
-      setNovaPassword('');
-      setRedefinirFor(null);
-      setSentFor(null);
-      setCopiedFor(m.id);   // reaproveita o "✓ Copiada!" como confirmação visual
-      await navigator.clipboard.writeText(nova).catch(() => {});
-      setTimeout(() => setCopiedFor(null), 2500);
+      await updateMarathon(m.id, mudou);
+      const { marathons } = await getProfOverview();
+      setMarathons(marathons);
+      setEditarFor(null);
+      if (mudou.password) {
+        await navigator.clipboard.writeText(mudou.password).catch(() => {});
+        setCopiedFor(m.id);
+        setTimeout(() => setCopiedFor(null), 2500);
+      }
     } catch (err) {
       setPwError(err.message);
     } finally {
-      setRedefinindo(null);
+      setGuardando(null);
     }
   };
 
@@ -168,32 +203,90 @@ export default function ProfMarathons() {
                   <Link to={`/prof/monitorizacao/${m.id}`} className="btn sm blue" style={{ textDecoration: 'none' }}>Monitorizar</Link>
                   <Link to={`/prof/estatisticas/${m.id}`} className="btn sm ghost" style={{ textDecoration: 'none' }}>Estatísticas</Link>
 
-                  {redefinirFor === m.id ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', width: '100%' }}>
+                  <button className="btn sm ghost" onClick={() => abrirEdicao(m)} title="Editar esta maratona">
+                    ✏️ Editar
+                  </button>
+                </>
+              )}
+
+              {/* Painel de edição. O que aparece depende de a maratona já ter
+                  sido tentada por algum aluno — e é o servidor que o diz
+                  (m.hasAttempts), para a interface não prometer o que ele
+                  recusa. */}
+              {editarFor === m.id && (
+                <div style={{ width: '100%', borderTop: '1.5px solid var(--brd)', marginTop: 16, paddingTop: 18 }}>
+                  {m.hasAttempts && (
+                    <div className="sm" style={{ background: 'var(--blue-l)', borderRadius: 10, padding: '10px 14px', marginBottom: 16 }}>
+                      ℹ️ Esta maratona já tem tentativas de alunos. Só podes mudar o que não afecta os
+                      resultados — e a data de fim, apenas para a <b>adiar</b>. Alterar a duração ou as
+                      questões agora tornaria os resultados incomparáveis entre si.
+                    </div>
+                  )}
+
+                  <div className="field">
+                    <label className="label">Título</label>
+                    <input className="input" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+                  </div>
+
+                  <div className="row" style={{ gap: 16 }}>
+                    <div className="col field">
+                      <label className="label">Disciplina</label>
+                      <input className="input" value={form.discipline} onChange={(e) => setForm({ ...form, discipline: e.target.value })} />
+                    </div>
+                    <div className="col field">
+                      <label className="label">Nova password <span className="mut" style={{ fontWeight: 400 }}>(deixa vazio para manter)</span></label>
                       <input
                         className="input"
-                        style={{ flex: '1 1 160px', maxWidth: 220, padding: '10px 14px', textTransform: 'uppercase', fontWeight: 700, letterSpacing: 1 }}
-                        placeholder="Nova password"
-                        value={novaPassword}
-                        autoFocus
-                        onChange={(e) => setNovaPassword(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && redefinirPassword(m)}
+                        style={{ textTransform: 'uppercase', fontWeight: 700, letterSpacing: 1 }}
+                        placeholder="••••••"
+                        value={form.password}
+                        onChange={(e) => setForm({ ...form, password: e.target.value })}
                       />
-                      <button className="btn sm" disabled={redefinindo === m.id} onClick={() => redefinirPassword(m)}>
-                        {redefinindo === m.id ? 'A guardar…' : 'Guardar password'}
-                      </button>
-                      <button className="btn sm ghost" onClick={() => { setRedefinirFor(null); setNovaPassword(''); }}>Cancelar</button>
                     </div>
-                  ) : (
-                    <button
-                      className="btn sm ghost"
-                      onClick={() => { setRedefinirFor(m.id); setNovaPassword(''); setPwError(''); }}
-                      title="Definir uma password nova para esta maratona"
-                    >
-                      ♻ Nova password
+                  </div>
+
+                  <div className="field">
+                    <label className="label">Descrição</label>
+                    <textarea className="input" style={{ height: 70, resize: 'vertical' }} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+                  </div>
+
+                  <div className="row" style={{ gap: 16 }}>
+                    <div className="col field">
+                      <label className="label">
+                        Início {m.hasAttempts && <span className="mut" style={{ fontWeight: 400 }}>(bloqueado)</span>}
+                      </label>
+                      <input type="datetime-local" className="input" disabled={m.hasAttempts} value={form.start} onChange={(e) => setForm({ ...form, start: e.target.value })} />
+                    </div>
+                    <div className="col field">
+                      <label className="label">
+                        Fim {m.hasAttempts && <span className="mut" style={{ fontWeight: 400 }}>(só para adiar)</span>}
+                      </label>
+                      <input type="datetime-local" className="input" min={m.hasAttempts ? form.end : undefined} value={form.end} onChange={(e) => setForm({ ...form, end: e.target.value })} />
+                    </div>
+                  </div>
+
+                  <div className="row" style={{ gap: 16 }}>
+                    <div className="col field">
+                      <label className="label">
+                        Duração (min) {m.hasAttempts && <span className="mut" style={{ fontWeight: 400 }}>(bloqueado)</span>}
+                      </label>
+                      <input type="number" min="5" className="input" disabled={m.hasAttempts} value={form.duration} onChange={(e) => setForm({ ...form, duration: e.target.value })} />
+                    </div>
+                    <div className="col field">
+                      <label className="label">
+                        Questões por sessão {m.hasAttempts && <span className="mut" style={{ fontWeight: 400 }}>(bloqueado)</span>}
+                      </label>
+                      <input type="number" min="4" max="5" className="input" disabled={m.hasAttempts} value={form.perSession} onChange={(e) => setForm({ ...form, perSession: e.target.value })} />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
+                    <button className="btn sm" disabled={guardando === m.id} onClick={() => guardarEdicao(m)}>
+                      {guardando === m.id ? 'A guardar…' : 'Guardar alterações'}
                     </button>
-                  )}
-                </>
+                    <button className="btn sm ghost" onClick={() => setEditarFor(null)}>Cancelar</button>
+                  </div>
+                </div>
               )}
 
               {/* Apagar fica sempre à direita e discreto: não é uma acção do
