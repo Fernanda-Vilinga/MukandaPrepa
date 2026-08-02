@@ -4,6 +4,7 @@ const crypto = require("crypto");
 const { enviarEmail } = require("../utils/email");
 const tpl = require("../utils/emailTemplates");
 const val = require("../utils/validacao");
+const { esquecerConta } = require("../middleware/authMiddleware");
 
 // POST /api/admin/professores  (protegido: só admin)
 // Cria conta de professor com senha temporária — o professor deve
@@ -168,6 +169,10 @@ exports.actualizarUtilizador = async (req, res) => {
         }
 
         await db.collection("usuarios").doc(id).update(patch);
+
+        // A suspensão passou a ser verificada a cada pedido, com uma cache curta
+        // no middleware. Limpar aqui faz o efeito ser imediato nesta instância.
+        esquecerConta(id);
 
         if (novaSenhaTemporaria && alvo.email) {
             const { subject, html } = tpl.senhaRedefinida({ nome: alvo.nome, email: alvo.email, senhaTemporaria: novaSenhaTemporaria });

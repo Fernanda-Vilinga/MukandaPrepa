@@ -61,6 +61,18 @@ export async function request(path, { method = 'GET', body, auth = true } = {}) 
     throw new Error('Sem ligação ao servidor. Verifica a tua internet e tenta de novo.');
   }
   const data = await res.json().catch(() => ({}));
+
+  // Conta suspensa pelo administrador enquanto a sessão estava aberta.
+  // O backend passou a verificar isto em cada pedido; sem este tratamento, o
+  // utilizador ficava dentro da app a ver dados antigos e a apanhar erros a
+  // cada clique. Termina-se a sessão e leva-se ao login com a explicação.
+  if (res.status === 403 && data.suspenso) {
+    logout();
+    sessionStorage.setItem('mkp_aviso', data.mensagem || 'Esta conta está suspensa.');
+    window.location.assign('/login');
+    throw new Error(data.mensagem || 'Esta conta está suspensa.');
+  }
+
   if (!res.ok) throw new Error(data.mensagem || `Erro do servidor (${res.status}).`);
   return data;
 }

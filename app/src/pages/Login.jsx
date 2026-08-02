@@ -24,7 +24,14 @@ export default function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  // Quando a sessão é terminada a meio por a conta ter sido suspensa, o motivo
+  // é deixado aqui pelo services/api.js — sem isto o utilizador voltaria ao
+  // login sem perceber porquê. Lê-se uma vez e apaga-se.
+  const [error, setError] = useState(() => {
+    const aviso = sessionStorage.getItem('mkp_aviso');
+    if (aviso) sessionStorage.removeItem('mkp_aviso');
+    return aviso || '';
+  });
   const [busy, setBusy] = useState(false);
 
   const submit = async (e) => {
