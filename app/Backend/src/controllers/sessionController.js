@@ -3,6 +3,7 @@ const { enviarEmail } = require("../utils/email");
 const tpl = require("../utils/emailTemplates");
 
 const { limiteDeTentativas } = require("../utils/planos");
+const { temEnunciado } = require("../utils/questoes");
 
 // ---- helpers ----
 const agoraMs = () => Date.now();
@@ -96,9 +97,19 @@ exports.iniciar = async (req, res) => {
         }
 
         // SORTEIO server-side de 4–5 questões do banco de 15 (Fisher–Yates)
-        const banco = (m.questoes || []).filter((q) => q && q.filled);
+        //
+        // Exige-se enunciado e não só `filled`: as questões gravadas antes de
+        // existir upload real estão marcadas como preenchidas mas não têm
+        // imagem — ou têm apenas o nome de um ficheiro do computador do
+        // professor. Sem esta verificação o aluno entrava, o cronómetro
+        // arrancava, e ele ficava a olhar para rectângulos vazios.
+        //
+        // Recusar aqui não gasta tentativa — a sessão só é criada mais abaixo.
+        const banco = (m.questoes || []).filter(temEnunciado);
         if (banco.length < m.questoesPorSessao) {
-            return res.status(400).json({ mensagem: "Esta maratona não tem questões suficientes." });
+            return res.status(400).json({
+                mensagem: "Esta maratona ainda não está pronta: faltam enunciados. Avisa o professor — não perdeste nenhuma tentativa.",
+            });
         }
         const baralhado = [...banco];
         for (let i = baralhado.length - 1; i > 0; i--) {

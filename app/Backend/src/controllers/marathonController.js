@@ -4,6 +4,7 @@ const { cifrar, decifrar } = require("../utils/crypto");
 
 // Limites de tentativas por plano — validados SEMPRE no servidor (spec §4.3)
 const { limiteDeTentativas } = require("../utils/planos");
+const { enderecoDeImagem, temEnunciado, semEnunciado } = require("../utils/questoes");
 
 const AREAS = { eng: "Engenharia e Tecnologia", soc: "Ciências Sociais" };
 
@@ -26,12 +27,15 @@ const statusEfectivo = (m) => {
     return "active";
 };
 
-// Uma questão só conta se tiver imagem: nesta plataforma o enunciado É a
-// imagem. Antes bastava estar "preenchida", pelo que era possível publicar uma
-// maratona com 15 questões sem enunciado nenhum — o aluno abriria a prova e
-// veria 15 rectângulos vazios, já dentro do tempo a contar.
-const temEnunciado = (q) => !!(q && q.filled && q.image);
+// Uma questão só conta se tiver enunciado — ver utils/questoes.js para o que
+// isso quer dizer e porquê. Antes bastava estar "preenchida", pelo que era
+// possível publicar uma maratona com 15 questões sem enunciado nenhum: o aluno
+// abriria a prova e veria 15 rectângulos vazios, já com o cronómetro a contar.
 const questoesPreenchidas = (m) => (m.questoes || []).filter(temEnunciado).length;
+
+// Contadas à parte para poderem ser mostradas ao professor. Sem este número,
+// nada na interface distingue uma maratona pronta de uma que abre em branco.
+const questoesSemImagem = (m) => (m.questoes || []).filter(semEnunciado).length;
 
 // → formato esperado pela lista do professor (PROF_MARATHONS)
 const paraProfessor = (m, connectedNow = 0) => ({
@@ -47,6 +51,7 @@ const paraProfessor = (m, connectedNow = 0) => ({
     participants: m.participantes || 0,
     connectedNow,
     questionsUploaded: questoesPreenchidas(m),
+    questionsMissingImage: questoesSemImagem(m),
 });
 
 // → formato esperado pelo estudante (MARATHONS) — NUNCA inclui a senha.
@@ -176,7 +181,7 @@ exports.guardarQuestao = async (req, res) => {
         // endereço do nosso armazenamento: antes do upload real, aqui chegava
         // o nome do ficheiro escolhido no computador do professor ("ex1.png"),
         // que é texto sem qualquer utilidade para quem vai fazer a prova.
-        if (!image || !/^https:\/\//.test(String(image))) {
+        if (!enderecoDeImagem(image)) {
             return res.status(400).json({ mensagem: "Carrega a imagem da questão antes de guardar." });
         }
 

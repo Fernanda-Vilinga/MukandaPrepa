@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { getMarathons, getResults, currentUser } from '../services/api.js';
 import { Topbar, Badge } from '../components/Ui.jsx';
 import { ChatFab } from '../components/Chat.jsx';
-import { PLAN_ATTEMPTS } from '../data/mock.js';
 
 const FILTERS = [
   ['all', 'Todas'],
@@ -18,7 +17,9 @@ export default function Marathons() {
   const [results, setResults] = useState([]);
   const [filter, setFilter] = useState('all');
   const [q, setQ] = useState('');
-  const maxAtt = PLAN_ATTEMPTS[user?.plan ?? 'basic'];
+  // As tentativas mostradas nesta página vêm de cada maratona (m.attemptsMax),
+  // calculadas no servidor. Havia aqui um maxAtt da tabela fixa do frontend que
+  // nada usava — removido para ninguém voltar a pegar nele por engano.
 
   useEffect(() => {
     getMarathons().then(setMarathons);

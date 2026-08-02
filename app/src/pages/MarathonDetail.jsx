@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { getMarathon, enterMarathon, currentUser } from '../services/api.js';
 import { Topbar, Badge, AttemptDots } from '../components/Ui.jsx';
-import { PLAN_ATTEMPTS, PLAN_LABEL } from '../data/mock.js';
+import { PLAN_LABEL } from '../data/mock.js';
 import { ChatFab } from '../components/Chat.jsx';
 
 const PASS_LEN = 6;
@@ -15,7 +15,8 @@ export default function MarathonDetail() {
   const [chars, setChars] = useState(Array(PASS_LEN).fill(''));
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const maxAtt = PLAN_ATTEMPTS[user?.plan ?? 'basic'];
+  // As tentativas vêm da própria maratona (m.attemptsMax), calculadas no
+  // servidor. Havia aqui um maxAtt da tabela fixa do frontend que nada usava.
 
   useEffect(() => { getMarathon(id).then(setM).catch(() => navigate('/maratonas')); }, [id, navigate]);
 

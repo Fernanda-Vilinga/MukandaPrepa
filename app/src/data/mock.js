@@ -22,7 +22,10 @@ export const CURRENT_USER = {
 // Se estes números forem alterados na Gestão de planos, actualizar aqui
 // também — senão o aluno vê um limite e o servidor aplica outro.
 // TODO: substituir por uma leitura de /api/plans, eliminando a última cópia.
-export const PLAN_ATTEMPTS = { basic: 2, plus: 5, premium: Infinity };
+// PLAN_ATTEMPTS foi removido a 2 de Agosto de 2026. Era a última cópia de um
+// número que o administrador pode mudar na Gestão de planos, e ficava a mentir
+// ao aluno sempre que isso acontecia. O valor vem agora de /api/plans, através
+// do hook useMaxAttempts — não voltar a acrescentar uma tabela aqui.
 export const PLAN_LABEL = { basic: 'Basic', plus: 'Plus', premium: 'Premium' };
 
 // Áreas de conhecimento (registo)

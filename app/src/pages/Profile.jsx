@@ -4,7 +4,8 @@ import { useState } from "react";
 import { currentUser, updateProfile, changePassword } from "../services/api.js";
 import { Topbar } from "../components/Ui.jsx";
 import { ChatFab } from "../components/Chat.jsx";
-import { AREAS, PLAN_LABEL, PLAN_ATTEMPTS } from "../data/mock.js";
+import { AREAS, PLAN_LABEL } from "../data/mock.js";
+import { useMaxAttempts } from "../hooks/useMaxAttempts.js";
 import { useNavigate } from "react-router-dom";
 
 
@@ -39,7 +40,9 @@ export default function Profile() {
 
 
 
-  const maxAtt = PLAN_ATTEMPTS[user?.plan || "basic"];
+  // Vinha de uma tabela fixa no frontend, que ficava desactualizada sempre que
+  // o administrador mudava as tentativas na Gestão de planos.
+  const maxAtt = useMaxAttempts(user?.plan);
 
 
 
@@ -692,12 +695,20 @@ Plano actual
 </strong>
 
 
-<p>
+<p className="mut">
 
 {
+maxAtt===undefined
+?
+"…"
+:
 maxAtt===Infinity
 ?
 "Tentativas ilimitadas"
+:
+maxAtt==null
+?
+"Tentativas por maratona conforme o plano"
 :
 `${maxAtt} tentativas por maratona`
 }

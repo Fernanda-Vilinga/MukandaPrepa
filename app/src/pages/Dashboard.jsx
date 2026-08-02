@@ -3,7 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { getMarathons, getResults, currentUser } from '../services/api.js';
 import { Topbar, Badge, Stat, AttemptDots } from '../components/Ui.jsx';
 import { ChatFab } from '../components/Chat.jsx';
-import { PLAN_ATTEMPTS, PLAN_LABEL } from '../data/mock.js';
+import { PLAN_LABEL } from '../data/mock.js';
+import { useMaxAttempts } from '../hooks/useMaxAttempts.js';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -34,7 +35,7 @@ export default function Dashboard() {
   const avg = validated.length
     ? Math.round(validated.reduce((s, r) => s + (r.percent ?? 0), 0) / validated.length)
     : null;
-  const maxAtt = PLAN_ATTEMPTS[user?.plan ?? 'basic'];
+  const maxAtt = useMaxAttempts(user?.plan);
   const firstName = (user?.name ?? 'Estudante').split(' ')[0];
   const featured = active.find((m) => m.id === selectedId) ?? active[0];
 
@@ -59,7 +60,12 @@ export default function Dashboard() {
           <Stat value={best ? `#${best}` : '—'} label="Melhor ranking" />
           <Stat
             value={PLAN_LABEL[user?.plan]}
-            label={maxAtt === Infinity ? 'Tentativas ilimitadas' : `Até ${maxAtt} tentativas por maratona`}
+            // maxAtt indefinido = ainda a chegar do servidor; melhor não dizer
+            // nada do que dizer um número e corrigi-lo um instante depois.
+            label={maxAtt === undefined ? ' '
+              : maxAtt === Infinity ? 'Tentativas ilimitadas'
+              : maxAtt == null ? 'Plano actual'
+              : `Até ${maxAtt} tentativas por maratona`}
             color="var(--orange)"
             style={{ background: 'var(--dark)', color: '#fff' }}
           />

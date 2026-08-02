@@ -3,19 +3,23 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { getResult, currentUser } from '../services/api.js';
 import { Topbar } from '../components/Ui.jsx';
 import { ChatFab } from '../components/Chat.jsx';
-import { PLAN_ATTEMPTS, PLAN_LABEL } from '../data/mock.js';
+import { PLAN_LABEL } from '../data/mock.js';
+import { useMaxAttempts } from '../hooks/useMaxAttempts.js';
 
 export default function ResultDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const user = currentUser();
   const [r, setR] = useState(null);
-  const maxAtt = PLAN_ATTEMPTS[user?.plan ?? 'basic'];
+  const maxAtt = useMaxAttempts(user?.plan);
 
   useEffect(() => { getResult(id).then(setR).catch(() => navigate('/resultados')); }, [id, navigate]);
   if (!r) return null;
 
-  const canRetry = maxAtt === Infinity || r.attempt < maxAtt;
+  // Enquanto o limite não chega do servidor não se afirma nada: dizer ao aluno
+  // "atingiste o limite" e desdizer meio segundo depois é pior do que esperar.
+  const limiteConhecido = maxAtt !== undefined && maxAtt !== null;
+  const canRetry = limiteConhecido && (maxAtt === Infinity || r.attempt < maxAtt);
 
   return (
     <>
@@ -72,24 +76,26 @@ export default function ResultDetail() {
           </div>
         ))}
 
-        <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 20, marginTop: 10, flexWrap: 'wrap' }}>
-          <div style={{ flex: 1, minWidth: 220 }}>
-            {canRetry ? (
-              <>
-                <b>Ainda tens tentativas disponíveis ({r.attempt + 1}ª{maxAtt !== Infinity && ` de ${maxAtt}`} — plano {PLAN_LABEL[user?.plan]}).</b>
-                <div className="mut sm">Novo sorteio de questões aleatórias do mesmo banco de 15.</div>
-              </>
-            ) : (
-              <>
-                <b>Atingiste o limite de tentativas do plano {PLAN_LABEL[user?.plan]}.</b>
-                <div className="mut sm">Faz upgrade para Plus ou Premium para repetir maratonas.</div>
-              </>
-            )}
+        {limiteConhecido && (
+          <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 20, marginTop: 10, flexWrap: 'wrap' }}>
+            <div style={{ flex: 1, minWidth: 220 }}>
+              {canRetry ? (
+                <>
+                  <b>Ainda tens tentativas disponíveis ({r.attempt + 1}ª{maxAtt !== Infinity && ` de ${maxAtt}`} — plano {PLAN_LABEL[user?.plan]}).</b>
+                  <div className="mut sm">Novo sorteio de questões aleatórias do mesmo banco de 15.</div>
+                </>
+              ) : (
+                <>
+                  <b>Atingiste o limite de tentativas do plano {PLAN_LABEL[user?.plan]}.</b>
+                  <div className="mut sm">Faz upgrade para Plus ou Premium para repetir maratonas.</div>
+                </>
+              )}
+            </div>
+            {canRetry
+              ? <Link to={`/maratonas/${r.marathonId}`} className="btn blue" style={{ textDecoration: 'none' }}>🔁 Repetir maratona</Link>
+              : <button className="btn blue" onClick={() => navigate('/planos')}>Fazer upgrade</button>}
           </div>
-          {canRetry
-            ? <Link to={`/maratonas/${r.marathonId}`} className="btn blue" style={{ textDecoration: 'none' }}>🔁 Repetir maratona</Link>
-            : <button className="btn blue" onClick={() => navigate('/planos')}>Fazer upgrade</button>}
-        </div>
+        )}
       </div>
       <ChatFab />
     </>

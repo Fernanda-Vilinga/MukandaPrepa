@@ -6,7 +6,6 @@
 // ============================================================
 import {
   MARATHONS, QUESTIONS, RESULTS, CURRENT_USER,
-  PLAN_ATTEMPTS,
 } from '../data/mock.js';
 
 const delay = (ms = 250) => new Promise((r) => setTimeout(r, ms));
@@ -275,6 +274,29 @@ export async function getResult(id) {
 // pagamento configurados pelo admin em admin/Plans.jsx)
 export async function getPlans() {
   return request('/plans');
+}
+
+// Tentativas por plano, lidas do servidor.
+//
+// Este número existia numa tabela fixa no frontend (PLAN_ATTEMPTS, em
+// data/mock.js). Era a última cópia de um valor que o administrador pode mudar
+// a qualquer momento na Gestão de planos — e uma cópia que ninguém se lembrava
+// de actualizar. O aluno via "2 tentativas" e o servidor aplicava outra coisa.
+//
+// A promessa é guardada, não o resultado: várias páginas pedem isto ao mesmo
+// tempo e assim fazem um único pedido ao servidor.
+let promessaTentativas = null;
+
+export function getPlanAttempts() {
+  if (!promessaTentativas) {
+    promessaTentativas = request('/plans')
+      .then(({ plans }) => Object.fromEntries(
+        // attempts a null significa ilimitadas — em toda a app isso é Infinity.
+        (plans || []).map((p) => [p.id, p.attempts == null ? Infinity : Number(p.attempts)]),
+      ))
+      .catch((e) => { promessaTentativas = null; throw e; });   // permite nova tentativa
+  }
+  return promessaTentativas;
 }
 
 // REAL — POST /api/plans/upgrade-request  { planId, promoCode }

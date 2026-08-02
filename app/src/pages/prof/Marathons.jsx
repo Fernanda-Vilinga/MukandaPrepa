@@ -82,6 +82,18 @@ export default function ProfMarathons() {
                     ? <>{m.questionsUploaded}/15 questões carregadas · não publicada <Pill kind="gray">rascunho</Pill></>
                     : `${m.durationMinutes} min · ${m.questionsPerSession} questões por sessão · fecha ${m.accessEnd} · ${m.participants} participantes`}
                 </div>
+                {/* Maratonas criadas antes de existir upload real têm questões
+                    marcadas como carregadas mas sem enunciado. Sem este aviso,
+                    nada na interface as distingue de uma maratona pronta — e o
+                    professor só descobria pelos alunos, no dia. */}
+                {m.questionsMissingImage > 0 && (
+                  <div className="sm" style={{ marginTop: 8, background: 'var(--red-l)', color: 'var(--red)', borderRadius: 10, padding: '8px 12px' }}>
+                    ⚠ {m.questionsMissingImage} {m.questionsMissingImage === 1 ? 'questão está' : 'questões estão'} sem imagem do enunciado.
+                    {m.status === 'draft'
+                      ? ' Abre-as e carrega a imagem antes de publicar.'
+                      : ' Os alunos não conseguem entrar nesta maratona — apaga-a ou carrega as imagens em falta.'}
+                  </div>
+                )}
               </div>
               {m.status === 'draft' ? (
                 <Link to="/prof/maratonas/nova" className="btn sm" style={{ textDecoration: 'none' }} onClick={() => openDraft(m.id)}>Continuar</Link>
