@@ -1,4 +1,4 @@
-const { db } = require("../config/firebase");
+const { db, FieldValue } = require("../config/firebase");
 const bcrypt = require("bcrypt");
 const { cifrar, decifrar } = require("../utils/crypto");
 
@@ -324,6 +324,8 @@ exports.guardarQuestao = async (req, res) => {
         }
 
         const questoes = m.questoes || [];
+        const imagemAnterior = questoes[slot - 1]?.image;
+
         questoes[slot - 1] = {
             slot,
             type: tipo,
@@ -333,7 +335,21 @@ exports.guardarQuestao = async (req, res) => {
             filled: true,
         };
 
-        await db.collection("maratonas").doc(m.id).update({ questoes });
+        // É AQUI que a imagem antiga deixa de servir para alguma coisa — e não
+        // no momento do envio. Enquanto a questão não é guardada, é ela que o
+        // aluno vê. Ver a nota em uploadController.imagemDaQuestao.
+        //
+        // A "pendente" deste slot passa a estar gravada, portanto deixa de
+        // precisar de ser seguida.
+        await db.collection("maratonas").doc(m.id).update({
+            questoes,
+            [`imagensPendentes.${slot}`]: FieldValue.delete(),
+        });
+
+        if (imagemAnterior && imagemAnterior !== image) {
+            await apagarImagem(caminhoDoUrl(imagemAnterior));
+        }
+
         res.json({ ok: true, slot, questionsUploaded: questoes.filter((q) => q && q.filled).length });
     } catch (e) {
         console.error(e);
@@ -428,11 +444,19 @@ exports.apagar = async (req, res) => {
             });
         }
 
-        // As imagens das questões ocupam espaço na base de dados e mais ninguém
-        // lhes vai chegar. Apagadas primeiro: se algo falhar aqui, a maratona
-        // continua a existir e a operação pode ser repetida sem perder nada.
-        for (const q of m.questoes || []) {
-            if (q && q.image) await apagarImagem(caminhoDoUrl(q.image));
+        // As imagens ocupam espaço na base de dados e mais ninguém lhes vai
+        // chegar. Apagadas primeiro: se algo falhar aqui, a maratona continua a
+        // existir e a operação pode ser repetida sem perder nada.
+        //
+        // Inclui as PENDENTES — imagens enviadas para um slot cuja questão
+        // nunca chegou a ser guardada. Não estão em `questoes`, e sem esta
+        // linha sobreviveriam à maratona que as justificava.
+        const paraApagar = new Set([
+            ...(m.questoes || []).map((q) => q && q.image),
+            ...Object.values(m.imagensPendentes || {}),
+        ]);
+        for (const url of paraApagar) {
+            if (url) await apagarImagem(caminhoDoUrl(url));
         }
 
         // Conversas de Dúvidas desta maratona: sem maratona não têm assunto.

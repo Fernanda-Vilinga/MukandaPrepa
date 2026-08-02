@@ -42,13 +42,30 @@ exports.imagemDaQuestao = async (req, res) => {
 
         const { url } = await guardarImagem(req.body, `maratonas/${m.id}`, `q${slot}`, baseUrlDoPedido(req));
 
-        // A imagem anterior deste slot deixa de servir para alguma coisa.
-        // Apaga-se DEPOIS de a nova estar guardada: se a gravação falhasse,
-        // ficávamos sem nenhuma das duas.
-        const anterior = (m.questoes || [])[slot - 1];
-        if (anterior && anterior.image && anterior.image !== url) {
-            await apagarImagem(caminhoDoUrl(anterior.image));
+        // ── Duas coisas erradas aqui antes ──────────────────────────────────
+        //
+        // 1. Apagava-se logo a imagem GRAVADA na questão. Mas enviar não é
+        //    guardar: se o professor carregasse uma substituição e depois não
+        //    guardasse a questão — ou fechasse a página — a questão continuava
+        //    a apontar para uma imagem que já não existia. Numa maratona
+        //    publicada, isso é um enunciado em branco no dia da prova.
+        //    A imagem gravada só se apaga quando a questão for mesmo guardada
+        //    com outra (ver marathonController.guardarQuestao).
+        //
+        // 2. Nada apagava as imagens enviadas e nunca guardadas. Carregar
+        //    cinco imagens no mesmo slot à procura da melhor deixava quatro
+        //    registos a ocupar espaço para sempre, sem ninguém lhes chegar.
+        //    Guarda-se agora qual é a "pendente" de cada slot: ao chegar outra,
+        //    a anterior vai-se — a menos que seja a que está gravada.
+        const pendentes = m.imagensPendentes || {};
+        const pendenteAnterior = pendentes[String(slot)];
+        const gravada = (m.questoes || [])[slot - 1]?.image;
+
+        if (pendenteAnterior && pendenteAnterior !== url && pendenteAnterior !== gravada) {
+            await apagarImagem(caminhoDoUrl(pendenteAnterior));
         }
+
+        await db.collection("maratonas").doc(m.id).update({ [`imagensPendentes.${slot}`]: url });
 
         res.json({ ok: true, url });
     } catch (e) {
@@ -88,10 +105,24 @@ exports.fotografiaDaResposta = async (req, res) => {
 
         const { url } = await guardarImagem(req.body, `respostas/${s.id}`, `q${indice}`, baseUrlDoPedido(req));
 
-        const anterior = (s.respostas || {})[questoes[indice].id];
-        if (anterior && anterior !== url) {
-            await apagarImagem(caminhoDoUrl(anterior));
+        // Aqui a regra é diferente da das questões, de propósito.
+        //
+        // A fotografia gravada É apagada logo, porque o aluno vê o resultado no
+        // ecrã e volta a enviar se algo correr mal — ao contrário do enunciado
+        // de uma prova publicada, onde um erro só se descobre no dia. E porque
+        // a resposta é gravada um segundo depois do envio, deixar a anterior
+        // para trás significaria uma imagem órfã por cada substituição.
+        //
+        // A pendente é apagada pela mesma razão que nas questões: o aluno pode
+        // fotografar três vezes seguidas antes de a resposta chegar ao servidor.
+        const gravada = (s.respostas || {})[questoes[indice].id];
+        const pendenteAnterior = (s.imagensPendentes || {})[String(indice)];
+
+        for (const antiga of new Set([gravada, pendenteAnterior])) {
+            if (antiga && antiga !== url) await apagarImagem(caminhoDoUrl(antiga));
         }
+
+        await db.collection("sessoes").doc(s.id).update({ [`imagensPendentes.${indice}`]: url });
 
         res.json({ ok: true, url });
     } catch (e) {
