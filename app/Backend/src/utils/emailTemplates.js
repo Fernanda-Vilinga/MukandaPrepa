@@ -1,6 +1,8 @@
 // Modelos HTML simples para os emails transaccionais — uma única moldura
 // (base()) com a identidade da MUKANDA PREPA, para não repetir CSS em
 // cada controller. Texto sempre em português de Angola, directo.
+const { faseGratuita } = require("./fase");
+
 const APP_URL = process.env.APP_URL || "http://localhost:5173";
 
 const ORANGE = "#FB6D1D";
@@ -41,7 +43,9 @@ const boasVindasEstudante = ({ nome }) => ({
       <li>Correcção pelos professores e resultados no teu dashboard</li>
       <li>Chat de dúvidas com o professor de cada maratona</li>
     </ul>
-    <p>Entraste no plano <b>Basic</b>, que é gratuito. Podes mudar de plano a qualquer momento a partir da app.</p>`,
+    ${faseGratuita()
+        ? `<p>Nesta fase, as maratonas e as aulas online MUKANDA PREPA 2026 são <b>totalmente gratuitas</b> — não há planos para comprar nem pagamentos a fazer.</p>`
+        : `<p>Entraste no plano <b>Basic</b>, que é gratuito. Podes mudar de plano a qualquer momento a partir da app.</p>`}`,
         { url: APP_URL, label: "Entrar na plataforma" }),
 });
 

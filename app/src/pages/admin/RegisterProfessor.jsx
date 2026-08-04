@@ -117,12 +117,17 @@ export default function RegisterProfessor() {
           <div className="col">
             <div className="card" style={{ background: 'var(--dark)', color: '#fff' }}>
               <div className="mont" style={{ fontWeight: 700, marginBottom: 12 }}>📧 Email automático</div>
+              {/* Espelha o modelo real (Backend/src/utils/emailTemplates.js →
+                  boasVindasProfessor). O endereço não é escrito aqui: o email
+                  leva um botão para APP_URL, que muda por variável de ambiente
+                  quando o domínio próprio entrar. */}
               <div className="sm" style={{ color: '#B9BAC6', background: 'rgba(255,255,255,.06)', borderRadius: 12, padding: 16 }}>
-                <b style={{ color: '#fff' }}>Bem-vindo à MUKANDA PREPA</b><br /><br />
-                Olá {form.name.split(' ')[0] || '—'}, a tua conta de professor foi criada.<br /><br />
+                <b style={{ color: '#fff' }}>Bem-vindo(a), Prof. {form.name.split(' ')[0] || '—'} 👋</b><br /><br />
+                A tua conta de professor na Plataforma de Maratonas MUKANDA PREPA foi criada. Estas são as tuas credenciais de acesso:<br /><br />
                 Email: {form.email || '—'}<br />
                 Senha temporária: MKP-••••<br /><br />
-                Entra em app.mukandaprepa.ao e define a tua nova senha.
+                Por segurança, no primeiro acesso vais ter de definir uma senha nova.<br /><br />
+                <span style={{ display: 'inline-block', background: 'var(--orange)', color: '#fff', borderRadius: 8, padding: '8px 14px', fontWeight: 600 }}>Entrar na plataforma</span>
               </div>
             </div>
             <div className="card" style={{ marginTop: 20 }}>
