@@ -22,13 +22,20 @@ export default function Terms() {
   // Os termos abrem num separador NOVO a partir do registo — o formulário
   // preenchido fica no separador de origem. "Voltar" não deve navegar este
   // separador para um registo vazio: deve FECHÁ-LO, revelando o registo
-  // original tal como estava. O browser só deixa fechar separadores abertos
-  // por um link/script (é o caso); se alguém tiver aberto /termos
-  // directamente, o fecho é recusado em silêncio e seguimos para o registo
-  // nesta própria janela — onde o rascunho guardado restaura os campos.
+  // original tal como estava.
+  //
+  // A distinção faz-se pelo ?origem=registo que o link do registo acrescenta:
+  // sem ele (alguém abriu /termos directamente), NÃO se tenta fechar — o
+  // browser fecha qualquer separador com uma só entrada no histórico, e o
+  // aluno ficava sem janela nenhuma. Nesse caso navega-se normalmente.
+  const veioDoRegisto = new URLSearchParams(window.location.search).get('origem') === 'registo';
   const voltarAoRegisto = () => {
-    window.close();
-    setTimeout(() => navigate('/registo'), 150);
+    if (veioDoRegisto) {
+      window.close();
+      setTimeout(() => navigate('/registo'), 150);   // rede de segurança
+    } else {
+      navigate('/registo');
+    }
   };
 
   return (

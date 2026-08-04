@@ -139,7 +139,10 @@ export default function Register() {
                   formulário nunca sair do ecrã. O stopPropagation impede o
                   clique no link de alternar também a checkbox (comportamento
                   de <a> dentro de <label> nalguns browsers). */}
-              <Link to="/termos" target="_blank" rel="noreferrer" style={{ color: 'var(--blue)' }} onClick={(e) => e.stopPropagation()}>termos e condições</Link>{' '}
+              {/* ?origem=registo diz à página de termos que há um separador
+                  de registo aberto atrás — o "Voltar" dela fecha este
+                  separador em vez de navegar. */}
+              <Link to="/termos?origem=registo" target="_blank" rel="noreferrer" style={{ color: 'var(--blue)' }} onClick={(e) => e.stopPropagation()}>termos e condições</Link>{' '}
               e a política de privacidade.
             </span>
           </label>

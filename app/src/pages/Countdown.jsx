@@ -96,7 +96,9 @@ export default function Countdown() {
           <div style={{ fontSize: 16 }}>{erroCarregar}</div>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 18, flexWrap: 'wrap' }}>
             <button className="btn" onClick={carregar}>Tentar de novo</button>
-            <button className="btn ghost" style={{ color: '#fff', borderColor: '#3A3A4A' }} onClick={() => navigate(`/maratonas/${id}`)}>Voltar à maratona</button>
+            {/* Botão secundário explícito para fundo escuro: o .btn.ghost tem
+                fundo branco e deixava o texto branco invisível. */}
+            <button className="btn" style={{ background: 'transparent', border: '1.5px solid #55566A', color: '#fff' }} onClick={() => navigate(`/maratonas/${id}`)}>Voltar à maratona</button>
           </div>
         </div>
       )}
@@ -108,7 +110,9 @@ export default function Countdown() {
           <div className="xs" style={{ color: '#8A8B9A', marginTop: 8 }}>Nada se perdeu — a tua tentativa só conta depois de a prova abrir.</div>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 18, flexWrap: 'wrap' }}>
             <button className="btn" disabled={aIniciar} onClick={iniciar}>{aIniciar ? 'A iniciar…' : 'Tentar iniciar de novo'}</button>
-            <button className="btn ghost" style={{ color: '#fff', borderColor: '#3A3A4A' }} onClick={() => navigate(`/maratonas/${id}`)}>Voltar à maratona</button>
+            {/* Botão secundário explícito para fundo escuro: o .btn.ghost tem
+                fundo branco e deixava o texto branco invisível. */}
+            <button className="btn" style={{ background: 'transparent', border: '1.5px solid #55566A', color: '#fff' }} onClick={() => navigate(`/maratonas/${id}`)}>Voltar à maratona</button>
           </div>
         </div>
       )}

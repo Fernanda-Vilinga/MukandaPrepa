@@ -29,6 +29,43 @@ export default function Session() {
   const [guardado, setGuardado] = useState('guardado');
   const submitting = useRef(false);
 
+  // Ligação à internet, detectada no instante em que cai — os eventos do
+  // browser disparam antes de o auto-save sequer tentar. Perder a rede a
+  // meio de uma prova cronometrada é o pior momento possível para um aviso
+  // discreto: a faixa por baixo do cabeçalho não deixa dúvidas, diz ao aluno
+  // exactamente o que fazer (continuar a resolver, não fechar a página), e
+  // confirma em verde quando tudo ficou de novo no servidor.
+  const [online, setOnline] = useState(() => navigator.onLine);
+  const [recuperado, setRecuperado] = useState(false);
+  const estavaEmRisco = useRef(false);
+
+  useEffect(() => {
+    const ligou = () => setOnline(true);
+    const caiu = () => setOnline(false);
+    window.addEventListener('online', ligou);
+    window.addEventListener('offline', caiu);
+    return () => {
+      window.removeEventListener('online', ligou);
+      window.removeEventListener('offline', caiu);
+    };
+  }, []);
+
+  useEffect(() => {
+    const emRisco = !online || guardado === 'por-guardar';
+    if (emRisco) {
+      estavaEmRisco.current = true;
+      setRecuperado(false);
+      return undefined;
+    }
+    if (estavaEmRisco.current && guardado === 'guardado') {
+      estavaEmRisco.current = false;
+      setRecuperado(true);
+      const t = setTimeout(() => setRecuperado(false), 6000);
+      return () => clearTimeout(t);
+    }
+    return undefined;
+  }, [online, guardado]);
+
   // Os dados da maratona só alimentam o cabeçalho (título). Se a chamada
   // falhar a meio da prova, o ecrã ficava em branco PARA SEMPRE — com o
   // cronómetro a correr invisível e as respostas inacessíveis. A prova em si
@@ -173,6 +210,24 @@ export default function Session() {
           </div>
         </div>
       </header>
+
+      {/* Faixa de estado da ligação — visível nas duas vistas (questões e
+          revisão), cola-se ao topo ao rolar, por cima de tudo. */}
+      {(!online || guardado === 'por-guardar') && (
+        <div role="alert" style={{ position: 'sticky', top: 0, zIndex: 30, background: 'var(--red)', color: '#fff', padding: '12px 18px', textAlign: 'center', fontWeight: 600, fontSize: 14.5 }}>
+          ⚠ {online
+            ? 'As tuas respostas ainda não chegaram ao servidor.'
+            : 'A tua ligação à internet caiu.'}{' '}
+          Continua a resolver — as respostas ficam guardadas neste dispositivo
+          e são reenviadas sozinhas assim que a ligação voltar.
+          <b> Não feches nem recarregues esta página.</b>
+        </div>
+      )}
+      {recuperado && (
+        <div role="status" style={{ position: 'sticky', top: 0, zIndex: 30, background: 'var(--green)', color: '#fff', padding: '10px 18px', textAlign: 'center', fontWeight: 600, fontSize: 14.5 }}>
+          ✓ Ligação restabelecida — todas as respostas estão no servidor. Boa prova!
+        </div>
+      )}
 
       {!review ? (
         <div className="wrap" style={{ maxWidth: 960 }}>

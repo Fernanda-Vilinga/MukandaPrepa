@@ -203,7 +203,12 @@ td { padding: 16px; border-bottom: 1px solid #EFEFF2; font-size: 14.5px; }
 .marca-sessao { display: flex; align-items: center; flex-shrink: 0; }
 .sessao-info { flex: 1; min-width: 0; display: flex; align-items: center; gap: 20px; }
 .sessao-info__principal { flex: 1; min-width: 0; }
-.sessao-info__lado { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.sessao-info__lado { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+
+/* Ecrã da prova em computador: os 72px da topbar esmagavam o cronómetro e a
+   contagem empilhados à direita — o cronómetro chegava a sair do rebordo.
+   Altura própria, com respiração vertical. */
+.topbar.session { height: auto; min-height: 96px; padding-top: 12px; padding-bottom: 12px; }
 .titulo-sessao { font-weight: 700; font-size: 15px; line-height: 1.25; overflow-wrap: anywhere; }
 .contagem-sessao { font-weight: 600; font-size: 13px; white-space: nowrap; }
 
