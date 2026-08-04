@@ -134,7 +134,7 @@ export default function Contactos() {
             </div>
             <div className="contactos-info__card">
               <h3>Email</h3>
-              <a href="mailto:mukandaprepa@gmail.com">mukandaprepa@gmail.com</a>
+              <a href={`mailto:${CONTACTO.email}`}>{CONTACTO.email}</a>
             </div>
             <div className="contactos-info__card">
               <h3>Telefone</h3>

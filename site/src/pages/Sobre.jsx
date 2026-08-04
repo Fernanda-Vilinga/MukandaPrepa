@@ -54,10 +54,10 @@ export default function Sobre() {
               ajude a preparar-se com confiança.
             </p>
             <p>
-              Juntamos maratonas de exercícios, aulas ao vivo e uma biblioteca
-              de exames passados numa só plataforma, pensada para o contexto
-              angolano — incluindo o acesso maioritariamente via telemóvel e
-              ligações 3G/4G.
+              Juntamos maratonas de exercícios e aulas ao vivo numa só
+              plataforma — com uma biblioteca de exames passados a caminho —
+              pensada para o contexto angolano, incluindo o acesso
+              maioritariamente via telemóvel e ligações 3G/4G.
             </p>
             <Link to="/missao" className="sobre-historia__link">
               Conhece a nossa Visão 2030 →

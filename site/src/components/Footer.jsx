@@ -42,7 +42,7 @@ export default function Footer() {
         <div className="footer__col">
           <h4>Contactos</h4>
           <p>Luanda, Angola</p>
-          <a href="mailto:mukandaprepa@gmail.com">mukandaprepa@gmail.com</a>
+          <a href={`mailto:${CONTACTO.email}`}>{CONTACTO.email}</a>
           <a href={CONTACTO.telefoneLink}>{CONTACTO.telefoneLegivel}</a>
           <a href={CONTACTO.whatsappLink} target="_blank" rel="noreferrer">
             WhatsApp: {CONTACTO.telefoneLegivel}

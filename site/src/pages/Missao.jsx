@@ -40,9 +40,9 @@ export default function Missao() {
           <p>
             Acreditamos que a preparação para a universidade não devia
             depender da capacidade financeira da família ou da província
-            onde se nasce. É por isso que mantemos um plano totalmente
-            gratuito com acesso a maratonas abertas, biblioteca de exames
-            passados e uma comunidade activa de estudantes.
+            onde se nasce. É por isso que, nesta primeira fase, as maratonas
+            e as aulas online são totalmente gratuitas para todos os
+            estudantes, com uma comunidade activa a acompanhar cada semana.
           </p>
         </div>
       </section>

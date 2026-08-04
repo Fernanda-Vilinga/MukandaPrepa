@@ -14,7 +14,9 @@ export const CONTACTO = {
   telefoneLink: `tel:+${TELEFONE_DIGITOS}`,
   // Conversa de WhatsApp
   whatsappLink: `https://wa.me/${TELEFONE_DIGITOS}`,
-  email: 'geral@mukandaprepa.ao',
+  // Endereço real e activo. O domínio próprio ainda não existe — quando a
+  // Fluxo o entregar, muda-se AQUI (e só aqui) para geral@mukandaprepa.ao.
+  email: 'mukandaprepa@gmail.com',
 };
 
 // WhatsApp com mensagem já preenchida — para os botões de "falar connosco".
