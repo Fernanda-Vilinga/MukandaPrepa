@@ -1,7 +1,7 @@
 // Termos e Condições — versão validada pela área jurídica (Ago 2026).
 // Alterações a este texto devem passar pela equipa de Gestão e Administração
 // (decisão D16) antes de entrar no código.
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Brand } from '../components/Ui.jsx';
 
 const SECTIONS = [
@@ -17,14 +17,26 @@ const SECTIONS = [
 ];
 
 export default function Terms() {
+  const navigate = useNavigate();
+
+  // Os termos abrem num separador NOVO a partir do registo — o formulário
+  // preenchido fica no separador de origem. "Voltar" não deve navegar este
+  // separador para um registo vazio: deve FECHÁ-LO, revelando o registo
+  // original tal como estava. O browser só deixa fechar separadores abertos
+  // por um link/script (é o caso); se alguém tiver aberto /termos
+  // directamente, o fecho é recusado em silêncio e seguimos para o registo
+  // nesta própria janela — onde o rascunho guardado restaura os campos.
+  const voltarAoRegisto = () => {
+    window.close();
+    setTimeout(() => navigate('/registo'), 150);
+  };
+
   return (
     <div style={{ minHeight: '100dvh', background: 'var(--bg)' }}>
       <header className="topbar">
         <Brand />
         <span style={{ flex: 1 }} />
-        {/* O regresso não perde o formulário: o rascunho do registo vive em
-            sessionStorage (ver Register.jsx) e é restaurado ao montar. */}
-        <Link to="/registo" className="btn sm ghost" style={{ textDecoration: 'none' }}>← Voltar ao registo</Link>
+        <button className="btn sm ghost" onClick={voltarAoRegisto}>← Voltar ao registo</button>
       </header>
       <div className="wrap" style={{ maxWidth: 860 }}>
         <div className="card" style={{ padding: 48 }}>
