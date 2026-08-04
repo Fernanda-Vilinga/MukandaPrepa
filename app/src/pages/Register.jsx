@@ -20,12 +20,19 @@ const lerDraft = () => {
   }
 };
 
+// As senhas nunca tocam no sessionStorage. Vivem neste objecto em memória do
+// módulo, que sobrevive à navegação dentro do mesmo separador (ir aos termos
+// e voltar, por exemplo) e desaparece ao fechar ou recarregar a página —
+// exactamente o compromisso certo entre conforto e segurança.
+const senhasEmMemoria = { password: '', confirm: '' };
+
 export default function Register() {
   const navigate = useNavigate();
   const [form, setForm] = useState(() => ({
-    name: '', email: '', phone: '', area: '', password: '', confirm: '', terms: false,
+    name: '', email: '', phone: '', area: '', terms: false,
     ...lerDraft(),
-    password: '', confirm: '',   // nunca vêm do rascunho
+    password: senhasEmMemoria.password,
+    confirm: senhasEmMemoria.confirm,
   }));
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -38,6 +45,8 @@ export default function Register() {
     } catch {
       // armazenamento cheio ou bloqueado — o rascunho é conforto, não requisito
     }
+    senhasEmMemoria.password = form.password;
+    senhasEmMemoria.confirm = form.confirm;
   }, [form]);
 
   // O botão só fica disponível com todos os campos preenchidos + termos aceites
@@ -59,6 +68,8 @@ export default function Register() {
     try {
       await register(form);
       try { sessionStorage.removeItem(DRAFT_KEY); } catch { /* nada a fazer */ }
+      senhasEmMemoria.password = '';
+      senhasEmMemoria.confirm = '';
       navigate('/');
     } catch (err) {
       setError(err.message);

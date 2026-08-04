@@ -10,13 +10,10 @@ const { _obterConfig } = require("./configController");
 const PLANO_LABEL = { basic: "Basic", plus: "Plus", premium: "Premium" };
 const PLANOS_VALIDOS = ["basic", "plus", "premium"];
 
-// Fase gratuita (D11 + D-A3, 3 Ago 2026): na Fase 1 não há upgrades — todos
-// os alunos estão no Basic e as maratonas são gratuitas. O interruptor é uma
-// variável de ambiente para os planos voltarem sem deploy de código; por
-// omissão está LIGADO, porque é o estado real desta fase. A app já não mostra
-// os cartões de compra (src/config/fase.js) — isto garante o mesmo do lado do
-// servidor, para pedidos feitos à mão contra a API.
-const faseGratuita = () => String(process.env.FASE_GRATUITA ?? "true").toLowerCase() !== "false";
+// Fase gratuita: ver src/utils/fase.js (interruptor único do servidor).
+// A app já não mostra os cartões de compra (src/config/fase.js) — isto
+// garante o mesmo do lado do servidor, para pedidos feitos à mão contra a API.
+const { faseGratuita } = require("../utils/fase");
 
 const conversaSuporteDe = async (estudanteId) => {
     const existentes = (await db.collection("conversas").where("estudanteId", "==", estudanteId).get())
