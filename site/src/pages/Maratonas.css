@@ -82,6 +82,12 @@
   margin-bottom: 28px;
 }
 
+.maratonas-calendario__nota {
+  text-align: center;
+  color: #5A5A6E;
+  margin-top: 18px;
+}
+
 .maratonas-calendario__scroll {
   overflow-x: auto;
 }

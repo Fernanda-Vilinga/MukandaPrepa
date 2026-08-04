@@ -18,17 +18,14 @@ const PILARES = [
   },
 ];
 
-// Só a 1ª maratona tem data confirmada. As restantes ficam por anunciar em
-// vez de mostrarem datas inventadas — o site dizia 22 de Julho enquanto o
-// contador dizia 17 de Agosto. Actualizar quando o documento institucional
-// fixar o calendário (a data confirmada vive em src/config/maratona.js).
+// Calendário confirmado pela equipa (4 Ago 2026): três semanas, três fases.
+// A primeira maratona começa a 20/08 às 20h00 (data no src/config/maratona.js,
+// que alimenta o contador). Depois de 10/09 não são publicadas novas
+// maratonas; as abertas e as aulas online continuam até 15/09.
 const CALENDARIO = [
-  { semana: `Semana 1 · ${DATA_PROXIMA_MARATONA_LEGIVEL}`, fase: 'Fase Aberta', area: 'Geral', estado: 'aberta' },
-  { semana: 'Semana 2 · data a anunciar', fase: 'Fase Temática', area: 'Matemática', estado: 'brevemente' },
-  { semana: 'Semana 3 · data a anunciar', fase: 'Fase Temática', area: 'Física', estado: 'brevemente' },
-  { semana: 'Semana 4 · data a anunciar', fase: 'Fase Temática', area: 'Química', estado: 'brevemente' },
-  { semana: 'Semana 5 · data a anunciar', fase: 'Fase Temática', area: 'Biologia', estado: 'brevemente' },
-  { semana: 'Semana 6 · data a anunciar', fase: 'Fase Temática', area: 'Português', estado: 'brevemente' },
+  { semana: 'Semana 1 · 20 a 26 de Agosto', fase: 'Fase A · Fundamental', estado: 'aberta' },
+  { semana: 'Semana 2 · 27 de Agosto a 2 de Setembro', fase: 'Fase B · Intermediária', estado: 'brevemente' },
+  { semana: 'Semana 3 · 3 a 10 de Setembro', fase: 'Fase C · Autonomia', estado: 'brevemente' },
 ];
 
 export default function Maratonas() {
@@ -79,7 +76,6 @@ export default function Maratonas() {
                 <tr>
                   <th>Semana</th>
                   <th>Fase</th>
-                  <th>Área</th>
                   <th>Estado</th>
                 </tr>
               </thead>
@@ -88,7 +84,6 @@ export default function Maratonas() {
                   <tr key={c.semana}>
                     <td>{c.semana}</td>
                     <td>{c.fase}</td>
-                    <td>{c.area}</td>
                     <td>
                       <span className={`pill pill--${c.estado}`}>
                         {c.estado === 'aberta' ? 'Inscrições abertas' : 'Em breve'}
@@ -99,6 +94,10 @@ export default function Maratonas() {
               </tbody>
             </table>
           </div>
+          <p className="maratonas-calendario__nota">
+            A primeira maratona começa a {DATA_PROXIMA_MARATONA_LEGIVEL}. As
+            maratonas abertas e as aulas online continuam até 15 de Setembro.
+          </p>
         </div>
       </section>
     </>
