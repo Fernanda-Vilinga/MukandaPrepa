@@ -6,8 +6,8 @@ const COMO_FUNCIONAM = [
     desc: 'Aulas semanais com professores especializados, em directo, com interacção em tempo real.',
   },
   {
-    titulo: 'Gravadas',
-    desc: 'No plano Premium, todas as aulas ficam gravadas para reveres quando quiseres.',
+    titulo: 'Gratuitas em 2026',
+    desc: 'Nesta primeira fase, as aulas online MUKANDA PREPA 2026 são totalmente gratuitas.',
   },
   {
     titulo: 'Por matéria',
@@ -15,14 +15,9 @@ const COMO_FUNCIONAM = [
   },
 ];
 
-// Horário provisório — o Briefing não especificava dias/horas/matérias concretas.
-// Substituir pelo horário real definido pela equipa pedagógica.
-const HORARIO = [
-  { dia: 'Segunda', materia: 'Matemática', hora: '18h00', plano: 'Plus' },
-  { dia: 'Terça', materia: 'Física', hora: '18h00', plano: 'Premium' },
-  { dia: 'Quarta', materia: 'Português', hora: '18h00', plano: 'Plus' },
-  { dia: 'Quinta', materia: 'Química', hora: '18h00', plano: 'Premium' },
-];
+// Decisão da equipa (D9, 3 Ago 2026): o horário provisório saiu — era
+// inventado. Quando a equipa pedagógica fixar o horário real, volta aqui
+// como tabela (a estrutura antiga está no histórico do git).
 
 export default function AulasOnline() {
   return (
@@ -35,7 +30,7 @@ export default function AulasOnline() {
               Professores especializados a explicar as matérias mais difíceis,
               com aulas ao vivo e gravadas, por matéria e ao teu ritmo.
             </p>
-            <a href="/planos" className="btn btn-primary">Ver plano com aulas</a>
+            <a href="/planos" className="btn btn-primary">Começar gratuitamente</a>
           </div>
           <div className="aulas-hero__illustration" aria-hidden="true">
             <svg viewBox="0 0 400 320" xmlns="http://www.w3.org/2000/svg">
@@ -64,30 +59,10 @@ export default function AulasOnline() {
       <section className="aulas-horario">
         <div className="container">
           <h2>Horário semanal</h2>
-          <div className="aulas-horario__scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th>Dia</th>
-                  <th>Matéria</th>
-                  <th>Hora</th>
-                  <th>Plano</th>
-                </tr>
-              </thead>
-              <tbody>
-                {HORARIO.map((h) => (
-                  <tr key={`${h.dia}-${h.materia}`}>
-                    <td>{h.dia}</td>
-                    <td>{h.materia}</td>
-                    <td>{h.hora}</td>
-                    <td>
-                      <span className="pill-plano">{h.plano}</span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <p className="aulas-horario__aviso">
+            O horário das aulas será anunciado brevemente na plataforma e nas
+            nossas redes sociais.
+          </p>
         </div>
       </section>
 

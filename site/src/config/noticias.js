@@ -3,46 +3,29 @@
 // A página Notícias mostra todas; a página Blog mostra as três mais recentes.
 // Estavam escritas nos dois sítios e já tinham divergido nas datas.
 //
-// Conteúdo provisório, a substituir pelas notícias reais quando o documento
-// institucional estiver disponível. As duas primeiras datas são as únicas
-// confirmadas: lançamento a 10 de Agosto, primeira maratona a 17 de Agosto
+// Só entram aqui factos confirmados pelo calendário oficial
+// (Calendario-Realizacao-MukandaPrepa-2026-2027): lançamento e abertura de
+// inscrições a 17 de Agosto às 12h; primeira maratona a 20 de Agosto às 20h00
 // (esta última também em src/config/maratona.js, que alimenta o contador).
+// Nada de números, planos ou parcerias por confirmar.
 export const NOTICIAS = [
   {
     titulo: 'MUKANDA PREPA lança a primeira Maratona Nacional',
+    data: '20 Ago 2026',
+    resumo: 'A primeira maratona aberta a todos os estudantes acontece a 20 de Agosto, às 20h00, com inscrições abertas desde 17 de Agosto.',
+    cor: '#1742E7',
+  },
+  {
+    titulo: 'Lançamento oficial da plataforma MUKANDA PREPA',
     data: '17 Ago 2026',
-    resumo: 'A primeira maratona aberta a todos os estudantes acontece a 17 de Agosto, com inscrições já abertas.',
-    cor: '#1742E7',
-  },
-  {
-    titulo: 'Lançamento oficial da plataforma mukandaprepa.ao',
-    data: '10 Ago 2026',
-    resumo: 'O website MUKANDA PREPA entra oficialmente no ar a 10 de Agosto, com Homepage, planos, maratonas e aulas online.',
+    resumo: 'O website entra oficialmente no ar a 17 de Agosto, ao meio-dia, com a abertura das inscrições para as maratonas.',
     cor: '#FB6D1D',
   },
   {
-    titulo: 'Novo plano Premium já disponível',
-    data: '25 Jul 2026',
-    resumo: 'Aulas gravadas, maratonas por universidade e plano de estudo individualizado, tudo num só plano.',
+    titulo: 'Maratonas e Aulas Online 2026: 100% gratuitas',
+    data: '17 Ago 2026',
+    resumo: 'Nesta primeira fase, as maratonas e as aulas online MUKANDA PREPA 2026 são totalmente gratuitas para todos os estudantes.',
     cor: '#FB6D1D',
-  },
-  {
-    titulo: 'Parceria com professores especializados',
-    data: '15 Jul 2026',
-    resumo: 'Reforçámos a equipa pedagógica para as aulas ao vivo dos planos Plus e Premium.',
-    cor: '#1742E7',
-  },
-  {
-    titulo: 'Como preparar-te para os exames de acesso',
-    data: '30 Jun 2026',
-    resumo: 'Reunimos as melhores estratégias de estudo para os últimos meses antes do exame.',
-    cor: '#FB6D1D',
-  },
-  {
-    titulo: 'MUKANDA PREPA ultrapassa os 500 estudantes inscritos',
-    data: '15 Jun 2026',
-    resumo: 'Um marco importante na nossa missão de tornar o acesso à universidade mais justo em Angola.',
-    cor: '#1742E7',
   },
 ];
 

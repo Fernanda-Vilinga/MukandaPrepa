@@ -15,6 +15,12 @@
   gap: 24px;
 }
 
+/* Fase gratuita: um único cartão, centrado (ver config/planos.js). */
+.planos-preview__grid--solo {
+  grid-template-columns: minmax(0, 380px);
+  justify-content: center;
+}
+
 .plano-card {
   position: relative;
   border: 1.5px solid var(--color-border);

@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { currentUser, requestPlanUpgrade, getPlans } from '../services/api.js';
 import { Topbar } from '../components/Ui.jsx';
+import { FASE_GRATUITA } from '../config/fase.js';
 
 // Cor de destaque por plano — puramente visual, não vem do backend.
 const ACCENT = { basic: '#64748B', plus: '#1742E7', premium: '#FB6D1D' };
@@ -32,10 +33,52 @@ export default function Plans() {
   const user = currentUser();
 
   useEffect(() => {
+    if (FASE_GRATUITA) return;   // não há cartões para carregar nesta fase
     getPlans().then((data) => setPlans(data.plans)).catch(() => setPlans([]));
   }, []);
 
   const voltar = () => navigate(-1);
+
+  // Fase gratuita (ver src/config/fase.js): sem cartões de compra, sem
+  // código promocional, sem instruções de comprovativo. A página completa
+  // continua abaixo, pronta para quando os planos pagos voltarem.
+  if (FASE_GRATUITA) {
+    return (
+      <>
+        <Topbar />
+        <div className="wrap" style={{ maxWidth: 720 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: 8 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <h1 style={{ fontSize: 24, fontWeight: 800 }}>Planos MUKANDA PREPA</h1>
+            </div>
+            <button
+              onClick={voltar}
+              aria-label="Fechar e voltar"
+              style={{ background: 'none', border: '1.5px solid var(--brd)', borderRadius: 10, width: 40, height: 40, fontSize: 18, color: 'var(--mut)', flexShrink: 0 }}
+            >
+              ✕
+            </button>
+          </div>
+
+          <div style={{ border: '1.5px solid var(--brd)', borderRadius: 16, padding: 26, background: '#fff', marginTop: 12 }}>
+            <div className="mont" style={{ fontWeight: 800, fontSize: 19 }}>🎉 Nesta fase, é tudo gratuito</div>
+            <p className="sm" style={{ marginTop: 10 }}>
+              As maratonas e as aulas online MUKANDA PREPA 2026 estão incluídas
+              na tua conta, sem custos — não há planos para comprar nem
+              comprovativos para enviar.
+            </p>
+            <p className="sm mut" style={{ marginTop: 8 }}>
+              Quando houver novos planos com mais recursos, vamos anunciá-los
+              aqui e nas nossas redes sociais.
+            </p>
+            <button className="btn" style={{ marginTop: 18 }} onClick={voltar}>
+              Voltar
+            </button>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   const choose = async (plan) => {
     setBusy(plan.id);

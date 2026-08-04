@@ -2,7 +2,44 @@ import { useState } from 'react';
 import './Planos.css';
 import { appRegisto, propsLink } from '../config/appLinks';
 import { whatsappCom } from '../config/contactos';
-import { PLANOS } from '../config/planos';
+import { PLANOS, FASE_GRATUITA } from '../config/planos';
+
+// ── Conteúdo da fase gratuita ───────────────────────────────────────────────
+// Mostrado enquanto FASE_GRATUITA for true (ver config/planos.js). Só promete
+// o que existe na Fase 1: maratonas, aulas online e comunidade, sem custos.
+const FEATURES_GRATUITAS = [
+  `${PLANOS.find((p) => p.key === 'basic').tentativas} tentativas por maratona`,
+  'Maratonas nacionais abertas a todos',
+  'Aulas online ao vivo, sem custos',
+  'Comunidade de estudantes',
+];
+
+// Provisório — a validar pela equipa de marketing (D-A4) antes de 17/08.
+const FAQS_GRATUITAS = [
+  {
+    pergunta: 'É mesmo tudo gratuito?',
+    resposta:
+      'Sim. Nesta primeira fase, as maratonas e as aulas online MUKANDA PREPA 2026 são totalmente gratuitas para todos os estudantes.',
+  },
+  {
+    pergunta: 'Preciso de dados de pagamento para me inscrever?',
+    resposta: 'Não. Crias a tua conta e participas — não pedimos qualquer dado de pagamento.',
+  },
+  {
+    pergunta: 'Quantas tentativas tenho por maratona?',
+    resposta: `Tens ${PLANOS.find((p) => p.key === 'basic').tentativas} tentativas por maratona.`,
+  },
+  {
+    pergunta: 'Vai haver planos pagos?',
+    resposta:
+      'Mais tarde, com novos recursos. Qualquer novidade será anunciada no site e nas nossas redes sociais.',
+  },
+  {
+    pergunta: 'Como me inscrevo?',
+    resposta:
+      'Carrega em "Inscrever-me gratuitamente", cria a tua conta na plataforma e fica atento à data da primeira maratona: 20 de Agosto, às 20h00.',
+  },
+];
 
 
 const FEATURES = [
@@ -67,6 +104,84 @@ function FeatureValue({ value }) {
 
 export default function Planos() {
   const [openFaq, setOpenFaq] = useState(null);
+
+  // Fase gratuita: um único cartão, sem tabela comparativa nem preços.
+  // A versão com os três planos continua abaixo, pronta para as Fases 2/3.
+  if (FASE_GRATUITA) {
+    return (
+      <>
+        <section className="planos-hero">
+          <div className="container">
+            <h1>Nesta fase, é tudo gratuito</h1>
+            <p>Maratonas e aulas online MUKANDA PREPA 2026 sem custos, para todos os estudantes.</p>
+          </div>
+        </section>
+
+        <section className="planos-cards">
+          <div className="container planos-cards__grid planos-cards__grid--solo">
+            <div className="plano-card-full plano-card-full--destaque">
+              <span className="plano-card-full__badge">2026</span>
+              <h3>Maratonas &amp; Aulas Online</h3>
+              <p className="plano-card-full__preco">Grátis</p>
+              <p className="plano-card-full__pagamento">Sem pagamento, sem cartão</p>
+
+              <ul className="plano-card-full__features">
+                {FEATURES_GRATUITAS.map((f) => (
+                  <li key={f}>
+                    <span className="feature-check" aria-label="Incluído">✓</span>
+                    <span>{f}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <a
+                href={appRegisto()}
+                {...propsLink(appRegisto())}
+                className="btn btn-primary plano-card-full__cta"
+              >
+                Inscrever-me gratuitamente
+              </a>
+            </div>
+          </div>
+        </section>
+
+        <section className="planos-faq">
+          <div className="container">
+            <h2>Perguntas frequentes</h2>
+            <div className="planos-faq__list">
+              {FAQS_GRATUITAS.map((faq, index) => (
+                <div className="faq-item" key={faq.pergunta}>
+                  <button
+                    className="faq-item__question"
+                    onClick={() => setOpenFaq(openFaq === index ? null : index)}
+                    aria-expanded={openFaq === index}
+                  >
+                    {faq.pergunta}
+                    <span className="faq-item__icon">{openFaq === index ? '−' : '+'}</span>
+                  </button>
+                  {openFaq === index && <p className="faq-item__answer">{faq.resposta}</p>}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="planos-cta-final">
+          <div className="container planos-cta-final__inner">
+            <h2>Ainda tens dúvidas?</h2>
+            <a
+              href={whatsappCom('Olá! Tenho dúvidas sobre as maratonas gratuitas da MUKANDA PREPA.')}
+              target="_blank"
+              rel="noreferrer"
+              className="btn btn-primary"
+            >
+              Falar no WhatsApp
+            </a>
+          </div>
+        </section>
+      </>
+    );
+  }
 
   return (
     <>

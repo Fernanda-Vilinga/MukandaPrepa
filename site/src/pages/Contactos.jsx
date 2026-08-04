@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import './Contactos.css';
 import { CONTACTO } from '../config/contactos';
+import { API_BASE } from '../config/api';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -8,6 +9,7 @@ export default function Contactos() {
   const [form, setForm] = useState({ nome: '', email: '', assunto: '', mensagem: '' });
   const [error, setError] = useState('');
   const [enviado, setEnviado] = useState(false);
+  const [aEnviar, setAEnviar] = useState(false);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -20,15 +22,33 @@ export default function Contactos() {
     return '';
   };
 
-  const handleSubmit = (e) => {
+  // Entrega a mensagem ao backend (POST /contacto), que a envia por email
+  // para a caixa de suporte. Só se mostra "enviada" com resposta positiva —
+  // a versão anterior confirmava sucesso sem enviar nada.
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const validationError = validate();
     setError(validationError);
     if (validationError) return;
 
-    // TODO: ligar a um endpoint real (email transaccional ou backend) para
-    // entregar a mensagem. Por agora só valida no browser, não é enviada.
-    setEnviado(true);
+    setAEnviar(true);
+    try {
+      const resposta = await fetch(`${API_BASE}/contacto`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      const dados = await resposta.json().catch(() => ({}));
+      if (!resposta.ok) {
+        setError(dados.mensagem || 'Não foi possível enviar a mensagem. Tenta de novo.');
+        return;
+      }
+      setEnviado(true);
+    } catch {
+      setError('Sem ligação. Verifica a internet e tenta de novo.');
+    } finally {
+      setAEnviar(false);
+    }
   };
 
   return (
@@ -96,8 +116,12 @@ export default function Contactos() {
 
                 {error && <p className="contactos-form-card__error">{error}</p>}
 
-                <button type="submit" className="btn btn-primary contactos-form-card__submit">
-                  Enviar mensagem
+                <button
+                  type="submit"
+                  className="btn btn-primary contactos-form-card__submit"
+                  disabled={aEnviar}
+                >
+                  {aEnviar ? 'A enviar…' : 'Enviar mensagem'}
                 </button>
               </form>
             )}

@@ -45,14 +45,17 @@ const paraTexto = (html) => html.replace(/<br\s*\/?>/gi, "\n").replace(/<[^>]+>/
  * baixo, credenciais inválidas, etc.) regista o erro e continua, para não
  * quebrar o fluxo principal (registo, validação, compra, etc.).
  */
-async function enviarEmail({ to, subject, html }) {
+async function enviarEmail({ to, subject, html, replyTo }) {
     const texto = paraTexto(html);
     if (!configurado) {
         console.log(`\n✉ [EMAIL SIMULADO] Para: ${to}\n  Assunto: ${subject}\n  ---\n  ${texto.replace(/\n/g, "\n  ")}\n  ---\n`);
         return { simulado: true };
     }
     try {
-        const envio = transporter.sendMail({ from: remetente, to, subject, html, text: texto });
+        // replyTo: usado pelo formulário de contacto do site, para que
+        // "responder" no cliente de email vá para quem escreveu e não para
+        // a própria conta institucional.
+        const envio = transporter.sendMail({ from: remetente, to, subject, html, text: texto, ...(replyTo ? { replyTo } : {}) });
         const info = await Promise.race([
             envio,
             new Promise((_, rejeitar) =>

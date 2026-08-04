@@ -18,6 +18,15 @@
 // │                                                                      │
 // │  Ao alterar aqui:  admin → Gestão de planos → Modificar → Guardar     │
 // └──────────────────────────────────────────────────────────────────────┘
+// ── FASE GRATUITA ───────────────────────────────────────────────────────────
+// Decisão da equipa (D11 + D-A3, 3 Ago 2026): na Fase 1 (até 15/09) as
+// maratonas e as aulas online são gratuitas para todos; Plus e Premium não
+// estão disponíveis e ficam ESCONDIDOS (não "brevemente"). Os planos pagos
+// voltam nas Fases 2/3 (2027) — para os repor, basta pôr isto a false.
+// O mesmo interruptor existe na app (src/config/fase.js) e no backend
+// (variável FASE_GRATUITA) — mudar os três em conjunto.
+export const FASE_GRATUITA = true;
+
 export const PLANOS = [
   {
     key: 'basic',

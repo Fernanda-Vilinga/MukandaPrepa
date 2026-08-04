@@ -18,7 +18,7 @@ export default function Recursos() {
       <section className="recursos-hero">
         <div className="container">
           <h1>Recursos</h1>
-          <p>Materiais de estudo gratuitos para download, organizados por matéria.</p>
+          <p>Materiais de estudo gratuitos, organizados por matéria — brevemente disponíveis para download.</p>
         </div>
       </section>
 

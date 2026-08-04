@@ -1,12 +1,14 @@
 import './Missao.css';
 
-// ⚠️ Estatísticas de exemplo — NÃO são dados reais. Substituir por números
-// verificados pela equipa antes do lançamento; não publicar como estão.
-const ESTATISTICAS = [
-  { valor: '500+', label: 'Estudantes inscritos (exemplo)' },
-  { valor: '12', label: 'Maratonas realizadas (exemplo)' },
-  { valor: '3', label: 'Universidades parceiras (exemplo)' },
-  { valor: '18', label: 'Províncias alcançadas (exemplo)' },
+// Decisão da equipa (D5, 3 Ago 2026): a plataforma lança sem histórico, por
+// isso esta secção não anuncia números — anuncia compromissos. Quando houver
+// dados reais de maratonas realizadas e estudantes inscritos, os números
+// entram aqui com fonte.
+const COMPROMISSOS = [
+  { valor: 'Gratuito', label: 'Maratonas e aulas online 2026 sem custos' },
+  { valor: 'Nacional', label: 'Abertas a estudantes de todo o país' },
+  { valor: 'No telemóvel', label: 'Pensado para dados móveis e ecrãs pequenos' },
+  { valor: 'Comunidade', label: 'Estudantes e professores lado a lado' },
 ];
 
 export default function Missao() {
@@ -47,12 +49,9 @@ export default function Missao() {
 
       <section className="missao-stats">
         <div className="container">
-          <h2>O nosso impacto</h2>
-          <p className="missao-stats__aviso">
-            Valores de exemplo, ainda por confirmar com dados reais.
-          </p>
+          <h2>O nosso compromisso</h2>
           <div className="missao-stats__grid">
-            {ESTATISTICAS.map((e) => (
+            {COMPROMISSOS.map((e) => (
               <div className="stat-card" key={e.label}>
                 <span className="stat-card__valor">{e.valor}</span>
                 <span className="stat-card__label">{e.label}</span>
@@ -68,7 +67,7 @@ export default function Missao() {
           <p>
             Até 2030, queremos ser a plataforma de referência na preparação
             para o acesso ao ensino superior em Angola, presente em todas as
-            18 províncias, com milhares de estudantes preparados todos os
+            províncias do país, com milhares de estudantes preparados todos os
             anos e uma taxa de aprovação acima da média nacional.
           </p>
         </div>

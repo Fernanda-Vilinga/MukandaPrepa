@@ -10,6 +10,7 @@ const sessionRoutes = require("./src/routes/sessionRoutes");
 const { profSubs, results, resultDetail } = require("./src/routes/submissionRoutes");
 const { studentRouter: chatStudent, profRouter: chatProf, adminRouter: chatAdmin } = require("./src/routes/chatRoutes");
 const planRoutes = require("./src/routes/planRoutes");
+const contactoRoutes = require("./src/routes/contactoRoutes");
 const { uploads: uploadRoutes, imagens: imagensRoutes } = require("./src/routes/uploadRoutes");
 const { varrerExpiradas } = require("./src/controllers/sessionController");
 const seedAdmin = require("./src/utils/seedAdmin");
@@ -79,6 +80,7 @@ api.use("/chats", chatStudent);
 api.use("/prof/chats", chatProf);
 api.use("/admin/chats", chatAdmin);
 api.use("/plans", planRoutes);
+api.use("/contacto", contactoRoutes);   // formulário do site — pública, com limitador
 // Registada no router `api`, como todas as outras. Estava directamente no `app`
 // com o caminho fixo "/api/students", o que a deixava de fora da montagem dupla
 // abaixo: se a reescrita da hospedagem entregar o pedido já sem o prefixo /api,

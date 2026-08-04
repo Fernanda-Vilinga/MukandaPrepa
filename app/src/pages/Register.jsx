@@ -46,7 +46,7 @@ export default function Register() {
           <p className="mut sm" style={{ margin: '6px 0 20px' }}>Rápido e simples — só precisas destes dados.</p>
 
           <div className="sm" style={{ background: 'var(--green-l)', color: 'var(--green)', borderRadius: 12, padding: '12px 16px', marginBottom: 24, fontWeight: 500 }}>
-            ✓ A criação de conta é 100% gratuita. Entras no plano Basic e, já dentro da app, podes actualizar o plano quando quiseres.
+            ✓ A criação de conta é 100% gratuita — e nesta fase, as maratonas e as aulas online também. Sem pagamentos, sem comprovativos.
           </div>
 
           <div className="field">

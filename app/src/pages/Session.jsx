@@ -2,7 +2,7 @@
 // Countdown global, auto-save, submissão automática no fim do tempo (spec).
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getMarathon, activeSession, savedAnswers, saveAnswers, submitSession } from '../services/api.js';
+import { getMarathon, activeSession, savedAnswers, saveAnswers, submitSession, observarGuardado, haPorEnviar } from '../services/api.js';
 import { uploadFotoResposta } from '../services/imagens.js';
 import { Brand, Timer, ImagePh } from '../components/Ui.jsx';
 
@@ -26,15 +26,40 @@ export default function Session() {
   const [erroFoto, setErroFoto] = useState('');
   const [erroSubmissao, setErroSubmissao] = useState('');
   const [aSubmeter, setASubmeter] = useState(false);
+  const [guardado, setGuardado] = useState('guardado');
   const submitting = useRef(false);
 
-  useEffect(() => { getMarathon(id).then(setM); }, [id]);
+  // Os dados da maratona só alimentam o cabeçalho (título). Se a chamada
+  // falhar a meio da prova, o ecrã ficava em branco PARA SEMPRE — com o
+  // cronómetro a correr invisível e as respostas inacessíveis. A prova em si
+  // vive no browser (session + auto-save), portanto não depende desta
+  // chamada: falhando, segue-se com um título genérico e a prova continua.
+  useEffect(() => {
+    getMarathon(id)
+      .then(setM)
+      .catch(() => setM({ title: 'Maratona MUKANDA' }));
+  }, [id]);
   useEffect(() => { if (!session) navigate(`/maratonas/${id}`, { replace: true }); }, [session, id, navigate]);
 
   // countdown global
   useEffect(() => {
     const t = setInterval(() => setLeft((s) => s - 1), 1000);
     return () => clearInterval(t);
+  }, []);
+
+  useEffect(() => observarGuardado(setGuardado), []);
+
+  // Fechar o separador com respostas por enviar é a forma mais provável de as
+  // perder: elas estão só no browser. O aviso do próprio browser é a única
+  // maneira de interromper isso a tempo.
+  useEffect(() => {
+    const avisar = (e) => {
+      if (!haPorEnviar()) return;
+      e.preventDefault();
+      e.returnValue = '';   // exigido para o aviso aparecer
+    };
+    window.addEventListener('beforeunload', avisar);
+    return () => window.removeEventListener('beforeunload', avisar);
   }, []);
 
   // Submeter é o momento em que falhar custa mais — e era o único sem
@@ -267,8 +292,22 @@ export default function Session() {
                   ? <button className="btn" onClick={() => setIdx(idx + 1)}>Seguinte →</button>
                   : <button className="btn green" onClick={() => setReview(true)}>Rever respostas ✓</button>}
               </div>
-              <div className="sm accoes-sessao__aviso" style={{ color: 'var(--green)', fontWeight: 500 }}>
-                {savedAt ? '✓ Resposta guardada automaticamente' : 'As respostas são guardadas automaticamente'}
+              {/* Este aviso dizia sempre "guardada", acontecesse o que
+                  acontecesse. Agora reflecte o que se passa de facto: o aluno
+                  tem direito a saber que as respostas não estão a chegar,
+                  enquanto ainda pode fazer alguma coisa quanto a isso. */}
+              <div
+                className="sm accoes-sessao__aviso"
+                style={{
+                  fontWeight: guardado === 'por-guardar' ? 600 : 500,
+                  color: guardado === 'por-guardar' ? 'var(--red)' : guardado === 'a-guardar' ? 'var(--mut)' : 'var(--green)',
+                }}
+              >
+                {guardado === 'por-guardar'
+                  ? '⚠ Sem ligação: as respostas ainda não chegaram ao servidor. Continua a responder — vamos tentar sozinhos. Não feches esta página.'
+                  : guardado === 'a-guardar'
+                    ? '⏳ A guardar…'
+                    : savedAt ? '✓ Resposta guardada automaticamente' : 'As respostas são guardadas automaticamente'}
               </div>
             </div>
           </div>
@@ -323,6 +362,13 @@ export default function Session() {
                 <b>{missing.length === 1 ? 'Há 1 questão em falta.' : `Há ${missing.length} questões em falta.`}</b>{' '}
                 <span className="mut">Podes voltar atrás e responder, ou submeter mesmo assim — as questões em branco contam como não respondidas.</span>
               </div>
+            </div>
+          )}
+          {guardado === 'por-guardar' && !erroSubmissao && (
+            <div className="sm" style={{ background: 'var(--amber-l)', color: '#B45309', borderRadius: 12, padding: '14px 18px', marginBottom: 20, fontWeight: 500 }}>
+              ⚠ Algumas respostas ainda não chegaram ao servidor — estão guardadas apenas neste
+              dispositivo. Podes submeter na mesma: a submissão leva tudo de uma vez. Não feches
+              esta página antes disso.
             </div>
           )}
           {erroSubmissao && (

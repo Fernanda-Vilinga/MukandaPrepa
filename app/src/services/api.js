@@ -225,14 +225,106 @@ export function activeSession() {
   return raw ? JSON.parse(raw) : null;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Auto-save das respostas
+//
+// Havia aqui um `.catch(() => {})`. Se a rede caísse a meio da prova, o aluno
+// continuava a ver "✓ Resposta guardada automaticamente" durante uma hora
+// inteira enquanto nada chegava ao servidor — e se fechasse o separador, ou o
+// telemóvel ficasse sem bateria, perdia tudo. Com ligações móveis, numa prova
+// cronometrada, isto acontece a alguém.
+//
+// Três coisas mudaram:
+//
+//   1. O estado é comunicado a quem quiser mostrá-lo (ver useEstadoGuardado).
+//   2. Uma falha volta a ser tentada, com espera crescente, e imediatamente
+//      quando o browser avisa que a ligação voltou.
+//   3. Os envios são feitos EM SÉRIE. Antes eram disparados em paralelo, e
+//      duas respostas seguidas podiam chegar trocadas — cada pedido leva o
+//      conjunto completo de respostas, por isso o que chegasse em último ficava
+//      gravado, mesmo sendo o mais antigo. Perdia-se uma resposta sem nada
+//      falhar.
+// ─────────────────────────────────────────────────────────────────────────────
+const ESPERAS = [1000, 2000, 5000, 10000, 20000];   // recuo entre tentativas
+
+let respostasPorEnviar = null;   // últimas respostas ainda não confirmadas
+let envioEmCurso = false;
+let tentativa = 0;
+let temporizador = null;
+const ouvintes = new Set();
+
+// 'guardado' · 'a-guardar' · 'por-guardar'
+let estadoActual = 'guardado';
+
+function anunciar(estado) {
+  if (estado === estadoActual) return;
+  estadoActual = estado;
+  ouvintes.forEach((f) => { try { f(estado); } catch { /* um ouvinte partido não trava os outros */ } });
+}
+
+/** Observa o estado do auto-save. Devolve a função para deixar de observar. */
+export function observarGuardado(fn) {
+  ouvintes.add(fn);
+  fn(estadoActual);
+  return () => ouvintes.delete(fn);
+}
+
+export function estadoGuardado() {
+  return estadoActual;
+}
+
+/** Há respostas que ainda não chegaram ao servidor? */
+export function haPorEnviar() {
+  return respostasPorEnviar !== null;
+}
+
+async function enviarRespostas() {
+  if (envioEmCurso || respostasPorEnviar === null) return;
+
+  const sess = activeSession();
+  if (!sess) { respostasPorEnviar = null; return; }
+
+  const aEnviar = respostasPorEnviar;
+  envioEmCurso = true;
+  anunciar('a-guardar');
+
+  try {
+    await request(`/sessions/${sess.id}/answers`, { method: 'PATCH', body: { answers: aEnviar } });
+    envioEmCurso = false;
+    tentativa = 0;
+
+    // Se entretanto o aluno respondeu a mais alguma coisa, `respostasPorEnviar`
+    // já é outro objecto — só se dá por concluído o que foi mesmo enviado.
+    if (respostasPorEnviar === aEnviar) {
+      respostasPorEnviar = null;
+      anunciar('guardado');
+    } else {
+      enviarRespostas();
+    }
+  } catch {
+    envioEmCurso = false;
+    anunciar('por-guardar');
+
+    const espera = ESPERAS[Math.min(tentativa, ESPERAS.length - 1)];
+    tentativa += 1;
+    clearTimeout(temporizador);
+    temporizador = setTimeout(enviarRespostas, espera);
+  }
+}
+
 // PATCH /api/sessions/:id/answers — auto-save local imediato + servidor
 export function saveAnswers(answers) {
+  // O local é sempre imediato: mesmo sem rede, um F5 não perde nada.
   sessionStorage.setItem('mkp_answers', JSON.stringify(answers));
-  const sess = activeSession();
-  if (sess) {
-    request(`/sessions/${sess.id}/answers`, { method: 'PATCH', body: { answers } })
-      .catch(() => {}); // sem rede: o auto-save local mantém; o servidor recebe no próximo
-  }
+  respostasPorEnviar = answers;
+  enviarRespostas();
+}
+
+// Quando a ligação volta, não se espera pelo próximo recuo.
+if (typeof window !== 'undefined') {
+  window.addEventListener('online', () => {
+    if (respostasPorEnviar !== null) { tentativa = 0; enviarRespostas(); }
+  });
 }
 
 export function savedAnswers() {
@@ -249,6 +341,14 @@ export async function submitSession() {
   if (sess) {
     out = await request(`/sessions/${sess.id}/submit`, { method: 'POST', body: { answers } });
   }
+  // A submissão leva o conjunto completo de respostas, portanto o que estivesse
+  // por enviar acabou de chegar. Sem isto ficava uma tentativa agendada a
+  // bater numa sessão já fechada.
+  respostasPorEnviar = null;
+  clearTimeout(temporizador);
+  tentativa = 0;
+  anunciar('guardado');
+
   sessionStorage.removeItem('mkp_session');
   sessionStorage.removeItem('mkp_answers');
   return out;

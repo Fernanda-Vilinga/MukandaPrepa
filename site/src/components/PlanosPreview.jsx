@@ -1,7 +1,31 @@
 import './PlanosPreview.css';
-import { PLANOS } from '../config/planos';
+import { PLANOS, FASE_GRATUITA } from '../config/planos';
 
 export default function PlanosPreview() {
+  // Fase gratuita (ver config/planos.js): a homepage não mostra preços —
+  // mostra a oferta única e gratuita. Os três cartões voltam nas Fases 2/3.
+  if (FASE_GRATUITA) {
+    return (
+      <section className="planos-preview">
+        <div className="container">
+          <h2 className="planos-preview__title">Nesta fase, é tudo gratuito</h2>
+
+          <div className="planos-preview__grid planos-preview__grid--solo">
+            <div className="plano-card plano-card--destaque">
+              <span className="plano-card__badge">2026</span>
+              <h3>Maratonas &amp; Aulas Online</h3>
+              <p className="plano-card__preco">Grátis</p>
+              <p className="plano-card__pagamento">Sem pagamento, sem cartão</p>
+              <a href="/planos" className="btn btn-primary plano-card__cta">
+                Ver detalhes
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="planos-preview">
       <div className="container">

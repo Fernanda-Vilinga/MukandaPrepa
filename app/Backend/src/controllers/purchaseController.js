@@ -10,6 +10,14 @@ const { _obterConfig } = require("./configController");
 const PLANO_LABEL = { basic: "Basic", plus: "Plus", premium: "Premium" };
 const PLANOS_VALIDOS = ["basic", "plus", "premium"];
 
+// Fase gratuita (D11 + D-A3, 3 Ago 2026): na Fase 1 não há upgrades — todos
+// os alunos estão no Basic e as maratonas são gratuitas. O interruptor é uma
+// variável de ambiente para os planos voltarem sem deploy de código; por
+// omissão está LIGADO, porque é o estado real desta fase. A app já não mostra
+// os cartões de compra (src/config/fase.js) — isto garante o mesmo do lado do
+// servidor, para pedidos feitos à mão contra a API.
+const faseGratuita = () => String(process.env.FASE_GRATUITA ?? "true").toLowerCase() !== "false";
+
 const conversaSuporteDe = async (estudanteId) => {
     const existentes = (await db.collection("conversas").where("estudanteId", "==", estudanteId).get())
         .docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -39,6 +47,12 @@ const enviarMensagemSuporte = async (estudanteId, texto, from) => {
 // POST /api/plans/upgrade-request  { planId, promoCode }  (estudante)
 exports.solicitar = async (req, res) => {
     try {
+        if (faseGratuita()) {
+            return res.status(403).json({
+                mensagem: "Nesta fase, as maratonas e as aulas online são gratuitas para todos — não há planos para comprar.",
+            });
+        }
+
         const planoNorm = String(req.body.planId || "").toLowerCase();
         if (!PLANOS_VALIDOS.includes(planoNorm)) {
             return res.status(400).json({ mensagem: "Plano inválido." });

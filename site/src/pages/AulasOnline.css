@@ -86,6 +86,14 @@
   overflow-x: auto;
 }
 
+/* Aviso temporário enquanto o horário real não é anunciado (D9). */
+.aulas-horario__aviso {
+  text-align: center;
+  color: #5A5A6E;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
 .aulas-horario table {
   width: 100%;
   border-collapse: collapse;

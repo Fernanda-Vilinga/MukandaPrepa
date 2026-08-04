@@ -26,6 +26,12 @@
   align-items: start;
 }
 
+/* Fase gratuita: um único cartão, centrado (ver config/planos.js). */
+.planos-cards__grid--solo {
+  grid-template-columns: minmax(0, 420px);
+  justify-content: center;
+}
+
 .plano-card-full {
   position: relative;
   border: 1.5px solid var(--color-border);

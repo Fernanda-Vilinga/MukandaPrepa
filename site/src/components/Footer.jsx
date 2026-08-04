@@ -18,10 +18,12 @@ export default function Footer() {
 
         <div className="footer__col">
           <h4>Siga-nos</h4>
-          <a href="https://linkedin.com" target="_blank" rel="noreferrer">LinkedIn</a>
-          <a href="https://facebook.com" target="_blank" rel="noreferrer">Facebook</a>
-          <a href="https://instagram.com" target="_blank" rel="noreferrer">Instagram</a>
-          <a href="https://tiktok.com" target="_blank" rel="noreferrer">TikTok</a>
+          {/* Perfis oficiais confirmados pela equipa a 3 Ago 2026 (D6).
+              O LinkedIn existe mas o URL exacto ainda não foi confirmado
+              (D-A2) — volta ao rodapé assim que a equipa o enviar. */}
+          <a href="https://www.facebook.com/profile.php?id=61591268696768" target="_blank" rel="noreferrer">Facebook</a>
+          <a href="https://www.instagram.com/mukandaprepa/" target="_blank" rel="noreferrer">Instagram</a>
+          <a href="https://www.tiktok.com/@mukandaprepa" target="_blank" rel="noreferrer">TikTok</a>
         </div>
 
         <div className="footer__col">
