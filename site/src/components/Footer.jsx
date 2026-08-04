@@ -21,7 +21,7 @@ export default function Footer() {
           {/* Perfis oficiais confirmados pela equipa (D6 + D-A2, 3-4 Ago 2026).
               O LinkedIn usa o URL público da página; o /admin/dashboard do
               link partilhado internamente só funciona para administradores. */}
-          <a href="https://www.linkedin.com/company/130234051/" target="_blank" rel="noreferrer">LinkedIn</a>
+          <a href="https://www.linkedin.com/company/mukanda-prepa/" target="_blank" rel="noreferrer">LinkedIn</a>
           <a href="https://www.facebook.com/profile.php?id=61591268696768" target="_blank" rel="noreferrer">Facebook</a>
           <a href="https://www.instagram.com/mukandaprepa/" target="_blank" rel="noreferrer">Instagram</a>
           <a href="https://www.tiktok.com/@mukandaprepa" target="_blank" rel="noreferrer">TikTok</a>
