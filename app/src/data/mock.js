@@ -28,15 +28,14 @@ export const CURRENT_USER = {
 // do hook useMaxAttempts — não voltar a acrescentar uma tabela aqui.
 export const PLAN_LABEL = { basic: 'Basic', plus: 'Plus', premium: 'Premium' };
 
-// Áreas de conhecimento (registo)
+// Áreas de conhecimento (registo, perfil, registo de professores).
+// Decisão da equipa (4 Ago 2026): nesta fase a comunidade organiza-se em
+// DOIS grandes grupos — e a lista aqui é a fonte única para todos os
+// dropdowns. Contas antigas com áreas extintas ("Direito", etc.) mantêm o
+// valor gravado; ao editarem o perfil, escolhem um dos dois grupos.
 export const AREAS = [
   'Engenharia e Tecnologia',
   'Ciências Sociais',
-  'Ciências da Saúde',
-  'Ciências Económicas e Gestão',
-  'Direito',
-  'Educação e Humanidades',
-  'Outra',
 ];
 
 export const MARATHONS = [

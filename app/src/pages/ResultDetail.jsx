@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { getResult, currentUser } from '../services/api.js';
 import { Topbar } from '../components/Ui.jsx';
 import { ChatFab } from '../components/Chat.jsx';
-import { PLAN_LABEL } from '../data/mock.js';
+import { planoLabel } from '../config/fase.js';
 import { useMaxAttempts } from '../hooks/useMaxAttempts.js';
 
 export default function ResultDetail() {
@@ -81,12 +81,12 @@ export default function ResultDetail() {
             <div style={{ flex: 1, minWidth: 220 }}>
               {canRetry ? (
                 <>
-                  <b>Ainda tens tentativas disponíveis ({r.attempt + 1}ª{maxAtt !== Infinity && ` de ${maxAtt}`} — plano {PLAN_LABEL[user?.plan]}).</b>
+                  <b>Ainda tens tentativas disponíveis ({r.attempt + 1}ª{maxAtt !== Infinity && ` de ${maxAtt}`} — plano {planoLabel(user?.plan)}).</b>
                   <div className="mut sm">Novo sorteio de questões aleatórias do mesmo banco de 15.</div>
                 </>
               ) : (
                 <>
-                  <b>Atingiste o limite de tentativas do plano {PLAN_LABEL[user?.plan]}.</b>
+                  <b>Atingiste o limite de tentativas do plano {planoLabel(user?.plan)}.</b>
                   <div className="mut sm">Faz upgrade para Plus ou Premium para repetir maratonas.</div>
                 </>
               )}

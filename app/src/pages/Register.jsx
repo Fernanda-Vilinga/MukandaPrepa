@@ -1,15 +1,44 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { register } from '../services/api.js';
 import { AuthLeft } from './Login.jsx';
 import { AREAS } from '../data/mock.js';
 
+// O formulário vive na memória do componente: qualquer navegação que o
+// desmonte (ex.: abrir os termos no mesmo separador e voltar) apagava tudo
+// o que o aluno tinha escrito. O rascunho passa a sobreviver no
+// sessionStorage — que morre ao fechar o separador, não fica no disco.
+// As SENHAS ficam de fora de propósito: nunca se guardam, nem aqui.
+const DRAFT_KEY = 'mkp:registoDraft';
+
+const lerDraft = () => {
+  try {
+    const d = JSON.parse(sessionStorage.getItem(DRAFT_KEY) || 'null');
+    return d && typeof d === 'object' ? d : null;
+  } catch {
+    return null;
+  }
+};
+
 export default function Register() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: '', email: '', phone: '', area: '', password: '', confirm: '', terms: false });
+  const [form, setForm] = useState(() => ({
+    name: '', email: '', phone: '', area: '', password: '', confirm: '', terms: false,
+    ...lerDraft(),
+    password: '', confirm: '',   // nunca vêm do rascunho
+  }));
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  useEffect(() => {
+    const { name, email, phone, area, terms } = form;
+    try {
+      sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ name, email, phone, area, terms }));
+    } catch {
+      // armazenamento cheio ou bloqueado — o rascunho é conforto, não requisito
+    }
+  }, [form]);
 
   // O botão só fica disponível com todos os campos preenchidos + termos aceites
   const complete =
@@ -29,6 +58,7 @@ export default function Register() {
     setBusy(true);
     try {
       await register(form);
+      try { sessionStorage.removeItem(DRAFT_KEY); } catch { /* nada a fazer */ }
       navigate('/');
     } catch (err) {
       setError(err.message);
@@ -94,7 +124,11 @@ export default function Register() {
             <input type="checkbox" checked={form.terms} onChange={(e) => setForm((f) => ({ ...f, terms: e.target.checked }))} />
             <span>
               Li e aceito os{' '}
-              <Link to="/termos" target="_blank" style={{ color: 'var(--blue)' }}>termos e condições</Link>{' '}
+              {/* target="_blank": os termos abrem noutro separador para o
+                  formulário nunca sair do ecrã. O stopPropagation impede o
+                  clique no link de alternar também a checkbox (comportamento
+                  de <a> dentro de <label> nalguns browsers). */}
+              <Link to="/termos" target="_blank" rel="noreferrer" style={{ color: 'var(--blue)' }} onClick={(e) => e.stopPropagation()}>termos e condições</Link>{' '}
               e a política de privacidade.
             </span>
           </label>

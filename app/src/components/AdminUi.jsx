@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { currentUser, logout } from '../services/api.js';
 import { Brand, TopbarNav } from './Ui.jsx';
+import { FASE_GRATUITA } from '../config/fase.js';
 
 export function AdminTopbar() {
   const user = currentUser();
@@ -74,6 +75,12 @@ export function PlanPill({ plan }) {
     premium: { label: 'Premium', style: { background: 'var(--orange-l)', color: 'var(--orange-d)' } },
   };
   if (!plan) return <span className="mut">—</span>;
+  // Fase gratuita: também no painel do admin há um único plano visível —
+  // mostrar "Plus" na lista de utilizadores enquanto o aluno vê "Gratuito"
+  // seria descrever uma realidade que não existe (ver config/fase.js).
+  if (FASE_GRATUITA) {
+    return <span style={{ display: 'inline-flex', fontSize: 11.5, fontWeight: 600, padding: '3px 10px', borderRadius: 999, background: 'var(--green-l)', color: 'var(--green)' }}>Gratuito</span>;
+  }
   const { label, style } = map[plan];
   return <span style={{ display: 'inline-flex', fontSize: 11.5, fontWeight: 600, padding: '3px 10px', borderRadius: 999, ...style }}>{label}</span>;
 }

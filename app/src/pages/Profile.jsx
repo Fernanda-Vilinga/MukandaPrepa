@@ -4,7 +4,8 @@ import { useState } from "react";
 import { currentUser, updateProfile, changePassword } from "../services/api.js";
 import { Topbar } from "../components/Ui.jsx";
 import { ChatFab } from "../components/Chat.jsx";
-import { AREAS, PLAN_LABEL } from "../data/mock.js";
+import { AREAS } from "../data/mock.js";
+import { planoLabel } from "../config/fase.js";
 import { useMaxAttempts } from "../hooks/useMaxAttempts.js";
 import { useNavigate } from "react-router-dom";
 
@@ -690,7 +691,7 @@ Plano actual
 
 <strong>
 
-{PLAN_LABEL[user?.plan]}
+{planoLabel(user?.plan)}
 
 </strong>
 

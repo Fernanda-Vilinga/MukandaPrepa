@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getUsers, updateUser } from '../../services/adminApi.js';
 import { AdminTopbar, RolePill, PlanPill } from '../../components/AdminUi.jsx';
+import { FASE_GRATUITA } from '../../config/fase.js';
 
 const PLANOS = [
   ['basic', 'Basic'],
@@ -131,7 +132,9 @@ export default function Users() {
                           <button className="sm" style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: '9px 12px', borderRadius: 8 }} onClick={() => toggleActive(u)}>
                             {u.active ? '⏸ Suspender conta' : '✅ Activar conta'}
                           </button>
-                          {u.role === 'student' && (
+                          {/* Fase gratuita: não há planos para alterar — a
+                              acção volta com os planos pagos (config/fase.js). */}
+                          {u.role === 'student' && !FASE_GRATUITA && (
                             <button className="sm" style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: '9px 12px', borderRadius: 8 }} onClick={() => { setPlanModalFor(u); setActionsFor(null); }}>
                               💳 Alterar plano
                             </button>

@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { currentUser, logout } from '../services/api.js';
-import { PLAN_LABEL } from '../data/mock.js';
+import { planoLabel } from '../config/fase.js';
 
 // Logotipo oficial MUKANDA PREPA (ícone). Versão branca sobre fundos
 // escuros/laranja (light), laranja sobre fundos claros (por defeito).
@@ -141,10 +141,10 @@ export function Topbar() {
       <button
         className="plan-chip"
         style={{ border: 'none', cursor: 'pointer' }}
-        title="Ver planos e fazer upgrade"
+        title="Ver planos"
         onClick={() => navigate('/planos')}
       >
-        Plano {PLAN_LABEL[user?.plan] ?? '—'}
+        Plano {planoLabel(user?.plan)}
       </button>
       <div ref={menuRef} style={{ position: 'relative' }}>
         <div

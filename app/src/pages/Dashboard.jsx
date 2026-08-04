@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { getMarathons, getResults, currentUser } from '../services/api.js';
 import { Topbar, Badge, Stat, AttemptDots } from '../components/Ui.jsx';
 import { ChatFab } from '../components/Chat.jsx';
-import { PLAN_LABEL } from '../data/mock.js';
+import { planoLabel } from '../config/fase.js';
 import { useMaxAttempts } from '../hooks/useMaxAttempts.js';
 
 export default function Dashboard() {
@@ -59,7 +59,7 @@ export default function Dashboard() {
           <Stat value={avg != null ? `${avg}%` : '—'} label="Média de acertos" />
           <Stat value={best ? `#${best}` : '—'} label="Melhor ranking" />
           <Stat
-            value={PLAN_LABEL[user?.plan]}
+            value={planoLabel(user?.plan)}
             // maxAtt indefinido = ainda a chegar do servidor; melhor não dizer
             // nada do que dizer um número e corrigi-lo um instante depois.
             label={maxAtt === undefined ? ' '
@@ -127,7 +127,7 @@ export default function Dashboard() {
             )}
             {featured && (
               <div className="card">
-                <h3 style={{ fontSize: 16.5, fontWeight: 700, marginBottom: 14 }}>As tuas tentativas — plano {PLAN_LABEL[user?.plan]}</h3>
+                <h3 style={{ fontSize: 16.5, fontWeight: 700, marginBottom: 14 }}>As tuas tentativas — plano {planoLabel(user?.plan)}</h3>
                 {active.length > 1 ? (
                   <select
                     className="input sm"

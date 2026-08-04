@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { getMarathon, enterMarathon, currentUser } from '../services/api.js';
 import { Topbar, Badge, AttemptDots } from '../components/Ui.jsx';
-import { PLAN_LABEL } from '../data/mock.js';
+import { planoLabel } from '../config/fase.js';
 import { ChatFab } from '../components/Chat.jsx';
 
 const PASS_LEN = 6;
@@ -73,7 +73,7 @@ export default function MarathonDetail() {
             </div>
 
             <div className="card" style={{ marginTop: 24 }}>
-              <h3 style={{ fontSize: 16.5, fontWeight: 700, marginBottom: 16 }}>As tuas tentativas — plano {PLAN_LABEL[user?.plan]}</h3>
+              <h3 style={{ fontSize: 16.5, fontWeight: 700, marginBottom: 16 }}>As tuas tentativas — plano {planoLabel(user?.plan)}</h3>
               <div style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' }}>
                 <AttemptDots used={m.attemptsUsed} max={m.attemptsMax ?? Infinity} />
                 <div className="sm mut">

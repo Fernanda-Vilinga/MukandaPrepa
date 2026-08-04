@@ -4,6 +4,7 @@
 import { useEffect, useState } from 'react';
 import { getPlansConfig, savePlansConfig } from '../../services/adminApi.js';
 import { AdminTopbar } from '../../components/AdminUi.jsx';
+import { FASE_GRATUITA } from '../../config/fase.js';
 
 const ACCENT = { basic: '#64748B', plus: '#1742E7', premium: '#FB6D1D' };
 const PAYMENT_VAZIO = { banco: '', iban: '', titular: '', mobileMoneyOperadora: '', mobileMoneyNumero: '', instrucoes: '', whatsapp: '' };
@@ -82,6 +83,15 @@ export default function Plans() {
           </div>
           {!editing && <button className="btn" onClick={startEdit}>✏️ Modificar</button>}
         </div>
+
+        {FASE_GRATUITA && (
+          <div className="sm" style={{ background: 'var(--green-l)', color: 'var(--green)', borderRadius: 12, padding: '12px 16px', marginBottom: 20, fontWeight: 500 }}>
+            🎉 Fase gratuita activa: os alunos vêem um único plano "Gratuito" e os
+            pedidos de compra estão desligados no servidor. Esta configuração
+            continua editável, mas só volta a ser visível quando os planos pagos
+            forem reactivados (interruptores em config/fase.js, site e backend).
+          </div>
+        )}
 
         {error && (
           <div className="sm" style={{ background: 'var(--red-l, #fdecec)', color: 'var(--red, #c0392b)', borderRadius: 10, padding: '12px 16px', marginBottom: 20 }}>
